@@ -210,24 +210,24 @@ st.write("")
 # =============================================================================
 if step == 0:
     st.markdown("""
-    <div class="glass-card">
-        <h3 style="margin:0 0 0.6rem 0; color:#e6edf3;">📡 How the 3-Agent Pipeline Works</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;">
-            <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-                <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 1 — Tavily</div>
-                <div style="color:#c9d1d9; font-size:0.88rem;">Searches competitors, confirms gaps via <code>site:viact.ai</code> — only 0-result topics are real gaps.</div>
-            </div>
-            <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-                <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 2 — Firecrawl</div>
-                <div style="color:#c9d1d9; font-size:0.88rem;">Scrapes competitor pages using anti-bot bypass. Returns clean Markdown for Agent 3 to use.</div>
-            </div>
-            <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-                <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 3 — Groq/Llama</div>
-                <div style="color:#c9d1d9; font-size:0.88rem;">Generates content using ONLY real scraped data. Zero-hallucination contract enforced at prompt level.</div>
-            </div>
+<div class="glass-card">
+    <h3 style="margin:0 0 0.6rem 0; color:#e6edf3;">📡 How the 3-Agent Pipeline Works</h3>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;">
+        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 1 — Tavily</div>
+            <div style="color:#c9d1d9; font-size:0.88rem;">Searches competitors, confirms gaps via <code>site:viact.ai</code> — only 0-result topics are real gaps.</div>
+        </div>
+        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 2 — Firecrawl</div>
+            <div style="color:#c9d1d9; font-size:0.88rem;">Scrapes competitor pages using anti-bot bypass. Returns clean Markdown for Agent 3 to use.</div>
+        </div>
+        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 3 — Groq/Llama</div>
+            <div style="color:#c9d1d9; font-size:0.88rem;">Generates content using ONLY real scraped data. Zero-hallucination contract enforced at prompt level.</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
     st.write("")
 
@@ -251,22 +251,22 @@ if step == 0:
         status_icon = "●" if present else "○"
         masked = f"{val[:8]}…" if present else "Not set"
         col.markdown(f"""
-        <div class="glass-card" style="padding:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{label}</span>
-                <span style="color:{status_color}; font-size:1.2rem;">{status_icon}</span>
-            </div>
-            <div style="color:#8b949e; font-size:0.78rem;">{desc} · <span style="color:#ff6a3d;">{agent}</span></div>
-            <div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family: monospace;">{masked}</div>
-        </div>
-        """, unsafe_allow_html=True)
+<div class="glass-card" style="padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{label}</span>
+        <span style="color:{status_color}; font-size:1.2rem;">{status_icon}</span>
+    </div>
+    <div style="color:#8b949e; font-size:0.78rem;">{desc} · <span style="color:#ff6a3d;">{agent}</span></div>
+    <div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family: monospace;">{masked}</div>
+</div>
+""", unsafe_allow_html=True)
 
     if not all_required_present:
         st.markdown("""
-        <div style="background:rgba(248,81,73,0.08); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:12px 16px; font-size:0.85rem; color:#f85149; margin-bottom:12px;">
-            ⚠️ Add missing keys to <code>.env</code>: &nbsp;<code>GROQ_API_KEY=gsk_...</code> &nbsp;·&nbsp; <code>TAVILY_API_KEY=tvly-...</code>
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:rgba(248,81,73,0.08); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:12px 16px; font-size:0.85rem; color:#f85149; margin-bottom:12px;">
+    ⚠️ Add missing keys to <code>.env</code>: &nbsp;<code>GROQ_API_KEY=gsk_...</code> &nbsp;·&nbsp; <code>TAVILY_API_KEY=tvly-...</code>
+</div>
+""", unsafe_allow_html=True)
 
     st.write("")
     run_radar = st.button(
@@ -313,13 +313,13 @@ elif step == 1:
     n_scanned = radar.get("total_competitors_scanned", 0)
 
     st.markdown(f"""
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
-        <h3 style="margin:0; color:#e6edf3;">🎯 Confirmed Content Gaps</h3>
-        <div style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:4px 14px; font-size:0.8rem; color:#ff6a3d; font-weight:600;">
-            {n_scanned} competitors scanned · {scan_ts}
-        </div>
+<div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+    <h3 style="margin:0; color:#e6edf3;">🎯 Confirmed Content Gaps</h3>
+    <div style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:4px 14px; font-size:0.8rem; color:#ff6a3d; font-weight:600;">
+        {n_scanned} competitors scanned · {scan_ts}
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
     # ── Render topic cards ─────────────────────────────────────────────────────
     for i, topic in enumerate(topics):
@@ -338,34 +338,34 @@ elif step == 1:
         )
 
         st.markdown(f"""
-        <div class="glass-card">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                <div>
-                    <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px;">Gap {i+1}</div>
-                    <h4 style="margin:0; color:#e6edf3; font-size:1.1rem; font-weight:700;">{topic['topic']}</h4>
-                </div>
-                <div style="display:flex; gap:8px; flex-shrink:0; margin-left:16px;">
-                    <span class="badge-confirmed">✅ CONFIRMED GAP</span>
-                    <span class="{opp_class}">{opp} Opportunity</span>
-                </div>
-            </div>
-
-            <div style="background:rgba(255,106,61,0.06); border:1px solid rgba(255,106,61,0.15); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:0.8rem; color:#8b949e; font-family:monospace;">
-                {topic.get('viact_search_query', '')} → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span> · confirmed {topic.get('confirmed_at', '')}
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 2fr; gap:20px;">
-                <div>
-                    <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Why Trending</div>
-                    <div style="color:#c9d1d9; font-size:0.87rem;">{topic.get('why_trending', '')}</div>
-                </div>
-                <div>
-                    <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Competitor Evidence ({comp_count} competitor{'s' if comp_count != 1 else ''})</div>
-                    {"<table style='width:100%; border-collapse:collapse;'><thead><tr style='background:rgba(255,255,255,0.03);'><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Competitor</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>URL</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Snippet</th></tr></thead><tbody>" + evidence_rows + "</tbody></table>" if evidence else "<div style='color:#484f58; font-size:0.82rem;'>Gap confirmed via Tavily search — no direct snippet evidence collected.</div>"}
-                </div>
-            </div>
+<div class="glass-card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+        <div>
+            <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px;">Gap {i+1}</div>
+            <h4 style="margin:0; color:#e6edf3; font-size:1.1rem; font-weight:700;">{topic['topic']}</h4>
         </div>
-        """, unsafe_allow_html=True)
+        <div style="display:flex; gap:8px; flex-shrink:0; margin-left:16px;">
+            <span class="badge-confirmed">✅ CONFIRMED GAP</span>
+            <span class="{opp_class}">{opp} Opportunity</span>
+        </div>
+    </div>
+
+    <div style="background:rgba(255,106,61,0.06); border:1px solid rgba(255,106,61,0.15); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:0.8rem; color:#8b949e; font-family:monospace;">
+        {topic.get('viact_search_query', '')} → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span> · confirmed {topic.get('confirmed_at', '')}
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 2fr; gap:20px;">
+        <div>
+            <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Why Trending</div>
+            <div style="color:#c9d1d9; font-size:0.87rem;">{topic.get('why_trending', '')}</div>
+        </div>
+        <div>
+            <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Competitor Evidence ({comp_count} competitor{'s' if comp_count != 1 else ''})</div>
+            {"<table style='width:100%; border-collapse:collapse;'><thead><tr style='background:rgba(255,255,255,0.03);'><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Competitor</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>URL</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Snippet</th></tr></thead><tbody>" + evidence_rows + "</tbody></table>" if evidence else "<div style='color:#484f58; font-size:0.82rem;'>Gap confirmed via Tavily search — no direct snippet evidence collected.</div>"}
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
     # ── HITL Gate ──────────────────────────────────────────────────────────────
     st.markdown("<hr/>", unsafe_allow_html=True)
@@ -382,15 +382,15 @@ elif step == 1:
 
     st.write("")
     st.markdown("""
-    <div style="margin-bottom:6px;">
-        <span style="color:#e6edf3; font-weight:600;">Reference material</span>
-        <span style="color:#8b949e; font-size:0.82rem; margin-left:8px;">— optional but recommended</span>
-    </div>
-    <div style="color:#8b949e; font-size:0.82rem; margin-bottom:8px;">
-        Paste MOM/BCA report excerpts, viAct case study data, or reference URLs.
-        Leave blank to use public regulatory data <span style="color:#d6a126;">(output marked [Unverified])</span>.
-    </div>
-    """, unsafe_allow_html=True)
+<div style="margin-bottom:6px;">
+    <span style="color:#e6edf3; font-weight:600;">Reference material</span>
+    <span style="color:#8b949e; font-size:0.82rem; margin-left:8px;">— optional but recommended</span>
+</div>
+<div style="color:#8b949e; font-size:0.82rem; margin-bottom:8px;">
+    Paste MOM/BCA report excerpts, viAct case study data, or reference URLs.
+    Leave blank to use public regulatory data <span style="color:#d6a126;">(output marked [Unverified])</span>.
+</div>
+""", unsafe_allow_html=True)
 
     references = st.text_area(
         "Reference material",
@@ -408,10 +408,10 @@ elif step == 1:
 
     if not firecrawl_available:
         st.markdown("""
-        <div style="background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.3); border-radius:8px; padding:10px 14px; font-size:0.83rem; color:#d6a126; margin:10px 0;">
-            ⚠️ <code>FIRECRAWL_API_KEY</code> not set — Agent 2 will skip scraping. Agent 3 will use Tavily snippets only.
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.3); border-radius:8px; padding:10px 14px; font-size:0.83rem; color:#d6a126; margin:10px 0;">
+    ⚠️ <code>FIRECRAWL_API_KEY</code> not set — Agent 2 will skip scraping. Agent 3 will use Tavily snippets only.
+</div>
+""", unsafe_allow_html=True)
 
     st.write("")
     if st.button(
@@ -502,17 +502,17 @@ elif step == 2:
 
     # ── Header ─────────────────────────────────────────────────────────────────
     st.markdown(f"""
-    <div class="glass-card" style="border-color:rgba(63,185,80,0.25);">
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:{'10px' if unverified else '0'};">
-            <span style="font-size:1.6rem;">✅</span>
-            <div>
-                <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;">Content Suite Ready</div>
-                <h3 style="margin:2px 0 0 0; color:#e6edf3;">{topic_str}</h3>
-            </div>
+<div class="glass-card" style="border-color:rgba(63,185,80,0.25);">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:{'10px' if unverified else '0'};">
+        <span style="font-size:1.6rem;">✅</span>
+        <div>
+            <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;">Content Suite Ready</div>
+            <h3 style="margin:2px 0 0 0; color:#e6edf3;">{topic_str}</h3>
         </div>
-        {"<div style='margin-top:10px; background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>⚠️ <strong>[Unverified]</strong> — No reference material provided. Statistics use public MOM/BCA data. Add a reference source before publishing.</div>" if unverified else ""}
     </div>
-    """, unsafe_allow_html=True)
+    {"<div style='margin-top:10px; background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>⚠️ <strong>[Unverified]</strong> — No reference material provided. Statistics use public MOM/BCA data. Add a reference source before publishing.</div>" if unverified else ""}
+</div>
+""", unsafe_allow_html=True)
 
     # ── Push to Sheets ─────────────────────────────────────────────────────────
     col_push, _ = st.columns([1, 4])
@@ -555,10 +555,10 @@ elif step == 2:
 
     with tab_dl:
         st.markdown("""
-        <div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-            💡 Copy this paragraph into Gary / Surendra's email. It cites the exact Tavily search, date, and real competitor URLs.
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
+    💡 Copy this paragraph into Gary / Surendra's email. It cites the exact Tavily search, date, and real competitor URLs.
+</div>
+""", unsafe_allow_html=True)
         st.text_area(
             "Decision Logic",
             content.get("decision_logic", ""),
@@ -569,12 +569,12 @@ elif step == 2:
     with tab_sources:
         st.markdown("<h4 style='color:#e6edf3;'>Agent 1 — Tavily Gap Confirmation</h4>", unsafe_allow_html=True)
         st.markdown(f"""
-        <div class="glass-card" style="padding:16px;">
-            <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Search:</span> <code>{selected_topic.get('viact_search_query', '')}</code> → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span></div>
-            <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Confirmed:</span> <span style="color:#c9d1d9;">{selected_topic.get('confirmed_at', '')}</span></div>
-            <div><span style="color:#8b949e; font-size:0.8rem;">Opportunity:</span> <span style="color:#ff6a3d; font-weight:700;">{selected_topic.get('opportunity_score', '?')}</span> &nbsp;·&nbsp; <span style="color:#8b949e; font-size:0.8rem;">{selected_topic.get('competitor_count', 0)} competitors covering this topic</span></div>
-        </div>
-        """, unsafe_allow_html=True)
+<div class="glass-card" style="padding:16px;">
+    <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Search:</span> <code>{selected_topic.get('viact_search_query', '')}</code> → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span></div>
+    <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Confirmed:</span> <span style="color:#c9d1d9;">{selected_topic.get('confirmed_at', '')}</span></div>
+    <div><span style="color:#8b949e; font-size:0.8rem;">Opportunity:</span> <span style="color:#ff6a3d; font-weight:700;">{selected_topic.get('opportunity_score', '?')}</span> &nbsp;·&nbsp; <span style="color:#8b949e; font-size:0.8rem;">{selected_topic.get('competitor_count', 0)} competitors covering this topic</span></div>
+</div>
+""", unsafe_allow_html=True)
 
         evidence = selected_topic.get("competitor_evidence", [])
         if evidence:
@@ -641,19 +641,19 @@ elif step == 2:
 
     with tab_schema:
         st.markdown("""
-        <div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-            Paste into <code>&lt;head&gt;</code> as <code>&lt;script type="application/ld+json"&gt;{ ... }&lt;/script&gt;</code>. Contains the 5 Schema FAQs only.
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
+    Paste into <code>&lt;head&gt;</code> as <code>&lt;script type="application/ld+json"&gt;{ ... }&lt;/script&gt;</code>. Contains the 5 Schema FAQs only.
+</div>
+""", unsafe_allow_html=True)
         st.code(content.get("schema_json_ld", ""), language="json")
 
     with tab_geo:
         geo = content.get("geo_package", {})
         st.markdown("""
-        <div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-            💡 Written to be cited by Claude, Perplexity, ChatGPT, and Google AI Overviews.
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
+    💡 Written to be cited by Claude, Perplexity, ChatGPT, and Google AI Overviews.
+</div>
+""", unsafe_allow_html=True)
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin-bottom:8px;'>Opening 200 Words — AI-citation optimized:</div>", unsafe_allow_html=True)
         st.text_area("Opening 200 words", geo.get("opening_200_words", ""), height=180, key="r3_geo")
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin:14px 0 8px;'>Citation Framing Tips:</div>", unsafe_allow_html=True)
