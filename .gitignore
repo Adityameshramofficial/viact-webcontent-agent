@@ -1,0 +1,27 @@
+# Secrets
+.env
+credentials.json
+token.json
+.streamlit/secrets.toml
+
+# Temporary processing files
+.tmp/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+.env
+__pycache__/
+.tmp/
+.claude/
+*.pyc
