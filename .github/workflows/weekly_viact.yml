@@ -29,7 +29,6 @@ jobs:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: python weekly_scan_script.py
 
