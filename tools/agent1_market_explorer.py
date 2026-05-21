@@ -175,18 +175,42 @@ def discover_market_gaps(progress_callback=None) -> dict:
     # Blog posts, glossary entries, news, and country-EHS pages do NOT count.
     # This distinguishes a product gap from a content gap.
 
+    # URLs that are NOT dedicated solution pages — blog, generic, root pages
     BLOG_SKIP_PATTERNS = [
         "/post/", "/blog", "/glossary", "/news/", "/case-stud",
         "/tags/", "/ehs/ehs-management-software-", "/ehs/", "/pages-sitemap",
+        "/about", "/contact", "/pricing", "/careers", "/partner",
+        "/resources", "/webinar", "/event", "/press", "/media",
+        "/legal", "/privacy", "/terms",
     ]
 
-    def _has_dedicated_solution_page(results: list[dict]) -> tuple[bool, list[str]]:
-        """Return (True, [solution_urls]) if any result is a dedicated solution page."""
+    # Root/generic pages that can match anything — never count as topic-specific
+    GENERIC_URL_SUFFIXES = ("viact.ai/", "viact.ai/#", "viact.ai/?", "viact.ai")
+
+    def _has_dedicated_solution_page(results: list[dict], topic_name: str) -> tuple[bool, list[str]]:
+        """
+        Return (True, [solution_urls]) ONLY if viAct has a SPECIFIC page for this topic.
+        A page counts only if:
+          1. URL does not match any BLOG_SKIP_PATTERNS
+          2. URL is not a generic root/homepage
+          3. At least one of the topic's keywords appears in the URL slug OR page title
+        """
+        topic_keywords = [w.lower() for w in topic_name.split() if len(w) > 4]
         solution_urls = []
         for r in results:
-            url = r.get("url", "").lower()
-            if not any(p in url for p in BLOG_SKIP_PATTERNS):
-                solution_urls.append(r.get("url", ""))
+            url = r.get("url", "").lower().rstrip("/")
+            title = r.get("title", "").lower()
+
+            # Skip generic root pages
+            if any(url.endswith(s.rstrip("/")) for s in GENERIC_URL_SUFFIXES):
+                continue
+            # Skip blog/generic section pages
+            if any(p in url for p in BLOG_SKIP_PATTERNS):
+                continue
+            # Only count if a topic keyword appears in the URL slug or page title
+            if topic_keywords and not any(kw in url or kw in title for kw in topic_keywords):
+                continue
+            solution_urls.append(r.get("url", ""))
         return bool(solution_urls), solution_urls
 
     confirmed_gaps: list[dict] = []
@@ -204,7 +228,7 @@ def discover_market_gaps(progress_callback=None) -> dict:
         except Exception:
             viact_results = []
 
-        is_covered, solution_pages = _has_dedicated_solution_page(viact_results)
+        is_covered, solution_pages = _has_dedicated_solution_page(viact_results, topic_name)
 
         if not is_covered:
             # CONFIRMED GAP — no dedicated solution page (only blog/glossary/generic)
