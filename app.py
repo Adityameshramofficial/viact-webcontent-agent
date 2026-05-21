@@ -164,27 +164,67 @@ div[data-testid="stRadio"] label { color: #c9d1d9 !important; }
 
 /* Caption / small text */
 small, .caption { color: #8b949e !important; font-size: 0.82rem !important; }
+
+/* Pipeline flow boxes */
+.pipeline-box {
+    background: rgba(22,25,33,0.8); border: 1px solid rgba(255,106,61,0.2);
+    border-radius: 10px; padding: 18px 16px; flex: 1; min-width: 0;
+}
+.pipeline-arrow {
+    color: #ff6a3d; font-size: 1.5rem; align-self: center;
+    flex-shrink: 0; padding: 0 6px; opacity: 0.7;
+}
+.pipeline-tag {
+    background: rgba(255,106,61,0.12); color: #ff6a3d;
+    border: 1px solid rgba(255,106,61,0.3); border-radius: 4px;
+    padding: 2px 8px; font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 8px;
+}
+.pipeline-output {
+    background: rgba(63,185,80,0.06); border: 1px solid rgba(63,185,80,0.2);
+    border-radius: 4px; padding: 5px 10px; margin-top: 10px;
+    font-size: 0.78rem; color: #3fb950;
+}
+
+/* Output chips (what you'll get) */
+.output-chip {
+    background: rgba(22,25,33,0.7); border: 1px solid #2d303a;
+    border-radius: 8px; padding: 12px 14px;
+}
+.output-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
+.output-chip-title { color: #e6edf3; font-weight: 700; font-size: 0.85rem; margin-bottom: 3px; }
+.output-chip-desc { color: #8b949e; font-size: 0.76rem; line-height: 1.4; }
+
+/* Step indicator with sub-label */
+.step-wrap { text-align: center; }
+.step-num-active { background: linear-gradient(135deg,#ff6a3d,#e54d1f); color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.step-num-done { background: rgba(63,185,80,0.15); color: #3fb950; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #238636; }
+.step-num-idle { background: rgba(22,25,33,0.5); color: #484f58; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #2d303a; }
+.step-title-active { color: #e6edf3; font-weight: 700; font-size: 0.9rem; }
+.step-title-done { color: #3fb950; font-weight: 700; font-size: 0.9rem; }
+.step-title-idle { color: #484f58; font-weight: 600; font-size: 0.9rem; }
+.step-sub { color: #8b949e; font-size: 0.76rem; margin-top: 3px; }
+.step-connector { color: #2d303a; font-size: 1.2rem; align-self: flex-start; padding-top: 14px; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="glass-card" style="padding:2rem 2.5rem; margin-bottom:1.5rem; border-color: rgba(255,106,61,0.25);">
-    <div style="display:flex; align-items:center; gap:1rem;">
-        <span style="font-size:2.6rem;">🏗️</span>
-        <div>
-            <h1 style="margin:0; font-size:1.9rem; color:#e6edf3; font-weight:700;">viact.ai Webpage Content Agent</h1>
-            <p style="margin:0.3rem 0 0 0; color:#8b949e; font-size:0.9rem;">
-                <span style="color:#ff6a3d; font-weight:600;">Agent 1</span> Tavily Market Radar
-                &nbsp;·&nbsp;
-                <span style="color:#ff6a3d; font-weight:600;">Agent 2</span> Firecrawl Scraping
-                &nbsp;·&nbsp;
-                <span style="color:#ff6a3d; font-weight:600;">Agent 3</span> Groq/Llama Content Generation
-            </p>
-        </div>
-    </div>
+st.markdown(_html("""
+<div class="glass-card" style="padding:1.8rem 2rem; margin-bottom:1.2rem; border-color:rgba(255,106,61,0.3);">
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+<div>
+<div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;">viAct &middot; Content Intelligence</div>
+<h1 style="margin:0; font-size:1.85rem; color:#e6edf3; font-weight:700; line-height:1.2;">Webpage Content Agent</h1>
+<p style="margin:8px 0 0; color:#8b949e; font-size:0.92rem; max-width:520px; line-height:1.5;">Finds topics your competitors rank for that <strong style="color:#e6edf3;">viAct doesn't have yet</strong> &#8212; then writes a complete, publish-ready webpage in under 3 minutes.</p>
 </div>
-""", unsafe_allow_html=True)
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
+<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#128225; Tavily Search</span>
+<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#128293; Firecrawl Scrape</span>
+<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#129302; Llama 3.3 70B</span>
+</div>
+</div>
+</div>
+"""), unsafe_allow_html=True)
 
 # =============================================================================
 # 3-AGENT MARKET RADAR → WEBPAGE PIPELINE (Tavily + Firecrawl + Groq)
@@ -195,23 +235,33 @@ if "r3_step" not in st.session_state:
 
 step = st.session_state["r3_step"]
 
-# ── Step indicator ─────────────────────────────────────────────────────────────
-steps = ["📡  Market Radar", "🎯  Topic Selection", "✅  Content Suite"]
-cols = st.columns(3)
-for i, (col, label) in enumerate(zip(cols, steps)):
-    if i < step:
-        css_class = "step-done"
-        prefix = "✓ "
-    elif i == step:
-        css_class = "step-active"
-        prefix = ""
+# ── Step indicator ────────────────────────────────────────────────────────────
+_step_data = [
+    ("1", "Competitor Research",   "Scan 8 sites · find content gaps"),
+    ("2", "Pick Your Topic",       "Choose gap · add reference material"),
+    ("3", "Content Ready",         "Review 10 sections · push to Sheets"),
+]
+_si_cols = st.columns([1, 0.08, 1, 0.08, 1])
+_col_idxs = [0, 2, 4]
+for _si, ((_num, _title, _sub), _ci) in enumerate(zip(_step_data, _col_idxs)):
+    if _si < step:
+        _num_cls, _title_cls, _check = "step-num-done", "step-title-done", "&#10003;"
+    elif _si == step:
+        _num_cls, _title_cls, _check = "step-num-active", "step-title-active", _num
     else:
-        css_class = "step-idle"
-        prefix = ""
-    col.markdown(
-        f"<div class='{css_class}'>{prefix}{label}</div>",
-        unsafe_allow_html=True,
-    )
+        _num_cls, _title_cls, _check = "step-num-idle", "step-title-idle", _num
+    _si_cols[_ci].markdown(_html(f"""
+<div class="step-wrap">
+<div class="{_num_cls}">{_check}</div>
+<div class="{_title_cls}">{_title}</div>
+<div class="step-sub">{_sub}</div>
+</div>
+"""), unsafe_allow_html=True)
+    if _ci < 4:
+        _si_cols[_ci + 1].markdown(
+            f"<div style='text-align:center; color:#2d303a; font-size:1.4rem; padding-top:8px;'>&#8594;</div>",
+            unsafe_allow_html=True,
+        )
 
 if step > 0:
     st.write("")
@@ -226,24 +276,81 @@ st.write("")
 # STEP 0 — API Key Check + Run Market Radar
 # =============================================================================
 if step == 0:
-    # ── Pipeline explanation ───────────────────────────────────────────────────
+    # ── Pipeline flow diagram ──────────────────────────────────────────────────
+    st.markdown(
+        "<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>HOW IT WORKS &mdash; 3 AI AGENTS IN SEQUENCE</p>",
+        unsafe_allow_html=True,
+    )
     st.markdown(_html("""
-<div class="glass-card">
-<h3 style="margin:0 0 0.6rem 0; color:#e6edf3;">&#128225; How the 3-Agent Pipeline Works</h3>
-<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;">
-<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 1 &#8212; Tavily</div>
-<div style="color:#c9d1d9; font-size:0.88rem;">Scans all competitors, extracts topics, confirms gaps via <code>site:viact.ai</code> &#8212; only 0-result topics are real gaps.</div>
+<div style="display:flex; gap:0; align-items:stretch; margin-bottom:20px;">
+
+<div class="pipeline-box" style="border-color:rgba(255,106,61,0.35);">
+<div class="pipeline-tag">Agent 1 &middot; Tavily Search</div>
+<div style="color:#e6edf3; font-weight:700; font-size:1rem; margin-bottom:6px;">&#128269; Find the Gap</div>
+<div style="color:#8b949e; font-size:0.82rem; line-height:1.6;">
+&#8226; Searches <strong style="color:#c9d1d9;">8 competitor websites</strong> for safety topics<br>
+&#8226; AI extracts 10&ndash;15 topic names from results<br>
+&#8226; Checks each topic on <code>viact.ai</code> &#8212; live<br>
+&#8226; Only topics with <strong style="color:#3fb950;">0 viAct pages</strong> pass through
 </div>
-<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 2 &#8212; Firecrawl</div>
-<div style="color:#c9d1d9; font-size:0.88rem;">Scrapes competitor pages using anti-bot bypass. Returns clean Markdown for Agent 3 to use.</div>
+<div class="pipeline-output">&#8594; Output: 3 Confirmed Content Gaps</div>
 </div>
-<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 3 &#8212; Groq/Llama</div>
-<div style="color:#c9d1d9; font-size:0.88rem;">Generates content using ONLY real scraped data. Zero-hallucination contract enforced at prompt level.</div>
+
+<div class="pipeline-arrow">&#9654;</div>
+
+<div class="pipeline-box" style="border-color:rgba(88,166,255,0.3);">
+<div class="pipeline-tag" style="background:rgba(88,166,255,0.1); color:#58a6ff; border-color:rgba(88,166,255,0.3);">Agent 2 &middot; Firecrawl</div>
+<div style="color:#e6edf3; font-weight:700; font-size:1rem; margin-bottom:6px;">&#128196; Read Competitor Pages</div>
+<div style="color:#8b949e; font-size:0.82rem; line-height:1.6;">
+&#8226; Downloads full competitor page content<br>
+&#8226; Bypasses anti-bot protection automatically<br>
+&#8226; Converts messy HTML to clean text<br>
+&#8226; Blocked pages marked <strong style="color:#f85149;">[ACCESS DENIED]</strong> &#8212; never faked
 </div>
+<div class="pipeline-output" style="border-color:rgba(88,166,255,0.2); color:#58a6ff;">&#8594; Output: Real Competitor Markdown</div>
 </div>
+
+<div class="pipeline-arrow">&#9654;</div>
+
+<div class="pipeline-box" style="border-color:rgba(63,185,80,0.3);">
+<div class="pipeline-tag" style="background:rgba(63,185,80,0.08); color:#3fb950; border-color:rgba(63,185,80,0.3);">Agent 3 &middot; Llama 3.3 70B</div>
+<div style="color:#e6edf3; font-weight:700; font-size:1rem; margin-bottom:6px;">&#9999; Write the Webpage</div>
+<div style="color:#8b949e; font-size:0.82rem; line-height:1.6;">
+&#8226; Uses <strong style="color:#c9d1d9;">only</strong> the scraped content &#8212; zero hallucination<br>
+&#8226; Writes headline, body, FAQs, meta tags<br>
+&#8226; Adds Singapore &amp; UAE regulatory context<br>
+&#8226; Generates schema markup + image prompts
+</div>
+<div class="pipeline-output" style="border-color:rgba(63,185,80,0.2); color:#3fb950;">&#8594; Output: 10-Section Publish-Ready Page</div>
+</div>
+
+</div>
+"""), unsafe_allow_html=True)
+
+    # ── What you'll get ────────────────────────────────────────────────────────
+    st.markdown(
+        "<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>WHAT YOU GET &mdash; 10 SECTIONS, READY TO PUBLISH</p>",
+        unsafe_allow_html=True,
+    )
+    _outputs = [
+        ("&#128196;", "Full Webpage Body",    "Complete Markdown page — paste into any CMS"),
+        ("&#127919;", "H1 Headline",          "Problem-focused, no marketing fluff"),
+        ("&#128269;", "SEO Meta Tags",        "Title &lt;60 chars, description &lt;155 chars"),
+        ("&#10067;",  "5 Schema FAQs",        "40-60 word answers for Google rich results"),
+        ("&#127991;", "JSON-LD Schema",       "Paste-ready &lt;script&gt; for structured data"),
+        ("&#127760;", "GEO Package",          "Opening 200 words for ChatGPT/Perplexity citations"),
+        ("&#128247;", "2 Image Prompts",      "Realistic APAC photography briefs, not CGI"),
+        ("&#128279;", "Internal Links",       "Verified viact.ai URLs only — never invented"),
+        ("&#128202;", "Decision Logic",       "Email paragraph with proof for Gary/Surendra"),
+        ("&#128220;", "Keyword Set",          "Primary + LSI keywords + heading map"),
+    ]
+    _out_cols = st.columns(5)
+    for _oi, (_icon, _title, _desc) in enumerate(_outputs):
+        _out_cols[_oi % 5].markdown(_html(f"""
+<div class="output-chip">
+<div class="output-chip-icon">{_icon}</div>
+<div class="output-chip-title">{_title}</div>
+<div class="output-chip-desc">{_desc}</div>
 </div>
 """), unsafe_allow_html=True)
 
@@ -253,11 +360,14 @@ if step == 0:
     from research_competitors import get_all_competitors
     _all_competitors = get_all_competitors()
 
-    st.markdown(
-        f"<p style='color:#8b949e; font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;'>"
-        f"COMPETITORS TO SCAN &nbsp;<span style='color:#ff6a3d;'>({len(_all_competitors)})</span></p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(_html(f"""
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+<p style="margin:0; color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px;">
+COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_all_competitors)} sites)</span>
+</p>
+<span style="color:#8b949e; font-size:0.76rem;">All searched simultaneously via Tavily</span>
+</div>
+"""), unsafe_allow_html=True)
     _comp_cols = st.columns(4)
     for _ci, _comp in enumerate(_all_competitors):
         _domain = _comp["url"].split("//")[-1].split("/")[0]
@@ -272,47 +382,68 @@ if step == 0:
     st.write("")
 
     # ── API Key Status ─────────────────────────────────────────────────────────
-    st.markdown("<p style='color:#8b949e; font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;'>API KEY STATUS</p>", unsafe_allow_html=True)
+    st.markdown(_html("""
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+<p style="margin:0; color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px;">API CONNECTIONS</p>
+<span style="color:#8b949e; font-size:0.76rem;">All 3 agents need their own API key to work</span>
+</div>
+"""), unsafe_allow_html=True)
 
     key_configs = [
-        ("GROQ_API_KEY",      "Groq",      "LLM — Llama 3.3 70B",   "Agent 3"),
-        ("TAVILY_API_KEY",    "Tavily",    "Live Search API",        "Agent 1"),
-        ("FIRECRAWL_API_KEY", "Firecrawl", "Anti-Bot Scraper",       "Agent 2"),
+        ("TAVILY_API_KEY",    "Tavily",    "&#128269;", "Searches competitor websites &amp; confirms gaps on viact.ai",  "Agent 1 — Required", True),
+        ("FIRECRAWL_API_KEY", "Firecrawl", "&#128293;", "Downloads full competitor page content bypassing anti-bot",     "Agent 2 — Optional", False),
+        ("GROQ_API_KEY",      "Groq",      "&#129302;", "Runs Llama 3.3 70B to extract topics and write page content",   "Agent 1 &amp; 3 — Required", True),
     ]
 
     key_cols = st.columns(3)
     all_required_present = True
-    for col, (key_name, label, desc, agent) in zip(key_cols, key_configs):
+    for col, (key_name, label, icon, desc, agent_label, required) in zip(key_cols, key_configs):
         val = os.getenv(key_name, "")
         present = bool(val)
-        if key_name != "FIRECRAWL_API_KEY" and not present:
+        if required and not present:
             all_required_present = False
-        status_color = "#3fb950" if present else "#f85149"
-        status_icon = "&#11044;" if present else "&#9711;"
+        status_color = "#3fb950" if present else ("#f85149" if required else "#d6a126")
+        status_text  = "Connected" if present else ("Missing" if required else "Optional")
         masked = f"{val[:8]}…" if present else "Not set"
         col.markdown(_html(f"""
-<div class="glass-card" style="padding:16px;">
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-<span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{_t(label)}</span>
-<span style="color:{status_color}; font-size:1.2rem;">{status_icon}</span>
+<div class="glass-card" style="padding:16px; border-color:rgba({'63,185,80' if present else ('248,81,73' if required else '210,153,34')},0.25);">
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+<div style="display:flex; align-items:center; gap:8px;">
+<span style="font-size:1.3rem;">{icon}</span>
+<span style="color:#e6edf3; font-weight:700; font-size:0.98rem;">{_t(label)}</span>
 </div>
-<div style="color:#8b949e; font-size:0.78rem;">{_t(desc)} &middot; <span style="color:#ff6a3d;">{_t(agent)}</span></div>
-<div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family:monospace;">{_t(masked)}</div>
+<span style="background:rgba({'63,185,80' if present else ('248,81,73' if required else '210,153,34')},0.1); color:{status_color}; border:1px solid rgba({'63,185,80' if present else ('248,81,73' if required else '210,153,34')},0.3); border-radius:20px; padding:2px 8px; font-size:0.72rem; font-weight:700;">{status_text}</span>
+</div>
+<div style="color:#8b949e; font-size:0.78rem; line-height:1.5; margin-bottom:6px;">{desc}</div>
+<div style="display:flex; justify-content:space-between; align-items:center;">
+<span style="color:#ff6a3d; font-size:0.72rem; font-weight:600;">{agent_label}</span>
+<span style="color:{status_color}; font-size:0.74rem; font-family:monospace;">{_t(masked)}</span>
+</div>
 </div>
 """), unsafe_allow_html=True)
 
     if not all_required_present:
         st.markdown(_html("""
-<div style="background:rgba(248,81,73,0.08); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:12px 16px; font-size:0.85rem; color:#f85149; margin-bottom:12px;">
-&#9888;&#65039; Add missing keys to <code>.env</code>: &nbsp;<code>GROQ_API_KEY=gsk_...</code> &nbsp;&middot;&nbsp; <code>TAVILY_API_KEY=tvly-...</code>
+<div style="background:rgba(248,81,73,0.06); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:12px 16px; font-size:0.84rem; color:#f85149; margin-bottom:4px;">
+<strong>&#9888; Missing required API keys.</strong> Add them to your <code>.env</code> file or Streamlit Cloud secrets:
+<br><code style="color:#c9d1d9;">GROQ_API_KEY=gsk_...</code> &nbsp;&middot;&nbsp; <code style="color:#c9d1d9;">TAVILY_API_KEY=tvly-...</code>
 </div>
 """), unsafe_allow_html=True)
 
     st.write("")
+    st.markdown(_html("""
+<div style="background:rgba(255,106,61,0.04); border:1px solid rgba(255,106,61,0.15); border-radius:8px; padding:12px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+<span style="font-size:1.4rem;">&#9201;</span>
+<div>
+<div style="color:#e6edf3; font-weight:600; font-size:0.88rem;">Takes about 2&ndash;3 minutes</div>
+<div style="color:#8b949e; font-size:0.78rem;">Agent 1 runs ~12 live searches (8 competitors + 10-15 viact.ai checks). No action needed &mdash; just watch the progress below.</div>
+</div>
+</div>
+"""), unsafe_allow_html=True)
     run_radar = st.button(
-        "🚀  Run Market Radar",
+        "🚀  Run Market Radar  —  Find What Competitors Are Winning",
         type="primary",
-        use_container_width=False,
+        use_container_width=True,
         key="r3_run",
         disabled=not all_required_present,
     )
@@ -427,11 +558,12 @@ elif step == 1:
     n_scanned = radar.get("total_competitors_scanned", 0)
 
     st.markdown(_html(f"""
-<div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
-<h3 style="margin:0; color:#e6edf3;">🎯 Confirmed Content Gaps</h3>
-<div style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:4px 14px; font-size:0.8rem; color:#ff6a3d; font-weight:600;">
-{_t(n_scanned)} competitors scanned · {_t(scan_ts)}
+<div style="margin-bottom:16px;">
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+<h3 style="margin:0; color:#e6edf3;">&#127919; These Topics Competitors Cover — viAct Does Not</h3>
+<span style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:3px 12px; font-size:0.78rem; color:#ff6a3d; font-weight:600;">{_t(n_scanned)} sites scanned &middot; {_t(scan_ts)}</span>
 </div>
+<p style="margin:0; color:#8b949e; font-size:0.84rem;">Each gap below was <strong style="color:#3fb950;">live-verified</strong> by searching viact.ai &#8212; only topics with zero existing pages are shown. Pick one to build a webpage for.</p>
 </div>
 """), unsafe_allow_html=True)
 
@@ -464,19 +596,20 @@ elif step == 1:
         plural_s = "s" if comp_count != 1 else ""
 
         st.markdown(_html(f"""
-<div class="glass-card">
-<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+<div class="glass-card" style="border-color:rgba(255,106,61,0.2);">
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
 <div>
-<div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px;">Gap {i+1}</div>
-<h4 style="margin:0; color:#e6edf3; font-size:1.1rem; font-weight:700;">{_t(topic['topic'])}</h4>
+<div style="color:#8b949e; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px;">Content Gap {i+1} of {len(topics)}</div>
+<h4 style="margin:0; color:#e6edf3; font-size:1.15rem; font-weight:700;">{_t(topic['topic'])}</h4>
 </div>
 <div style="display:flex; gap:8px; flex-shrink:0; margin-left:16px;">
-<span class="badge-confirmed">&#10003; CONFIRMED GAP</span>
+<span class="badge-confirmed">&#10003; viAct Has No Page</span>
 <span class="{opp_class}">{_t(opp)} Opportunity</span>
 </div>
 </div>
-<div style="background:rgba(255,106,61,0.06); border:1px solid rgba(255,106,61,0.15); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:0.8rem; color:#8b949e; font-family:monospace;">
-{_t(topic.get('viact_search_query', ''))} &#8594; <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span> &middot; confirmed {_t(topic.get('confirmed_at', ''))}
+<div style="background:rgba(63,185,80,0.05); border:1px solid rgba(63,185,80,0.2); border-radius:6px; padding:8px 12px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+<span style="font-size:1rem;">&#128269;</span>
+<span style="font-size:0.8rem; color:#8b949e;">Tavily searched <code>viact.ai</code> for <strong style="color:#c9d1d9;">&ldquo;{_t(topic['topic'])}&rdquo;</strong> &#8594; <strong style="color:#3fb950;">0 solution pages found</strong> &middot; checked {_t(topic.get('confirmed_at', ''))}</span>
 </div>
 <div style="display:grid; grid-template-columns:1fr 2fr; gap:20px;">
 <div>
@@ -505,25 +638,30 @@ elif step == 1:
     selected_idx = topic_options.index(selected_option)
 
     st.write("")
-    st.markdown("""
-<div style="margin-bottom:6px;">
-    <span style="color:#e6edf3; font-weight:600;">Reference material</span>
-    <span style="color:#8b949e; font-size:0.82rem; margin-left:8px;">— optional but recommended</span>
+    st.markdown(_html("""
+<div style="background:rgba(22,25,33,0.6); border:1px solid #2d303a; border-radius:10px; padding:16px 18px; margin-bottom:14px;">
+<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+<span style="font-size:1.2rem;">&#128196;</span>
+<div>
+<div style="color:#e6edf3; font-weight:700; font-size:0.92rem;">Reference Material <span style="color:#8b949e; font-weight:400; font-size:0.82rem;">&#8212; optional but makes content better</span></div>
+<div style="color:#8b949e; font-size:0.78rem; margin-top:2px;">Add real data so Agent 3 can cite it. Without this, content uses public MOM/BCA/OSHAD data and is marked <span style="color:#d6a126;">[Unverified]</span>.</div>
 </div>
-<div style="color:#8b949e; font-size:0.82rem; margin-bottom:8px;">
-    Paste MOM/BCA report excerpts, viAct case study data, or reference URLs.
-    Leave blank to use public regulatory data <span style="color:#d6a126;">(output marked [Unverified])</span>.
 </div>
-""", unsafe_allow_html=True)
+<div style="color:#8b949e; font-size:0.78rem; margin-bottom:8px; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
+<strong style="color:#c9d1d9;">What to paste:</strong> MOM/BCA report stats &middot; viAct project case study data &middot; accident rate figures &middot; regulatory quotes
+</div>
+</div>
+"""), unsafe_allow_html=True)
 
     references = st.text_area(
         "Reference material",
         placeholder=(
             "e.g. MOM WSH Report 2024: falls from height = 35% of fatalities\n"
-            "viAct Marina Bay project: 0 incidents in 18 months\n"
-            "Or leave blank and click proceed"
+            "viAct Marina Bay Sands project: 0 incidents across 18 months\n"
+            "BCA: construction sector accounts for 28% of workplace fatalities\n"
+            "Leave blank to proceed with public regulatory data only"
         ),
-        height=120,
+        height=130,
         key="r3_refs_input",
         label_visibility="collapsed",
     )
@@ -531,16 +669,25 @@ elif step == 1:
     firecrawl_available = bool(os.getenv("FIRECRAWL_API_KEY"))
 
     if not firecrawl_available:
-        st.markdown("""
-<div style="background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.3); border-radius:8px; padding:10px 14px; font-size:0.83rem; color:#d6a126; margin:10px 0;">
-    ⚠️ <code>FIRECRAWL_API_KEY</code> not set — Agent 2 will skip scraping. Agent 3 will use Tavily snippets only.
+        st.markdown(_html("""
+<div style="background:rgba(210,153,34,0.06); border:1px solid rgba(210,153,34,0.3); border-radius:8px; padding:10px 14px; font-size:0.82rem; color:#d6a126; margin:10px 0;">
+<strong>&#9888; Firecrawl key not set</strong> &#8212; Agent 2 will skip competitor page scraping. Agent 3 will use only the short Tavily snippets. Content quality will be lower. Add <code>FIRECRAWL_API_KEY</code> for best results.
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
 
     st.write("")
+    st.markdown(_html("""
+<div style="background:rgba(255,106,61,0.04); border:1px solid rgba(255,106,61,0.15); border-radius:8px; padding:10px 16px; margin-bottom:10px; display:flex; gap:10px; align-items:center;">
+<span style="font-size:1.2rem;">&#9201;</span>
+<div style="color:#8b949e; font-size:0.8rem;">
+<strong style="color:#c9d1d9;">What happens next:</strong> Agent 2 downloads competitor pages (30s) &#8594; Agent 3 writes your full webpage using only that real content (60-90s). Total: ~2 minutes.
+</div>
+</div>
+"""), unsafe_allow_html=True)
     if st.button(
-        f"⚡  Extract Data & Generate Content Suite — Gap {selected_idx + 1}",
+        f"⚡  Build Webpage for Gap {selected_idx + 1}: {topics[selected_idx]['topic'][:50]}{'…' if len(topics[selected_idx]['topic']) > 50 else ''}",
         type="primary",
+        use_container_width=True,
         key="r3_generate",
     ):
         raw_refs = references.strip()
@@ -625,15 +772,22 @@ elif step == 2:
     content = st.session_state["r3_content"]
 
     # ── Header ─────────────────────────────────────────────────────────────────
-    _unverified_banner = "<div style='margin-top:10px; background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>&#9888;&#65039; <strong>[Unverified]</strong> &#8212; No reference material provided. Statistics use public MOM/BCA data. Add a reference source before publishing.</div>" if unverified else ""
+    _unverified_banner = "<div style='margin-top:10px; background:rgba(210,153,34,0.06); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>&#9888; <strong>[Unverified]</strong> &#8212; No reference material was provided. Statistics use public MOM/BCA data only. Add real project data before publishing.</div>" if unverified else ""
     _mb = "10px" if unverified else "0"
     st.markdown(_html(f"""
-<div class="glass-card" style="border-color:rgba(63,185,80,0.25);">
-<div style="display:flex; align-items:center; gap:12px; margin-bottom:{_mb};">
-<span style="font-size:1.6rem;">&#10003;</span>
+<div class="glass-card" style="border-color:rgba(63,185,80,0.3); background:rgba(22,25,33,0.8);">
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:{_mb};">
+<div style="display:flex; align-items:center; gap:12px;">
+<div style="background:rgba(63,185,80,0.15); border:1px solid #238636; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">&#10003;</div>
 <div>
-<div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;">Content Suite Ready</div>
-<h3 style="margin:2px 0 0 0; color:#e6edf3;">{_t(topic_str)}</h3>
+<div style="color:#3fb950; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:3px;">10-Section Webpage Ready to Publish</div>
+<h3 style="margin:0; color:#e6edf3; font-size:1.1rem;">{_t(topic_str)}</h3>
+</div>
+</div>
+<div style="display:flex; gap:8px; flex-wrap:wrap;">
+<span style="background:rgba(88,166,255,0.1); color:#58a6ff; border:1px solid rgba(88,166,255,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#128269; Tavily verified</span>
+<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#128293; Firecrawl scraped</span>
+<span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#129302; Llama 3.3 written</span>
 </div>
 </div>
 {_unverified_banner}
@@ -641,9 +795,9 @@ elif step == 2:
 """), unsafe_allow_html=True)
 
     # ── Push to Sheets ─────────────────────────────────────────────────────────
-    col_push, _ = st.columns([1, 4])
-    with col_push:
-        if st.button("📊  Push to Google Sheets", type="primary", key="r3_push"):
+    _push_col, _info_col = st.columns([1, 3])
+    with _push_col:
+        if st.button("📊  Push to Google Sheets", type="primary", key="r3_push", use_container_width=True):
             try:
                 from push_to_sheets import push_webpage
                 competitor_urls_list = list(competitor_data.keys())
@@ -658,33 +812,44 @@ elif step == 2:
                 st.success(f"✅ Row written to 'Webpage Content' tab — [Open Sheet ↗]({sheet_url})")
             except Exception as e:
                 st.error(f"Sheets error: {e}")
+    with _info_col:
+        st.markdown(_html("""
+<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">
+&#128221; Sends all 10 sections to the <strong style="color:#c9d1d9;">Webpage Content</strong> tab in your Google Sheet. Each topic gets its own row. Open the sheet to copy content into your CMS.
+</div>
+"""), unsafe_allow_html=True)
 
     st.markdown("<hr/>", unsafe_allow_html=True)
 
     # ── Content Preview Tabs ───────────────────────────────────────────────────
+    st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL 10 SECTIONS</p>", unsafe_allow_html=True)
     (
         tab_dl, tab_sources, tab_body, tab_seo,
         tab_faqs, tab_schema, tab_geo,
         tab_visual, tab_links, tab_raw
     ) = st.tabs([
         "📋 Decision Logic",
-        "🔍 Data Sources",
-        "📄 Webpage Body",
-        "🔎 SEO Suite",
+        "🔍 Proof & Sources",
+        "📄 Page Body",
+        "🔎 SEO Tags",
         "❓ FAQs",
-        "🏷️ Schema JSON-LD",
-        "🌐 GEO Package",
-        "📷 Visual Strategy",
+        "🏷️ Schema Markup",
+        "🌐 AI Citations",
+        "📷 Image Briefs",
         "🔗 Internal Links",
         "🔧 Raw JSON",
     ])
 
     with tab_dl:
-        st.markdown("""
-<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-    💡 Copy this paragraph into Gary / Surendra's email. It cites the exact Tavily search, date, and real competitor URLs.
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#128161;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> A ready-to-send paragraph for Gary / Surendra explaining WHY we should build this page.
+It cites the exact Tavily search date, competitor names, and URLs &#8212; not just "we think this is a good idea."
 </div>
-""", unsafe_allow_html=True)
+</div>
+"""), unsafe_allow_html=True)
         st.text_area(
             "Decision Logic",
             content.get("decision_logic", ""),
@@ -693,6 +858,14 @@ elif step == 2:
         )
 
     with tab_sources:
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#128269;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> The proof trail &#8212; exactly what Agent 1 searched, what Agent 2 scraped, and what Agent 3 actually used to write the content. If someone asks "how do you know this is a real gap?" &#8212; show them this tab.
+</div>
+</div>
+"""), unsafe_allow_html=True)
         st.markdown("<h4 style='color:#e6edf3;'>Agent 1 — Tavily Gap Confirmation</h4>", unsafe_allow_html=True)
         st.markdown(_html(f"""
 <div class="glass-card" style="padding:16px;">
@@ -727,12 +900,28 @@ elif step == 2:
             st.markdown(f"<div style='color:#f85149; font-size:0.82rem;'>Agent 3 skipped (ACCESS DENIED): {_t(', '.join(denied[:4]))}</div>", unsafe_allow_html=True)
 
     with tab_body:
+        st.markdown(_html("""
+<div style="background:rgba(63,185,80,0.05); border:1px solid rgba(63,185,80,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#128196;</span>
+<div style="font-size:0.83rem; color:#3fb950; line-height:1.5;">
+<strong>What is this?</strong> The full webpage in Markdown format. Copy the text below and paste it into your CMS (WordPress, Webflow, Notion, etc.). Use "Preview" to see how it will look rendered.
+</div>
+</div>
+"""), unsafe_allow_html=True)
         body = content.get("webpage_body", "")
-        st.text_area("Webpage Body (Markdown — paste into CMS)", body, height=520, key="r3_body_text")
-        with st.expander("👁️ Preview rendered page"):
+        st.text_area("Webpage Body (Markdown — paste into CMS)", body, height=500, key="r3_body_text")
+        with st.expander("👁️ Preview — see how the page renders"):
             st.markdown(body)
 
     with tab_seo:
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#128269;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> Everything your web developer needs for SEO. Paste the meta title and description into your CMS &lt;head&gt;. Use the keywords for on-page copy. Heading map tells developers the H1/H2 structure.
+</div>
+</div>
+"""), unsafe_allow_html=True)
         seo = content.get("seo_suite", {})
         c1, c2 = st.columns(2)
         with c1:
@@ -754,6 +943,14 @@ elif step == 2:
                 st.markdown(f"<div style='margin-left:{indent}px; color:#c9d1d9; font-size:0.84rem; margin-bottom:4px;'>{'&#9472;' * (depth-1)} {_t(h)}</div>", unsafe_allow_html=True)
 
     with tab_faqs:
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#10067;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> Two types: <strong>Schema FAQs</strong> (5 short answers &#8212; become the JSON-LD markup that Google shows as rich results in search) and <strong>Extended FAQs</strong> (2 longer answers for the actual webpage). Copy both to your CMS.
+</div>
+</div>
+"""), unsafe_allow_html=True)
         st.markdown("<div style='color:#e6edf3; font-weight:700; margin-bottom:12px;'>Schema FAQs <span style='color:#8b949e; font-size:0.82rem; font-weight:400;'>— 5 items · 40-60 word answers · used in JSON-LD</span></div>", unsafe_allow_html=True)
         for i, faq in enumerate(content.get("schema_faqs", []), 1):
             with st.expander(f"Q{i}: {faq.get('question', '')}"):
@@ -766,18 +963,24 @@ elif step == 2:
                 st.caption(f"{len(faq.get('answer','').split())} words")
 
     with tab_schema:
-        st.markdown("""
-<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-    Paste into <code>&lt;head&gt;</code> as <code>&lt;script type="application/ld+json"&gt;{ ... }&lt;/script&gt;</code>. Contains the 5 Schema FAQs only.
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#127991;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> Structured data code for Google. Give this to your developer and tell them: "Add this inside a &lt;script type=&rdquo;application/ld+json&rdquo;&gt; tag in the page &lt;head&gt;." It makes Google show your FAQs directly in search results.
 </div>
-""", unsafe_allow_html=True)
+</div>
+"""), unsafe_allow_html=True)
         st.code(content.get("schema_json_ld", ""), language="json")
 
     with tab_geo:
         geo = content.get("geo_package", {})
-        st.markdown("""
-<div style="background:rgba(88,166,255,0.07); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:10px 14px; font-size:0.84rem; color:#58a6ff; margin-bottom:14px;">
-    💡 Written to be cited by Claude, Perplexity, ChatGPT, and Google AI Overviews.
+        st.markdown(_html("""
+<div style="background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#127760;</span>
+<div style="font-size:0.83rem; color:#58a6ff; line-height:1.5;">
+<strong>What is this?</strong> The opening 200 words are written specifically so that AI tools like ChatGPT, Perplexity, and Google AI Overviews will quote viAct when someone searches this topic. Use this exact text as the first paragraph of your webpage.
+</div>
 </div>
 """, unsafe_allow_html=True)
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin-bottom:8px;'>Opening 200 Words — AI-citation optimized:</div>", unsafe_allow_html=True)
