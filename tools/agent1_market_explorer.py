@@ -44,12 +44,12 @@ def _tavily_search(query: str, max_results: int = 5, include_domains: list[str] 
 
 def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list[str]:
     """
-    Single Groq call to extract 10-15 niche topics from competitor snippets.
-    Passes viAct's known solution areas so the LLM avoids already-covered topics.
+    Single Groq call — viAct Market Radar persona.
+    Extracts 10-15 high-intent content gaps from competitor snippets.
+    Returns list of topic strings.
     """
     from groq import Groq
 
-    # Build viAct coverage context from sitemap page slugs
     viact_slugs = []
     for p in viact_pages:
         path = p.rstrip("/").split("/")[-1].replace("-", " ")
@@ -57,28 +57,49 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
             viact_slugs.append(path)
     viact_context = "; ".join(viact_slugs[:30]) if viact_slugs else "PPE detection, fall protection, danger zone, crane safety"
 
+    trends = (
+        "2025-2026 regulatory trends: Singapore MOM WSH Act enforcement tightening; "
+        "UAE OSHAD mandatory digital safety records; ISO 45001 third-party audits; "
+        "permit-to-work digitisation; contractor onboarding compliance; "
+        "AI-assisted incident reporting; toolbox talk digital logging"
+    )
+
     client = Groq(api_key=get_env("GROQ_API_KEY"))
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
-            {"role": "user", "content": (
-                "You are a construction safety content strategist analyzing competitor websites.\n\n"
-                "Your goal: find topics that competitors address but viAct.ai has NOT built a dedicated solution page for.\n\n"
-                f"VIACT ALREADY COVERS THESE (do NOT suggest topics in these areas):\n{viact_context}\n\n"
-                "COMPETITOR SNIPPETS (analyze these for gaps):\n"
-                f"{snippets_block[:5000]}\n\n"
-                "RULES FOR SUGGESTED TOPICS:\n"
-                "- Must be topics a competitor explicitly addresses that viAct does NOT\n"
-                "- Focus on: regulatory compliance processes, permit-to-work systems, "
-                "safety training platforms, incident reporting workflows, contractor management, "
-                "toolbox talk management, RAMS (Risk Assessment Method Statement), "
-                "industry-specific verticals (tunneling, oil & gas, offshore), "
-                "or emerging 2025-2026 safety topics\n"
-                "- Do NOT suggest: PPE detection, fall protection, crane safety, area control, "
-                "behavior-based safety, fatigue detection — viAct already has these\n"
-                "- Each topic should be 4-8 words, specific and searchable\n\n"
-                "Return ONLY valid JSON: {\"topics\": [\"specific topic 1\", \"specific topic 2\", ...]}"
-            )},
+            {
+                "role": "system",
+                "content": (
+                    "You are viAct Market Radar. Analyze competitor snippets and industry trends. "
+                    "Identify high-intent construction safety content gaps for viAct.ai.\n\n"
+                    "Rules:\n"
+                    "- Target compliance buyers in Singapore (MOM/BCA) and UAE (OSHAD/Municipality).\n"
+                    "- Focus on: regulatory compliance workflows, permit-to-work systems, "
+                    "safety training platforms, incident reporting, contractor management, "
+                    "toolbox talk logging, RAMS, industry verticals (tunneling, oil & gas, offshore).\n"
+                    "- Do NOT suggest topics viAct already covers: PPE detection, fall protection, "
+                    "crane safety, area control, behavior-based safety, fatigue detection.\n"
+                    "- Each topic: 4-8 words, specific, searchable, compliance-oriented.\n"
+                    "- Return ONLY valid JSON — no markdown fences, no filler text.\n"
+                    f"VIACT ALREADY COVERS: {viact_context}"
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"### DATA\n"
+                    f"Competitors: {snippets_block[:4500]}\n\n"
+                    f"Trends: {trends}\n\n"
+                    "### TASK\n"
+                    "Identify 10-15 topics competitors address that viAct does NOT have a dedicated solution page for.\n"
+                    "For each topic provide: topic name, one-line evidence (which competitor covers it), "
+                    "and one-line strategy (why it's a compliance gap for Singapore MOM or UAE OSHAD buyers).\n\n"
+                    'Return JSON: {"topics": ["topic 1", "topic 2", ...], '
+                    '"evidence": {"topic 1": "competitor + evidence", ...}, '
+                    '"strategy": {"topic 1": "compliance gap strategy", ...}}'
+                ),
+            },
         ],
         temperature=0.4,
         max_tokens=1024,

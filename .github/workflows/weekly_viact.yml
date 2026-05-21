@@ -1,0 +1,42 @@
+name: Weekly viAct Market Radar
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # Every Monday at 4:00 AM UTC = 9:30 AM IST
+  workflow_dispatch:       # Manual trigger button in GitHub Actions tab
+
+jobs:
+  run-research:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Market Radar Pipeline
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: python weekly_scan_script.py
+
+      - name: Upload fallback output (if Sheets push failed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-gap-output-${{ github.run_number }}
+          path: .tmp/weekly_gap_*.json
+          if-no-files-found: ignore
+          retention-days: 7

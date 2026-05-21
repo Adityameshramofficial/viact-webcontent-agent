@@ -1,4 +1,14 @@
-"""Append generated content rows to a Google Sheet."""
+"""Append generated content rows to a Google Sheet.
+
+Authentication priority:
+  1. Service Account via GCP_SERVICE_ACCOUNT env var (JSON string) — used on Streamlit Cloud + GitHub Actions
+  2. OAuth token.json — used for local development only
+
+To set up service account (one-time):
+  - Google Cloud Console → IAM → Service Accounts → Create → Download JSON key
+  - Share your Google Sheet with the service account's client_email (Editor role)
+  - Add the full JSON as GCP_SERVICE_ACCOUNT in st.secrets / GitHub Secrets
+"""
 import json
 import os
 import sys
@@ -7,7 +17,10 @@ from datetime import date
 sys.path.insert(0, os.path.dirname(__file__))
 from utils import get_env
 
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
 CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
 TOKEN_PATH = os.path.join(BASE_DIR, "token.json")
@@ -15,26 +28,51 @@ TOKEN_PATH = os.path.join(BASE_DIR, "token.json")
 COLUMNS = ["Date", "Platform", "Post Copy", "Hashtags", "Image URL", "Input Source", "Status"]
 
 
+def _service_account_creds():
+    """Build service account credentials from GCP_SERVICE_ACCOUNT env var (JSON string or dict)."""
+    from google.oauth2 import service_account
+
+    raw = os.getenv("GCP_SERVICE_ACCOUNT", "")
+    if not raw:
+        return None
+    try:
+        sa_info = json.loads(raw) if isinstance(raw, str) else raw
+    except json.JSONDecodeError:
+        return None
+    return service_account.Credentials.from_service_account_info(sa_info, scopes=SCOPES)
+
+
 def get_sheets_service():
+    """Return an authenticated Google Sheets API service object.
+
+    Prefers service account (headless). Falls back to OAuth token for local dev.
+    """
+    from googleapiclient.discovery import build
+
+    # ── Service account (Streamlit Cloud / GitHub Actions) ────────────────────
+    creds = _service_account_creds()
+    if creds:
+        return build("sheets", "v4", credentials=creds)
+
+    # ── OAuth fallback (local development only) ───────────────────────────────
     from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
     from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
 
-    creds = None
+    oauth_creds = None
     if os.path.exists(TOKEN_PATH):
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+        oauth_creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+    if not oauth_creds or not oauth_creds.valid:
+        if oauth_creds and oauth_creds.expired and oauth_creds.refresh_token:
+            oauth_creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            oauth_creds = flow.run_local_server(port=0)
         with open(TOKEN_PATH, "w") as f:
-            f.write(creds.to_json())
+            f.write(oauth_creds.to_json())
 
-    return build("sheets", "v4", credentials=creds)
+    return build("sheets", "v4", credentials=oauth_creds)
 
 
 def ensure_header(service, sheet_id: str):
