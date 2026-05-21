@@ -119,108 +119,109 @@ def generate_structured_content(
     evidence_block = json.dumps(gap_evidence) if gap_evidence else "No direct evidence snippets."
     topic_slug = topic.lower().replace(" ", "-").replace("/", "-")
 
-    prompt = f"""TOPIC: {topic}
+    prompt = f"""### CONTEXT
+Topic: {topic}
+Target Regions: Singapore (MOM / BCA standards), UAE (OSHAD / UAE Municipality regulations).
+Reference Material: {references_str}
 
-GAP CONFIRMATION (from Tavily live search on {confirmed_at}):
-  Search query: "{viact_query}" → 0 results (viAct has NO page on this topic)
-  Opportunity score: {opp_score}
-  Competitor count covering this: {comp_count}
+GAP CONFIRMATION (Tavily live search — {confirmed_at}):
+  Query: "{viact_query}" → 0 results on viact.ai
+  Opportunity: {opp_score} | Competitors covering this: {comp_count}
   Why trending: {why_trending}
 
-COMPETITOR EVIDENCE SNIPPETS (from Tavily search):
+COMPETITOR EVIDENCE (Tavily snippets — verified source):
 {evidence_block}
 
-COMPETITOR FULL PAGE CONTENT (scraped by Firecrawl — use ONLY this content):
+SCRAPED COMPETITOR CONTENT (Firecrawl — use ONLY this, do not invent):
 {competitor_block}
 
-REFERENCE MATERIAL:
-{references_str}
-
-VIACT KNOWN PAGES (use ONLY these URLs for internal_links — never invent URLs):
+VIACT KNOWN PAGES (use ONLY these for internal_links — never invent URLs):
 {viact_pages_str}
 
-Generate the complete modular content suite. Return ONLY valid JSON matching exactly this schema:
+---
+### OUTPUT REQUIREMENTS
+Return a single JSON object with all fields below. Quality over word count — keep responses concise and factual.
 
 {{
   "topic": "{topic}",
-  "data_sources_used": ["list of URLs whose content you actually used"],
+  "data_sources_used": ["URLs you actually used from the scraped content above"],
   "access_denied_urls": {json.dumps(denied_urls)},
 
   "hero_section": {{
-    "h1": "Problem-focused headline. Names the risk. No viAct mention. No marketing language.",
-    "subheadline": "Supporting line — regulatory context or human cost in 1 sentence.",
+    "h1": "HERO_SECTION — H1 Headline: problem-focused, names the risk, no viAct mention, no banned marketing words",
+    "subheadline": "Sub-headline: regulatory context or human cost in 1 sentence",
     "cta_text": "Get a Free Safety Audit",
     "cta_url": "/contact"
   }},
 
-  "problem_statement": "50-80 words. Directly answers the query '{topic}' for AI citation. No viAct. GEO-optimized: states the problem, quantifies it, names the affected group, and gives regulatory context immediately.",
+  "problem_statement": "PROBLEM_STATEMENT — 60 words max. AI-citation friendly. Directly answers '{topic}'. States the problem, quantifies it, names the affected group, gives regulatory context. No viAct mention.",
 
   "solution_parameters": [
-    {{"feature": "...", "mechanism": "how it works in plain English", "benefit": "measurable outcome"}},
-    {{"feature": "...", "mechanism": "...", "benefit": "..."}},
-    {{"feature": "...", "mechanism": "...", "benefit": "..."}}
+    {{"feature": "SOLUTION_BLOCK — Feature 1 name", "mechanism": "How it works in plain English", "benefit": "Measurable outcome"}},
+    {{"feature": "Feature 2 name", "mechanism": "How it works", "benefit": "Measurable outcome"}},
+    {{"feature": "Feature 3 name", "mechanism": "How it works", "benefit": "Measurable outcome"}}
   ],
 
   "regulatory_context": {{
-    "singapore": {{"standard": "MOM WSH Act or BCA", "requirement": "specific requirement relevant to {topic}"}},
-    "uae": {{"standard": "OSHAD SF-AR-L01 or UAE Federal Law", "requirement": "specific requirement"}}
+    "singapore": {{"standard": "COMPLIANCE_FOCUS — MOM WSH Act or BCA standard", "requirement": "Specific Singapore requirement for {topic}"}},
+    "uae": {{"standard": "OSHAD SF-AR-L01 or UAE Federal Law No. 8", "requirement": "Specific UAE requirement for {topic}"}}
   }},
 
-  "webpage_body": "Full Markdown webpage body. Structure: # [H1 from hero_section]\\n\\n[problem_statement]\\n\\n## Why This Problem Persists\\n[regulatory + structural causes paragraph]\\n\\n## The Cost of Getting It Wrong\\n[human + financial cost paragraph. Cite named source or 'industry data shows'.]\\n\\n## How viAct Helps\\n[viAct introduced HERE for first time. Plain English mechanism. Reference solution_parameters.]\\n\\n## Proven Results\\n[Evidence: 95% accident reduction, 500+ deployed projects, 70% manpower cost reduction — or use reference material if provided.]\\n\\n**Get a free safety audit →**",
+  "webpage_body": "WEBPAGE_BODY — Full Markdown. Sections: # [H1]\\n\\n[problem_statement]\\n\\n## Why This Problem Persists\\n[regulatory + structural causes. Cite MOM/BCA/OSHAD.]\\n\\n## The Cost of Getting It Wrong\\n[Human + financial cost. Cite named source or 'industry data shows'.]\\n\\n## How viAct Helps\\n[viAct introduced HERE for first time. Plain English. Reference solution_parameters.]\\n\\n## Proven Results\\n[95% accident reduction, 500+ projects, 70% manpower cost reduction — or reference material if provided.]\\n\\n**Get a free safety audit →**",
 
   "schema_faqs": [
-    {{"question": "Regulatory FAQ about {topic}?", "answer": "40-60 word answer citing MOM/BCA/OSHAD by name."}},
-    {{"question": "What are the main causes of [risk related to {topic}]?", "answer": "40-60 word answer."}},
-    {{"question": "How does viAct reduce costs for [topic] management?", "answer": "40-60 word answer citing 70% manpower cost reduction or 95% accident reduction."}},
-    {{"question": "How does viAct detect [specific hazard in {topic}]?", "answer": "40-60 word plain English answer."}},
-    {{"question": "How long does viAct deployment take on an active site?", "answer": "40-60 word realistic and specific answer."}}
+    {{"question": "SCHEMA_FAQS — What does Singapore MOM / BCA require for {topic}?", "answer": "40-60 words. Cite MOM/BCA by name."}},
+    {{"question": "What are the main causes of [key hazard in {topic}]?", "answer": "40-60 words. Factual, named source or 'industry data shows'."}},
+    {{"question": "How does viAct reduce costs for {topic} management?", "answer": "40-60 words. Cite 70% manpower cost reduction or 95% accident reduction."}},
+    {{"question": "How does viAct detect [specific hazard in {topic}]?", "answer": "40-60 words. Plain English — no jargon."}},
+    {{"question": "How long does viAct deployment take on an active construction site?", "answer": "40-60 words. Realistic and specific."}}
   ],
 
   "extended_faqs": [
-    {{"question": "Common objection about AI safety on construction sites?", "answer": "80-120 word answer that acknowledges the concern, then addresses it with evidence."}},
-    {{"question": "How does viAct differ from checklist-based or wearable safety tools?", "answer": "80-120 word answer comparing approaches. Real-time detection vs reactive compliance."}}
+    {{"question": "Common objection: Is AI safety monitoring reliable on a real construction site?", "answer": "80-120 words. Acknowledge the concern, then address with evidence."}},
+    {{"question": "How does viAct differ from checklist-based or wearable safety tools?", "answer": "80-120 words. Real-time detection vs reactive compliance."}}
   ],
 
-  "schema_json_ld": "Complete FAQPage JSON-LD string using only the 5 schema_faqs above. Format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
+  "schema_json_ld": "FAQPage JSON-LD using only the 5 schema_faqs. Format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
 
   "seo_suite": {{
-    "meta_title": "Max 60 chars. Primary keyword + viAct.",
+    "meta_title": "SEO_SUITE — Max 60 chars. Primary keyword + viAct brand name.",
     "meta_description": "Max 155 chars. Primary keyword + value proposition. No truncation.",
-    "primary_keyword": "1 APAC-relevant high-intent keyword",
-    "secondary_keywords": ["variant 1", "variant 2", "variant 3"],
-    "lsi_keywords": ["regulatory term", "role term", "problem term", "location term", "compliance term"],
+    "primary_keyword": "1 APAC-relevant high-intent keyword for {topic}",
+    "secondary_keywords": ["semantic variant 1", "variant 2", "variant 3"],
+    "lsi_keywords": ["regulatory term", "job role term", "problem term", "Singapore/UAE location term", "compliance term"],
     "canonical_url_slug": "/ai-{topic_slug}-construction-safety",
     "heading_map": ["H1: ...", "H2: Why This Problem Persists", "H2: The Cost of Getting It Wrong", "H2: How viAct Helps", "H2: Proven Results", "H2: Frequently Asked Questions"]
   }},
 
   "geo_package": {{
-    "opening_200_words": "Exact first ~200 words of the webpage body. Must directly answer '{topic}' query. AI citation optimized.",
+    "opening_200_words": "Exact first ~200 words of webpage_body. Must directly answer '{topic}' query — no build-up. Optimized for AI citation (Claude, Perplexity, ChatGPT, Google AI Overviews).",
     "citation_framing_tips": [
-      "Tip 1: specific MOM/BCA data point to reference",
-      "Tip 2: how to frame H1 as a standalone definition",
-      "Tip 3: APAC market statistic to strengthen authority"
+      "Tip 1: MOM/BCA/OSHAD data point to anchor the opening",
+      "Tip 2: How to frame H1 as a standalone definition AI systems can extract",
+      "Tip 3: APAC market statistic to strengthen regional authority"
     ]
   }},
 
   "nano_banana_prompts": [
     {{
       "placement": "Hero",
-      "prompt": "Realistic documentary construction site photography. 2-3 workers in full PPE on scaffolding. APAC skyline (Singapore or Dubai) in background. Eye-level camera. NO CGI, NO stock-photo poses.",
-      "alt_text": "Descriptive alt text matching this prompt and topic"
+      "prompt": "IMAGE_PROMPTS — Realistic documentary construction site photography. 2-3 workers in full PPE (hard hats, hi-vis, harnesses) on scaffolding. Singapore or Dubai skyline in background. Eye-level camera. NO CGI, no stock-photo poses, no floating UI.",
+      "alt_text": "Descriptive alt text matching this prompt and the topic {topic}"
     }},
     {{
       "placement": "Mid-page",
-      "prompt": "Realistic construction site control room or site office. Safety manager looking at monitor showing AI detection interface with bounding boxes around hazard. Workers visible through window. Documentary style. NOT CGI.",
-      "alt_text": "Descriptive alt text matching this prompt and topic"
+      "prompt": "Realistic construction site control room. Safety manager looking at monitor showing AI detection interface with bounding boxes around a hazard. Workers visible through window. Documentary style. NOT CGI. Person in focus, screen secondary.",
+      "alt_text": "Descriptive alt text matching this prompt and the topic {topic}"
     }}
   ],
 
   "internal_links": [
-    {{"anchor_text": "...", "url": "MUST be from viAct known pages list above", "context": "Place in [section] paragraph"}},
+    {{"anchor_text": "...", "url": "MUST be from viAct known pages list above — never invent", "context": "Place in [section] paragraph"}},
     {{"anchor_text": "...", "url": "MUST be from viAct known pages list above", "context": "Place in [section] paragraph"}}
   ],
 
-  "decision_logic": "Agent 1 confirmed via Tavily on {confirmed_at}: '{viact_query}' returned 0 results. Competitors covering this topic: {comp_count} ({', '.join(e.get('competitor','') for e in gap_evidence[:3]) if gap_evidence else 'see Tavily evidence'}). Agent 2 scraped {len(competitor_data)} competitor pages via Firecrawl — {len(accessible_urls)} accessible, {len(denied_urls)} returned ACCESS DENIED. Agent 3 built this page from verified content. Primary keyword targets {opp_score} opportunity in APAC."
+  "decision_logic": "Agent 1 confirmed via Tavily on {confirmed_at}: '{viact_query}' returned 0 results. Competitors covering this: {comp_count} ({', '.join(e.get('competitor','') for e in gap_evidence[:3]) if gap_evidence else 'see Tavily evidence'}). Agent 2 scraped {len(competitor_data)} pages via Firecrawl — {len(accessible_urls)} accessible, {len(denied_urls)} ACCESS DENIED. Agent 3 built this page from verified content. Opportunity: {opp_score} in APAC."
 }}"""
 
     response = client.chat.completions.create(
