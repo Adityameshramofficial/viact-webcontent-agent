@@ -191,12 +191,14 @@ def discover_market_gaps(progress_callback=None) -> dict:
         for t in raw_topics:
             progress_callback("topics", t)
 
-    # ── Step 4: Confirm gaps via Tavily include_domains:viact.ai ────────────────
-    # A topic is ONLY "covered" if viAct has a DEDICATED SOLUTION page.
-    # Blog posts, glossary entries, news, and country-EHS pages do NOT count.
-    # This distinguishes a product gap from a content gap.
+    # ── Step 4: Confirm gaps via sitemap check + Tavily ──────────────────────────
+    # TWO-LAYER CHECK (in order):
+    #   Layer 1 — Sitemap keyword match (fast, no API, uses pages we already fetched)
+    #             "incident" in "incident-management-software" → COVERED, skip
+    #   Layer 2 — Tavily include_domains:viact.ai (catches pages not in sitemap)
+    # A topic is only a GAP if BOTH layers find no dedicated solution page.
 
-    # URLs that are NOT dedicated solution pages — blog, generic, root pages
+    # Non-solution URL patterns — skip these even if they contain topic keywords
     BLOG_SKIP_PATTERNS = [
         "/post/", "/blog", "/glossary", "/news/", "/case-stud",
         "/tags/", "/ehs/ehs-management-software-", "/ehs/", "/pages-sitemap",
@@ -205,30 +207,54 @@ def discover_market_gaps(progress_callback=None) -> dict:
         "/legal", "/privacy", "/terms",
     ]
 
-    # Root/generic pages that can match anything — never count as topic-specific
     GENERIC_URL_SUFFIXES = ("viact.ai/", "viact.ai/#", "viact.ai/?", "viact.ai")
 
+    # Build sitemap solution-page index once (filter out non-solution URLs)
+    sitemap_solution_pages = [
+        p.lower().rstrip("/") for p in viact_pages
+        if not any(pat in p.lower() for pat in BLOG_SKIP_PATTERNS)
+        and not any(p.lower().rstrip("/").endswith(s.rstrip("/")) for s in GENERIC_URL_SUFFIXES)
+    ]
+
+    # Words that appear across many viact.ai pages — too generic to pinpoint a specific topic
+    GENERIC_KEYWORDS = {
+        "safety", "system", "systems", "software", "management",
+        "construction", "monitoring", "solution", "solutions",
+        "worker", "workers", "digital", "smart", "tools",
+        "platform", "artificial", "intelligence", "based",
+        "detection", "assessment", "assessments", "automation",
+        "reporting", "work", "risk",
+    }
+
+    def _covered_in_sitemap(topic_name: str) -> tuple[bool, str]:
+        """Layer 1: Match topic-specific keywords against viact.ai sitemap URLs.
+        Excludes generic words so 'Hard Stop Detection' doesn't match 'worker-fatigue-detection'.
+        Uses >= 4 char threshold (catches 'lone', 'fire', 'crane') and de-hyphenates URLs
+        so 'heatmaps' matches 'workforce-heat-maps'.
+        """
+        keywords = [
+            w.lower() for w in topic_name.split()
+            if len(w) >= 4 and w.lower() not in GENERIC_KEYWORDS
+        ]
+        if not keywords:
+            return False, ""
+        for page_url in sitemap_solution_pages:
+            url_nohyphen = page_url.replace("-", "").replace("_", "")
+            if any(kw in page_url or kw in url_nohyphen for kw in keywords):
+                return True, page_url
+        return False, ""
+
     def _has_dedicated_solution_page(results: list[dict], topic_name: str) -> tuple[bool, list[str]]:
-        """
-        Return (True, [solution_urls]) ONLY if viAct has a SPECIFIC page for this topic.
-        A page counts only if:
-          1. URL does not match any BLOG_SKIP_PATTERNS
-          2. URL is not a generic root/homepage
-          3. At least one of the topic's keywords appears in the URL slug OR page title
-        """
+        """Layer 2: Check Tavily results — only count pages that pass skip + keyword filters."""
         topic_keywords = [w.lower() for w in topic_name.split() if len(w) > 4]
         solution_urls = []
         for r in results:
             url = r.get("url", "").lower().rstrip("/")
             title = r.get("title", "").lower()
-
-            # Skip generic root pages
             if any(url.endswith(s.rstrip("/")) for s in GENERIC_URL_SUFFIXES):
                 continue
-            # Skip blog/generic section pages
             if any(p in url for p in BLOG_SKIP_PATTERNS):
                 continue
-            # Only count if a topic keyword appears in the URL slug or page title
             if topic_keywords and not any(kw in url or kw in title for kw in topic_keywords):
                 continue
             solution_urls.append(r.get("url", ""))
@@ -240,6 +266,16 @@ def discover_market_gaps(progress_callback=None) -> dict:
         if len(confirmed_gaps) >= 6:
             break
         emit(f"  Checking viact.ai for: '{topic_name}'")
+
+        # Layer 1 — sitemap check (no API call needed)
+        sitemap_covered, sitemap_url = _covered_in_sitemap(topic_name)
+        if sitemap_covered:
+            emit(f"  ↳ Sitemap match: {sitemap_url[:70]}")
+            if progress_callback:
+                progress_callback("gaps", f"SKIP|{topic_name}|{sitemap_url[:60]}")
+            continue
+
+        # Layer 2 — Tavily live search
         try:
             viact_results = _tavily_search(
                 query=topic_name,
