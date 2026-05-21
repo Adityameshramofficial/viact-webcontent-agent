@@ -982,7 +982,7 @@ It cites the exact Tavily search date, competitor names, and URLs &#8212; not ju
 <strong>What is this?</strong> The opening 200 words are written specifically so that AI tools like ChatGPT, Perplexity, and Google AI Overviews will quote viAct when someone searches this topic. Use this exact text as the first paragraph of your webpage.
 </div>
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin-bottom:8px;'>Opening 200 Words — AI-citation optimized:</div>", unsafe_allow_html=True)
         st.text_area("Opening 200 words", geo.get("opening_200_words", ""), height=180, key="r3_geo")
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin:14px 0 8px;'>Citation Framing Tips:</div>", unsafe_allow_html=True)
