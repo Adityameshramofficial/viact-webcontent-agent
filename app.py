@@ -625,36 +625,26 @@ elif step == 1:
 """), unsafe_allow_html=True)
 
     # ── HITL Gate ──────────────────────────────────────────────────────────────
-    st.markdown("<hr/>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#e6edf3; margin-bottom:16px;'>Which gap should we build a page for?</h3>", unsafe_allow_html=True)
+    st.divider()
+    st.subheader("Which gap should we build a page for?")
 
     topic_options = [f"Gap {i+1}: {t['topic']}" for i, t in enumerate(topics)]
-    selected_option = st.radio(
-        "Select a gap:",
+    selected_option = st.selectbox(
+        "Select a gap to build a webpage for:",
         topic_options,
         key="r3_topic_choice",
-        label_visibility="collapsed",
     )
     selected_idx = topic_options.index(selected_option)
 
     st.write("")
-    st.markdown(_html("""
-<div style="background:rgba(22,25,33,0.6); border:1px solid #2d303a; border-radius:10px; padding:16px 18px; margin-bottom:14px;">
-<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-<span style="font-size:1.2rem;">&#128196;</span>
-<div>
-<div style="color:#e6edf3; font-weight:700; font-size:0.92rem;">Reference Material <span style="color:#8b949e; font-weight:400; font-size:0.82rem;">&#8212; optional but makes content better</span></div>
-<div style="color:#8b949e; font-size:0.78rem; margin-top:2px;">Add real data so Agent 3 can cite it. Without this, content uses public MOM/BCA/OSHAD data and is marked <span style="color:#d6a126;">[Unverified]</span>.</div>
-</div>
-</div>
-<div style="color:#8b949e; font-size:0.78rem; margin-bottom:8px; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px;">
-<strong style="color:#c9d1d9;">What to paste:</strong> MOM/BCA report stats &middot; viAct project case study data &middot; accident rate figures &middot; regulatory quotes
-</div>
-</div>
-"""), unsafe_allow_html=True)
+    st.markdown("**📄 Reference Material** — optional but makes content better")
+    st.caption(
+        "Add real data so Agent 3 can cite it. Without this, content uses public MOM/BCA/OSHAD data. "
+        "What to paste: MOM/BCA report stats · viAct project case study data · accident rate figures · regulatory quotes"
+    )
 
     references = st.text_area(
-        "Reference material",
+        "Reference material (optional)",
         placeholder=(
             "e.g. MOM WSH Report 2024: falls from height = 35% of fatalities\n"
             "viAct Marina Bay Sands project: 0 incidents across 18 months\n"
@@ -663,7 +653,6 @@ elif step == 1:
         ),
         height=130,
         key="r3_refs_input",
-        label_visibility="collapsed",
     )
 
     firecrawl_available = bool(os.getenv("FIRECRAWL_API_KEY"))
