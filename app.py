@@ -2,8 +2,20 @@
 import os
 import sys
 import json
+import html as _html_lib
 
 import streamlit as st
+
+
+def _t(text: str) -> str:
+    """Sanitize dynamic text for HTML embedding — escapes HTML chars, strips newlines."""
+    return _html_lib.escape(str(text)).replace('\n', ' ').replace('\r', '')
+
+
+def _html(s: str) -> str:
+    """Collapse a multi-line HTML string to a single line so CommonMark never treats
+    indented lines as code blocks and blank lines never break HTML block mode."""
+    return " ".join(part.strip() for part in s.splitlines() if part.strip())
 
 # ── Load secrets (localhost: .env  |  Streamlit Cloud: st.secrets) ───────────
 try:
@@ -255,16 +267,16 @@ if step == 0:
         status_color = "#3fb950" if present else "#f85149"
         status_icon = "●" if present else "○"
         masked = f"{val[:8]}…" if present else "Not set"
-        col.markdown(f"""
+        col.markdown(_html(f"""
 <div class="glass-card" style="padding:16px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{label}</span>
-        <span style="color:{status_color}; font-size:1.2rem;">{status_icon}</span>
-    </div>
-    <div style="color:#8b949e; font-size:0.78rem;">{desc} · <span style="color:#ff6a3d;">{agent}</span></div>
-    <div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family: monospace;">{masked}</div>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+<span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{_t(label)}</span>
+<span style="color:{status_color}; font-size:1.2rem;">{_t(status_icon)}</span>
 </div>
-""", unsafe_allow_html=True)
+<div style="color:#8b949e; font-size:0.78rem;">{_t(desc)} &middot; <span style="color:#ff6a3d;">{_t(agent)}</span></div>
+<div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family:monospace;">{_t(masked)}</div>
+</div>
+"""), unsafe_allow_html=True)
 
     if not all_required_present:
         st.markdown("""
@@ -317,14 +329,14 @@ elif step == 1:
     scan_ts = radar.get("scan_timestamp", "")
     n_scanned = radar.get("total_competitors_scanned", 0)
 
-    st.markdown(f"""
+    st.markdown(_html(f"""
 <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
-    <h3 style="margin:0; color:#e6edf3;">🎯 Confirmed Content Gaps</h3>
-    <div style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:4px 14px; font-size:0.8rem; color:#ff6a3d; font-weight:600;">
-        {n_scanned} competitors scanned · {scan_ts}
-    </div>
+<h3 style="margin:0; color:#e6edf3;">🎯 Confirmed Content Gaps</h3>
+<div style="background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.3); border-radius:20px; padding:4px 14px; font-size:0.8rem; color:#ff6a3d; font-weight:600;">
+{_t(n_scanned)} competitors scanned · {_t(scan_ts)}
 </div>
-""", unsafe_allow_html=True)
+</div>
+"""), unsafe_allow_html=True)
 
     # ── Render topic cards ─────────────────────────────────────────────────────
     for i, topic in enumerate(topics):
@@ -334,43 +346,53 @@ elif step == 1:
         evidence = topic.get("competitor_evidence", [])
 
         evidence_rows = "".join(
-            f"<tr style='border-bottom:1px solid #2d303a;'>"
-            f"<td style='padding:6px 10px; color:#ff6a3d; font-weight:600; font-size:0.8rem; white-space:nowrap;'>{e.get('competitor','')}</td>"
-            f"<td style='padding:6px 10px; font-size:0.78rem;'><a href='{e.get('url','')}' target='_blank' style='color:#58a6ff; text-decoration:none;'>{e.get('url','')[:55]}…</a></td>"
-            f"<td style='padding:6px 10px; color:#8b949e; font-size:0.76rem;'>{e.get('snippet','')[:90]}…</td>"
-            f"</tr>"
+            "<tr style='border-bottom:1px solid #2d303a;'>"
+            f"<td style='padding:6px 10px; color:#ff6a3d; font-weight:600; font-size:0.8rem; white-space:nowrap;'>{_t(e.get('competitor',''))}</td>"
+            f"<td style='padding:6px 10px; font-size:0.78rem;'><a href='{_t(e.get('url',''))}' target='_blank' style='color:#58a6ff; text-decoration:none;'>{_t(e.get('url','')[:55])}…</a></td>"
+            f"<td style='padding:6px 10px; color:#8b949e; font-size:0.76rem;'>{_t(e.get('snippet','')[:90])}…</td>"
+            "</tr>"
             for e in evidence[:4]
         )
+        evidence_table = (
+            "<table style='width:100%; border-collapse:collapse;'>"
+            "<thead><tr style='background:rgba(255,255,255,0.03);'>"
+            "<th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Competitor</th>"
+            "<th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>URL</th>"
+            "<th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Snippet</th>"
+            "</tr></thead>"
+            f"<tbody>{evidence_rows}</tbody></table>"
+            if evidence else
+            "<div style='color:#484f58; font-size:0.82rem;'>Gap confirmed via Tavily search — no direct snippet evidence collected.</div>"
+        )
+        plural_s = "s" if comp_count != 1 else ""
 
-        st.markdown(f"""
+        st.markdown(_html(f"""
 <div class="glass-card">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-        <div>
-            <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px;">Gap {i+1}</div>
-            <h4 style="margin:0; color:#e6edf3; font-size:1.1rem; font-weight:700;">{topic['topic']}</h4>
-        </div>
-        <div style="display:flex; gap:8px; flex-shrink:0; margin-left:16px;">
-            <span class="badge-confirmed">✅ CONFIRMED GAP</span>
-            <span class="{opp_class}">{opp} Opportunity</span>
-        </div>
-    </div>
-
-    <div style="background:rgba(255,106,61,0.06); border:1px solid rgba(255,106,61,0.15); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:0.8rem; color:#8b949e; font-family:monospace;">
-        {topic.get('viact_search_query', '')} → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span> · confirmed {topic.get('confirmed_at', '')}
-    </div>
-
-    <div style="display:grid; grid-template-columns:1fr 2fr; gap:20px;">
-        <div>
-            <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Why Trending</div>
-            <div style="color:#c9d1d9; font-size:0.87rem;">{topic.get('why_trending', '')}</div>
-        </div>
-        <div>
-            <div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Competitor Evidence ({comp_count} competitor{'s' if comp_count != 1 else ''})</div>
-            {"<table style='width:100%; border-collapse:collapse;'><thead><tr style='background:rgba(255,255,255,0.03);'><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Competitor</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>URL</th><th style='padding:6px 10px; color:#8b949e; font-size:0.78rem; text-align:left;'>Snippet</th></tr></thead><tbody>" + evidence_rows + "</tbody></table>" if evidence else "<div style='color:#484f58; font-size:0.82rem;'>Gap confirmed via Tavily search — no direct snippet evidence collected.</div>"}
-        </div>
-    </div>
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+<div>
+<div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:4px;">Gap {i+1}</div>
+<h4 style="margin:0; color:#e6edf3; font-size:1.1rem; font-weight:700;">{_t(topic['topic'])}</h4>
 </div>
-""", unsafe_allow_html=True)
+<div style="display:flex; gap:8px; flex-shrink:0; margin-left:16px;">
+<span class="badge-confirmed">&#10003; CONFIRMED GAP</span>
+<span class="{opp_class}">{_t(opp)} Opportunity</span>
+</div>
+</div>
+<div style="background:rgba(255,106,61,0.06); border:1px solid rgba(255,106,61,0.15); border-radius:6px; padding:8px 12px; margin-bottom:14px; font-size:0.8rem; color:#8b949e; font-family:monospace;">
+{_t(topic.get('viact_search_query', ''))} &#8594; <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span> &middot; confirmed {_t(topic.get('confirmed_at', ''))}
+</div>
+<div style="display:grid; grid-template-columns:1fr 2fr; gap:20px;">
+<div>
+<div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Why Trending</div>
+<div style="color:#c9d1d9; font-size:0.87rem;">{_t(topic.get('why_trending', ''))}</div>
+</div>
+<div>
+<div style="color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Competitor Evidence ({_t(comp_count)} competitor{plural_s})</div>
+{evidence_table}
+</div>
+</div>
+</div>
+"""), unsafe_allow_html=True)
 
     # ── HITL Gate ──────────────────────────────────────────────────────────────
     st.markdown("<hr/>", unsafe_allow_html=True)
@@ -506,18 +528,20 @@ elif step == 2:
     content = st.session_state["r3_content"]
 
     # ── Header ─────────────────────────────────────────────────────────────────
-    st.markdown(f"""
+    _unverified_banner = "<div style='margin-top:10px; background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>&#9888;&#65039; <strong>[Unverified]</strong> &#8212; No reference material provided. Statistics use public MOM/BCA data. Add a reference source before publishing.</div>" if unverified else ""
+    _mb = "10px" if unverified else "0"
+    st.markdown(_html(f"""
 <div class="glass-card" style="border-color:rgba(63,185,80,0.25);">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:{'10px' if unverified else '0'};">
-        <span style="font-size:1.6rem;">✅</span>
-        <div>
-            <div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;">Content Suite Ready</div>
-            <h3 style="margin:2px 0 0 0; color:#e6edf3;">{topic_str}</h3>
-        </div>
-    </div>
-    {"<div style='margin-top:10px; background:rgba(210,153,34,0.08); border:1px solid rgba(210,153,34,0.25); border-radius:6px; padding:8px 12px; font-size:0.82rem; color:#d6a126;'>⚠️ <strong>[Unverified]</strong> — No reference material provided. Statistics use public MOM/BCA data. Add a reference source before publishing.</div>" if unverified else ""}
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:{_mb};">
+<span style="font-size:1.6rem;">&#10003;</span>
+<div>
+<div style="color:#8b949e; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1.2px;">Content Suite Ready</div>
+<h3 style="margin:2px 0 0 0; color:#e6edf3;">{_t(topic_str)}</h3>
 </div>
-""", unsafe_allow_html=True)
+</div>
+{_unverified_banner}
+</div>
+"""), unsafe_allow_html=True)
 
     # ── Push to Sheets ─────────────────────────────────────────────────────────
     col_push, _ = st.columns([1, 4])
@@ -573,13 +597,13 @@ elif step == 2:
 
     with tab_sources:
         st.markdown("<h4 style='color:#e6edf3;'>Agent 1 — Tavily Gap Confirmation</h4>", unsafe_allow_html=True)
-        st.markdown(f"""
+        st.markdown(_html(f"""
 <div class="glass-card" style="padding:16px;">
-    <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Search:</span> <code>{selected_topic.get('viact_search_query', '')}</code> → <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span></div>
-    <div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Confirmed:</span> <span style="color:#c9d1d9;">{selected_topic.get('confirmed_at', '')}</span></div>
-    <div><span style="color:#8b949e; font-size:0.8rem;">Opportunity:</span> <span style="color:#ff6a3d; font-weight:700;">{selected_topic.get('opportunity_score', '?')}</span> &nbsp;·&nbsp; <span style="color:#8b949e; font-size:0.8rem;">{selected_topic.get('competitor_count', 0)} competitors covering this topic</span></div>
+<div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Search:</span> <code>{_t(selected_topic.get('viact_search_query', ''))}</code> &#8594; <span style="color:#3fb950; font-weight:700;">0 dedicated solution pages</span></div>
+<div style="margin-bottom:8px;"><span style="color:#8b949e; font-size:0.8rem;">Confirmed:</span> <span style="color:#c9d1d9;">{_t(selected_topic.get('confirmed_at', ''))}</span></div>
+<div><span style="color:#8b949e; font-size:0.8rem;">Opportunity:</span> <span style="color:#ff6a3d; font-weight:700;">{_t(selected_topic.get('opportunity_score', '?'))}</span> &nbsp;&middot;&nbsp; <span style="color:#8b949e; font-size:0.8rem;">{_t(selected_topic.get('competitor_count', 0))} competitors covering this topic</span></div>
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
 
         evidence = selected_topic.get("competitor_evidence", [])
         if evidence:
@@ -592,18 +616,18 @@ elif step == 2:
         if competitor_data:
             for url, result in competitor_data.items():
                 if result.get("success"):
-                    st.markdown(f"<div style='color:#3fb950; font-size:0.84rem; margin-bottom:4px;'>✅ <code>{url[:65]}</code> — {result.get('word_count', 0)} words scraped</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='color:#3fb950; font-size:0.84rem; margin-bottom:4px;'>&#10003; <code>{_t(url[:65])}</code> &mdash; {_t(result.get('word_count', 0))} words scraped</div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='color:#f85149; font-size:0.84rem; margin-bottom:4px;'>🚫 <code>{url[:65]}</code> — ACCESS DENIED ({result.get('error', 'unknown')})</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='color:#f85149; font-size:0.84rem; margin-bottom:4px;'>&#x1F6AB; <code>{_t(url[:65])}</code> &mdash; ACCESS DENIED ({_t(result.get('error', 'unknown'))})</div>", unsafe_allow_html=True)
         else:
             st.markdown("<div style='color:#484f58; font-size:0.84rem;'>No competitor URLs were scraped.</div>", unsafe_allow_html=True)
 
         used = content.get("data_sources_used", [])
         denied = content.get("access_denied_urls", [])
         if used:
-            st.markdown(f"<div style='margin-top:12px; color:#8b949e; font-size:0.82rem;'>Agent 3 used: {', '.join(used[:4])}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-top:12px; color:#8b949e; font-size:0.82rem;'>Agent 3 used: {_t(', '.join(used[:4]))}</div>", unsafe_allow_html=True)
         if denied:
-            st.markdown(f"<div style='color:#f85149; font-size:0.82rem;'>Agent 3 skipped (ACCESS DENIED): {', '.join(denied[:4])}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color:#f85149; font-size:0.82rem;'>Agent 3 skipped (ACCESS DENIED): {_t(', '.join(denied[:4]))}</div>", unsafe_allow_html=True)
 
     with tab_body:
         body = content.get("webpage_body", "")
@@ -623,14 +647,14 @@ elif step == 2:
             st.text_input("Canonical Slug", seo.get("canonical_url_slug", ""), key="r3_slug")
         with c2:
             st.markdown("<div style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;'>Keywords</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='margin-bottom:8px;'><span style='color:#8b949e; font-size:0.82rem;'>Primary: </span><code>{seo.get('primary_keyword', '')}</code></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='margin-bottom:8px; color:#8b949e; font-size:0.82rem;'>Secondary: " + " &nbsp;·&nbsp; ".join(f"<code>{k}</code>" for k in seo.get("secondary_keywords", [])) + "</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='margin-bottom:12px; color:#8b949e; font-size:0.82rem;'>LSI: " + " &nbsp;·&nbsp; ".join(f"<code>{k}</code>" for k in seo.get("lsi_keywords", [])) + "</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='margin-bottom:8px;'><span style='color:#8b949e; font-size:0.82rem;'>Primary: </span><code>{_t(seo.get('primary_keyword', ''))}</code></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom:8px; color:#8b949e; font-size:0.82rem;'>Secondary: " + " &nbsp;&middot;&nbsp; ".join(f"<code>{_t(k)}</code>" for k in seo.get("secondary_keywords", [])) + "</div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom:12px; color:#8b949e; font-size:0.82rem;'>LSI: " + " &nbsp;&middot;&nbsp; ".join(f"<code>{_t(k)}</code>" for k in seo.get("lsi_keywords", [])) + "</div>", unsafe_allow_html=True)
             st.markdown("<div style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;'>Heading Map</div>", unsafe_allow_html=True)
             for h in seo.get("heading_map", []):
                 depth = 1 if h.startswith("H1") else (2 if h.startswith("H2") else 3)
                 indent = (depth - 1) * 14
-                st.markdown(f"<div style='margin-left:{indent}px; color:#c9d1d9; font-size:0.84rem; margin-bottom:4px;'>{'─' * (depth-1)} {h}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-left:{indent}px; color:#c9d1d9; font-size:0.84rem; margin-bottom:4px;'>{'&#9472;' * (depth-1)} {_t(h)}</div>", unsafe_allow_html=True)
 
     with tab_faqs:
         st.markdown("<div style='color:#e6edf3; font-weight:700; margin-bottom:12px;'>Schema FAQs <span style='color:#8b949e; font-size:0.82rem; font-weight:400;'>— 5 items · 40-60 word answers · used in JSON-LD</span></div>", unsafe_allow_html=True)
@@ -663,7 +687,7 @@ elif step == 2:
         st.text_area("Opening 200 words", geo.get("opening_200_words", ""), height=180, key="r3_geo")
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin:14px 0 8px;'>Citation Framing Tips:</div>", unsafe_allow_html=True)
         for tip in geo.get("citation_framing_tips", []):
-            st.markdown(f"<div style='background:rgba(22,25,33,0.6); border:1px solid #2d303a; border-radius:6px; padding:8px 12px; margin-bottom:6px; color:#c9d1d9; font-size:0.85rem;'>→ {tip}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background:rgba(22,25,33,0.6); border:1px solid #2d303a; border-radius:6px; padding:8px 12px; margin-bottom:6px; color:#c9d1d9; font-size:0.85rem;'>&#8594; {_t(tip)}</div>", unsafe_allow_html=True)
 
     with tab_visual:
         prompts = content.get("nano_banana_prompts", content.get("visual_strategy", []))
@@ -671,7 +695,7 @@ elif step == 2:
         for i, v in enumerate(prompts, 1):
             with st.expander(f"Image {i} — {v.get('placement', '')}"):
                 st.text_area(f"Prompt {i}", v.get("prompt", ""), height=140, key=f"r3_vis_{i}")
-                st.markdown(f"<div style='color:#8b949e; font-size:0.82rem; margin-top:6px;'><strong style='color:#e6edf3;'>Alt text:</strong> {v.get('alt_text', '')}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='color:#8b949e; font-size:0.82rem; margin-top:6px;'><strong style='color:#e6edf3;'>Alt text:</strong> {_t(v.get('alt_text', ''))}</div>", unsafe_allow_html=True)
 
     with tab_links:
         st.markdown("<div style='color:#e6edf3; font-weight:600; margin-bottom:10px;'>Internal Links — verified viAct.ai URLs only:</div>", unsafe_allow_html=True)
@@ -679,9 +703,9 @@ elif step == 2:
             url_val = link.get("url", "")
             st.markdown(
                 f"<div style='background:rgba(22,25,33,0.6); border:1px solid #2d303a; border-radius:6px; padding:10px 14px; margin-bottom:8px;'>"
-                f"<div style='color:#ff6a3d; font-weight:600; font-size:0.88rem;'>{link.get('anchor_text', '')}</div>"
-                f"<div style='margin:4px 0;'><a href='{url_val}' target='_blank' style='color:#58a6ff; font-size:0.82rem;'>{url_val}</a></div>"
-                f"<div style='color:#8b949e; font-size:0.8rem;'>{link.get('context', '')}</div>"
+                f"<div style='color:#ff6a3d; font-weight:600; font-size:0.88rem;'>{_t(link.get('anchor_text', ''))}</div>"
+                f"<div style='margin:4px 0;'><a href='{_t(url_val)}' target='_blank' style='color:#58a6ff; font-size:0.82rem;'>{_t(url_val)}</a></div>"
+                f"<div style='color:#8b949e; font-size:0.8rem;'>{_t(link.get('context', ''))}</div>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
