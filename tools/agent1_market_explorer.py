@@ -243,6 +243,17 @@ def discover_market_gaps(progress_callback=None) -> dict:
     confirmed_gaps.sort(key=lambda x: x["competitor_count"], reverse=True)
     top_3 = confirmed_gaps[:3]
 
+    # ── Step 6: Build full competitor landscape (all competitors + their pages) ─
+    competitor_landscape: dict = {}
+    for s in competitor_snippets:
+        comp = s["competitor"]
+        if comp not in competitor_landscape:
+            competitor_landscape[comp] = {"urls": [], "titles": [], "snippets": []}
+        if s["url"] not in competitor_landscape[comp]["urls"]:
+            competitor_landscape[comp]["urls"].append(s["url"])
+            competitor_landscape[comp]["titles"].append(s["title"])
+            competitor_landscape[comp]["snippets"].append(s["snippet"][:200])
+
     emit(f"Done. {len(top_3)} confirmed gap(s) returned.")
 
     return {
@@ -250,6 +261,7 @@ def discover_market_gaps(progress_callback=None) -> dict:
         "viact_known_pages": viact_pages,
         "total_competitors_scanned": scanned_count,
         "scan_timestamp": timestamp,
+        "competitor_landscape": competitor_landscape,
     }
 
 

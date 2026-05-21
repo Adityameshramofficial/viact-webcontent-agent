@@ -120,6 +120,7 @@ def generate_structured_content(
     comp_count = radar_topic_entry.get("competitor_count", len(gap_evidence))
 
     evidence_block = json.dumps(gap_evidence, indent=2) if gap_evidence else "No direct evidence snippets."
+    topic_slug = topic.lower().replace(" ", "-").replace("/", "-")
 
     prompt = f"""TOPIC: {topic}
 
