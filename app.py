@@ -5,19 +5,24 @@ import json
 
 import streamlit as st
 
-# ── Load secrets ──────────────────────────────────────────────────────────────
+# ── Load secrets (localhost: .env  |  Streamlit Cloud: st.secrets) ───────────
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except Exception:
     pass
 
-try:
-    for _k, _v in st.secrets.items():
-        if isinstance(_v, str):
-            os.environ[_k] = _v
-except Exception:
-    pass
+# Explicitly pull every expected key from st.secrets so cloud works reliably
+_SECRET_KEYS = [
+    "GROQ_API_KEY", "TAVILY_API_KEY", "FIRECRAWL_API_KEY",
+    "SHEET_ID", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+]
+for _k in _SECRET_KEYS:
+    try:
+        if not os.environ.get(_k):
+            os.environ[_k] = st.secrets[_k]
+    except Exception:
+        pass
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
