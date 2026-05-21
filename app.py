@@ -28,6 +28,7 @@ except Exception:
 _SECRET_KEYS = [
     "GROQ_API_KEY", "TAVILY_API_KEY", "FIRECRAWL_API_KEY",
     "SHEET_ID", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
+    "GCP_SERVICE_ACCOUNT",
 ]
 for _k in _SECRET_KEYS:
     try:
