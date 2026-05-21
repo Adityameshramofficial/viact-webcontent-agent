@@ -135,8 +135,12 @@ def discover_market_gaps(progress_callback=None) -> dict:
                     "snippet": r.get("content", "")[:400],
                 })
             scanned_count += 1
+            if progress_callback:
+                progress_callback("competitors", f"{name}|{len(results)}")
         except Exception as exc:
             emit(f"  ⚠ {name} search failed: {exc}")
+            if progress_callback:
+                progress_callback("competitors", f"{name}|0")
 
     if not competitor_snippets:
         emit("No competitor snippets found — all searches failed.")
@@ -162,6 +166,9 @@ def discover_market_gaps(progress_callback=None) -> dict:
         raw_topics = []
 
     emit(f"Extracted {len(raw_topics)} candidate topics. Checking viAct coverage...")
+    if progress_callback:
+        for t in raw_topics:
+            progress_callback("topics", t)
 
     # ── Step 4: Confirm gaps via Tavily include_domains:viact.ai ────────────────
     # A topic is ONLY "covered" if viAct has a DEDICATED SOLUTION page.
@@ -236,8 +243,12 @@ def discover_market_gaps(progress_callback=None) -> dict:
                 "competitor_count": competitor_count,
             })
             emit(f"  ✅ CONFIRMED GAP: '{topic_name}' ({opportunity_score}, {competitor_count} competitors){blog_only_note}")
+            if progress_callback:
+                progress_callback("gaps", f"CONFIRMED|{topic_name}|{opportunity_score}")
         else:
             emit(f"  ↳ viAct has solution page: {solution_pages[0][:60]}")
+            if progress_callback:
+                progress_callback("gaps", f"SKIP|{topic_name}|{solution_pages[0][:60]}")
 
     # ── Step 5: Score and return top 3 ──────────────────────────────────────────
     confirmed_gaps.sort(key=lambda x: x["competitor_count"], reverse=True)

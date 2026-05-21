@@ -226,25 +226,48 @@ st.write("")
 # STEP 0 — API Key Check + Run Market Radar
 # =============================================================================
 if step == 0:
-    st.markdown("""
+    # ── Pipeline explanation ───────────────────────────────────────────────────
+    st.markdown(_html("""
 <div class="glass-card">
-    <h3 style="margin:0 0 0.6rem 0; color:#e6edf3;">📡 How the 3-Agent Pipeline Works</h3>
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;">
-        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 1 — Tavily</div>
-            <div style="color:#c9d1d9; font-size:0.88rem;">Searches competitors, confirms gaps via <code>site:viact.ai</code> — only 0-result topics are real gaps.</div>
-        </div>
-        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 2 — Firecrawl</div>
-            <div style="color:#c9d1d9; font-size:0.88rem;">Scrapes competitor pages using anti-bot bypass. Returns clean Markdown for Agent 3 to use.</div>
-        </div>
-        <div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
-            <div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 3 — Groq/Llama</div>
-            <div style="color:#c9d1d9; font-size:0.88rem;">Generates content using ONLY real scraped data. Zero-hallucination contract enforced at prompt level.</div>
-        </div>
-    </div>
+<h3 style="margin:0 0 0.6rem 0; color:#e6edf3;">&#128225; How the 3-Agent Pipeline Works</h3>
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px;">
+<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 1 &#8212; Tavily</div>
+<div style="color:#c9d1d9; font-size:0.88rem;">Scans all competitors, extracts topics, confirms gaps via <code>site:viact.ai</code> &#8212; only 0-result topics are real gaps.</div>
 </div>
-""", unsafe_allow_html=True)
+<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 2 &#8212; Firecrawl</div>
+<div style="color:#c9d1d9; font-size:0.88rem;">Scrapes competitor pages using anti-bot bypass. Returns clean Markdown for Agent 3 to use.</div>
+</div>
+<div style="background:rgba(255,106,61,0.07); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:14px;">
+<div style="color:#ff6a3d; font-weight:700; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Agent 3 &#8212; Groq/Llama</div>
+<div style="color:#c9d1d9; font-size:0.88rem;">Generates content using ONLY real scraped data. Zero-hallucination contract enforced at prompt level.</div>
+</div>
+</div>
+</div>
+"""), unsafe_allow_html=True)
+
+    st.write("")
+
+    # ── Competitor grid (static — no API calls) ────────────────────────────────
+    from research_competitors import get_all_competitors
+    _all_competitors = get_all_competitors()
+
+    st.markdown(
+        f"<p style='color:#8b949e; font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;'>"
+        f"COMPETITORS TO SCAN &nbsp;<span style='color:#ff6a3d;'>({len(_all_competitors)})</span></p>",
+        unsafe_allow_html=True,
+    )
+    _comp_cols = st.columns(4)
+    for _ci, _comp in enumerate(_all_competitors):
+        _domain = _comp["url"].split("//")[-1].split("/")[0]
+        _comp_cols[_ci % 4].markdown(
+            _html(f"""
+<div class="glass-card" style="padding:12px 14px;">
+<div style="color:#e6edf3; font-weight:700; font-size:0.88rem; margin-bottom:3px;">{_t(_comp['name'])}</div>
+<div style="color:#8b949e; font-size:0.74rem; font-family:monospace;">{_t(_domain)}</div>
+</div>
+"""), unsafe_allow_html=True)
 
     st.write("")
 
@@ -265,13 +288,13 @@ if step == 0:
         if key_name != "FIRECRAWL_API_KEY" and not present:
             all_required_present = False
         status_color = "#3fb950" if present else "#f85149"
-        status_icon = "●" if present else "○"
+        status_icon = "&#11044;" if present else "&#9711;"
         masked = f"{val[:8]}…" if present else "Not set"
         col.markdown(_html(f"""
 <div class="glass-card" style="padding:16px;">
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
 <span style="color:#e6edf3; font-weight:700; font-size:0.95rem;">{_t(label)}</span>
-<span style="color:{status_color}; font-size:1.2rem;">{_t(status_icon)}</span>
+<span style="color:{status_color}; font-size:1.2rem;">{status_icon}</span>
 </div>
 <div style="color:#8b949e; font-size:0.78rem;">{_t(desc)} &middot; <span style="color:#ff6a3d;">{_t(agent)}</span></div>
 <div style="color:{status_color}; font-size:0.78rem; margin-top:4px; font-family:monospace;">{_t(masked)}</div>
@@ -279,11 +302,11 @@ if step == 0:
 """), unsafe_allow_html=True)
 
     if not all_required_present:
-        st.markdown("""
+        st.markdown(_html("""
 <div style="background:rgba(248,81,73,0.08); border:1px solid rgba(248,81,73,0.3); border-radius:8px; padding:12px 16px; font-size:0.85rem; color:#f85149; margin-bottom:12px;">
-    ⚠️ Add missing keys to <code>.env</code>: &nbsp;<code>GROQ_API_KEY=gsk_...</code> &nbsp;·&nbsp; <code>TAVILY_API_KEY=tvly-...</code>
+&#9888;&#65039; Add missing keys to <code>.env</code>: &nbsp;<code>GROQ_API_KEY=gsk_...</code> &nbsp;&middot;&nbsp; <code>TAVILY_API_KEY=tvly-...</code>
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
 
     st.write("")
     run_radar = st.button(
@@ -298,15 +321,89 @@ if step == 0:
         from agent1_market_explorer import discover_market_gaps
 
         st.markdown("<hr/>", unsafe_allow_html=True)
-        status_box = st.empty()
-        log_lines: list[str] = []
+
+        # ── 3-phase progress panel ─────────────────────────────────────────────
+        if "r3_progress" not in st.session_state:
+            st.session_state["r3_progress"] = {"competitors": [], "topics": [], "gaps": []}
+
+        progress_placeholder = st.empty()
+
+        def _render_progress():
+            prog = st.session_state["r3_progress"]
+            comp_items  = prog["competitors"]   # "Name|N" strings
+            topic_items = prog["topics"]         # plain topic name strings
+            gap_items   = prog["gaps"]           # "CONFIRMED|name|score" or "SKIP|name|url"
+
+            n_comp  = len(comp_items)
+            n_topic = len(topic_items)
+            n_confirmed = sum(1 for g in gap_items if g.startswith("CONFIRMED"))
+            n_gap   = len(gap_items)
+
+            # Phase A rows
+            comp_rows = "".join(
+                f"<div style='display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #1f2430;'>"
+                f"<span style='color:#c9d1d9; font-size:0.82rem;'>{_t(item.split('|')[0])}</span>"
+                f"<span style='color:#8b949e; font-size:0.78rem;'>{_t(item.split('|')[1])} snippet(s)</span>"
+                f"</div>"
+                for item in comp_items
+            )
+
+            # Phase B rows
+            topic_rows = "".join(
+                f"<div style='padding:3px 0; color:#c9d1d9; font-size:0.82rem; border-bottom:1px solid #1f2430;'>&#8250; {_t(t)}</div>"
+                for t in topic_items
+            )
+
+            # Phase C rows
+            gap_rows = "".join(
+                (
+                    f"<div style='padding:4px 0; border-bottom:1px solid #1f2430;'>"
+                    f"<span style='background:rgba(255,106,61,0.12); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:4px; padding:1px 7px; font-size:0.74rem; font-weight:700; margin-right:6px;'>&#10003; CONFIRMED</span>"
+                    f"<span style='color:#e6edf3; font-size:0.82rem;'>{_t(parts[1] if len(parts) > 1 else '')}</span>"
+                    f"<span style='color:#ff6a3d; font-size:0.74rem; margin-left:6px;'>{_t(parts[2] if len(parts) > 2 else '')}</span>"
+                    f"</div>"
+                    if g.startswith("CONFIRMED") else
+                    f"<div style='padding:4px 0; border-bottom:1px solid #1f2430;'>"
+                    f"<span style='color:#484f58; font-size:0.78rem; margin-right:6px;'>&#8627; skip</span>"
+                    f"<span style='color:#484f58; font-size:0.8rem;'>{_t(parts[1] if len(parts) > 1 else '')}</span>"
+                    f"</div>"
+                )
+                for g in gap_items
+                for parts in [g.split("|")]
+            )
+
+            html_out = (
+                f"<div style='background:#0d1117; border:1px solid #2d303a; border-radius:10px; overflow:hidden; margin-top:8px;'>"
+
+                # Phase A header
+                f"<div style='padding:10px 14px; background:rgba(255,106,61,0.06); border-bottom:1px solid #2d303a; display:flex; justify-content:space-between;'>"
+                f"<span style='color:#ff6a3d; font-weight:700; font-size:0.82rem; text-transform:uppercase; letter-spacing:1px;'>&#128225; Competitors Scanned</span>"
+                f"<span style='color:#8b949e; font-size:0.8rem;'>{n_comp} / {len(_all_competitors)}</span>"
+                f"</div>"
+                + (f"<div style='padding:8px 14px;'>{comp_rows}</div>" if comp_rows else "")
+
+                # Phase B header
+                + f"<div style='padding:10px 14px; background:rgba(88,166,255,0.05); border-top:1px solid #2d303a; border-bottom:1px solid #2d303a; display:flex; justify-content:space-between;'>"
+                f"<span style='color:#58a6ff; font-weight:700; font-size:0.82rem; text-transform:uppercase; letter-spacing:1px;'>&#128269; Topics Extracted</span>"
+                f"<span style='color:#8b949e; font-size:0.8rem;'>{n_topic} topic(s)</span>"
+                f"</div>"
+                + (f"<div style='padding:8px 14px;'>{topic_rows}</div>" if topic_rows else "")
+
+                # Phase C header
+                + f"<div style='padding:10px 14px; background:rgba(63,185,80,0.05); border-top:1px solid #2d303a; border-bottom:1px solid #2d303a; display:flex; justify-content:space-between;'>"
+                f"<span style='color:#3fb950; font-weight:700; font-size:0.82rem; text-transform:uppercase; letter-spacing:1px;'>&#10003; Gap Confirmation</span>"
+                f"<span style='color:#8b949e; font-size:0.8rem;'>{n_confirmed} confirmed &middot; {n_gap} checked of {n_topic}</span>"
+                f"</div>"
+                + (f"<div style='padding:8px 14px;'>{gap_rows}</div>" if gap_rows else "")
+
+                + "</div>"
+            )
+            progress_placeholder.markdown(html_out, unsafe_allow_html=True)
 
         def _ui_progress(phase: str, message: str):
-            log_lines.append(message)
-            status_box.markdown(
-                "<div class='log-box'>" + "<br>".join(log_lines[-16:]) + "</div>",
-                unsafe_allow_html=True,
-            )
+            if phase in ("competitors", "topics", "gaps"):
+                st.session_state["r3_progress"][phase].append(message)
+                _render_progress()
 
         with st.spinner("Agent 1 running Tavily searches and confirming gaps..."):
             try:
