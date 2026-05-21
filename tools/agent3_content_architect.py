@@ -61,7 +61,7 @@ def _build_competitor_block(competitor_data: dict) -> str:
         if md == ACCESS_DENIED:
             lines.append(f"=== URL: {url} ===\n[ACCESS DENIED — do not invent this competitor's content]")
         else:
-            lines.append(f"=== URL: {url} ({wc} words) ===\n{md[:4000]}")
+            lines.append(f"=== URL: {url} ({wc} words) ===\n{md[:1500]}")
     return "\n\n".join(lines)
 
 
@@ -98,28 +98,25 @@ def generate_structured_content(
     denied_urls = [u for u, r in competitor_data.items() if not r.get("success")]
 
     viact_pages_str = (
-        "\n".join(viact_pages[:20])
+        "\n".join(viact_pages[:10])
         if viact_pages
         else "https://viact.ai/ (sitemap unavailable)"
     )
 
     references_str = (
-        references.strip()
+        references.strip()[:1500]
         if references.strip()
-        else (
-            "[No reference material provided. Use public MOM/BCA/OSHAD data only. "
-            "Mark any statistics without a named source as approximate with 'industry data shows'.]"
-        )
+        else "[No reference provided. Use MOM/BCA/OSHAD/ISO 45001 data only.]"
     )
 
-    gap_evidence = radar_topic_entry.get("competitor_evidence", [])
+    gap_evidence = radar_topic_entry.get("competitor_evidence", [])[:2]
     why_trending = radar_topic_entry.get("why_trending", "")
     confirmed_at = radar_topic_entry.get("confirmed_at", "")
     viact_query = radar_topic_entry.get("viact_search_query", f"site:viact.ai {topic}")
     opp_score = radar_topic_entry.get("opportunity_score", "High")
     comp_count = radar_topic_entry.get("competitor_count", len(gap_evidence))
 
-    evidence_block = json.dumps(gap_evidence, indent=2) if gap_evidence else "No direct evidence snippets."
+    evidence_block = json.dumps(gap_evidence) if gap_evidence else "No direct evidence snippets."
     topic_slug = topic.lower().replace(" ", "-").replace("/", "-")
 
     prompt = f"""TOPIC: {topic}
@@ -233,7 +230,7 @@ Generate the complete modular content suite. Return ONLY valid JSON matching exa
             {"role": "user", "content": prompt},
         ],
         temperature=0.65,
-        max_tokens=8192,
+        max_tokens=4096,
         response_format={"type": "json_object"},
     )
 
