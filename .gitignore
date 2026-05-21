@@ -3,6 +3,9 @@
 credentials.json
 token.json
 .streamlit/secrets.toml
+trusty-solution-495309-t6-3b0822589c1d.json
+*-service-account*.json
+*-serviceaccount*.json
 
 # Temporary processing files
 .tmp/
