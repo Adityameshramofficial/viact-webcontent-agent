@@ -109,9 +109,15 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
     return data.get("topics", [])
 
 
-def discover_market_gaps(progress_callback=None) -> dict:
+def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | None = None) -> dict:
     """
     Main function. Discovers 3 confirmed content gaps for viAct.
+
+    Args:
+        injected_pages: Optional list of new competitor pages from competitor_page_monitor.
+                        Each entry: {competitor, url, title, snippet}.
+                        These are added to competitor_snippets so the LLM treats
+                        fresh competitor pages as high-priority evidence.
 
     Returns:
         {
@@ -173,6 +179,17 @@ def discover_market_gaps(progress_callback=None) -> dict:
         }
 
     emit(f"Collected {len(competitor_snippets)} snippets from {scanned_count} competitors.")
+
+    # ── Step 2b: Inject new pages from competitor monitor (if any) ───────────────
+    if injected_pages:
+        for page in injected_pages:
+            competitor_snippets.append({
+                "competitor": page.get("competitor", "Unknown"),
+                "url": page.get("url", ""),
+                "title": page.get("title", "New page"),
+                "snippet": page.get("snippet", "")[:400],
+            })
+        emit(f"Injected {len(injected_pages)} new competitor page(s) from weekly monitor.")
 
     # ── Step 3: Extract topics from snippets via LLM ────────────────────────────
     emit("Extracting topic names via Llama 3.3 (excluding viAct's known coverage)...")
