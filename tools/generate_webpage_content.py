@@ -37,11 +37,31 @@ STRICT RULES:
 - No Fluff: Do not include "Sure, here is your page" or any conversational filler.
 - Formatting: Use clean Markdown with H1, H2, and H3 tags inside webpage_body.
 
+VIACT BRAND VOICE (match this style exactly — study these patterns):
+- Headlines: Short, punchy fragments are OK. "Zero Missed Alerts." "Real-Time. Every Site."
+- H2s: Outcome-first. Start with the result, not the process. "90% Fewer Incidents. Here's Why."
+- Body sentences: MAX 20 words each. No compound-complex chains.
+- Feature format: [Feature name] → [how it works in ≤8 words] → [measurable outcome].
+- Use bullet points for 3 or more items. Avoid dense paragraphs.
+- Customer-centric framing: "your team gets X" not "viAct provides X".
+- Numbers beat adjectives: write "90% risk reduction" not "significant risk reduction".
+- Energy: direct, confident, never breathless. Think safety manager, not salesperson.
+
+VIACT VERIFIED STATS (use ONLY these — do not invent or substitute other numbers):
+- 90% construction site risk reduction
+- 50% TRIR (Total Recordable Incident Rate) reduction
+- 65% LTI (Lost Time Injury) reduction
+- 80% safety expenditure reduction
+- $2.5M+ savings per project (cite as "industry data shows" if no source provided)
+- 32,000+ workers protected globally
+- 7,200+ lost workdays prevented
+- 400+ construction sites deployed
+
 PROBLEM-FIRST FRAMEWORK (non-negotiable):
 1. H1 + opening: Name the risk. Quantify the cost of inaction. No viAct mention in the first 100 words.
 2. Body: Explain WHY the problem persists using regulatory data (MOM Singapore, BCA, UAE OSHAD, ISO 45001).
 3. "How viAct Helps": Introduce viAct as the natural solution — never before this point.
-4. CTA: "Get a free safety audit →" or equivalent.
+4. CTA: Use "Book My Demo" or "Schedule Demo" — match viAct's actual website call-to-action.
 
 DATA SOURCES (cite by name or fall back gracefully):
 - Named sources only: MOM annual report, BCA publication, UAE OSHAD, ISO 45001, or provided reference material.
@@ -85,7 +105,7 @@ Generate the complete 6-output content suite for viact.ai. Return ONLY valid JSO
 {{
   "topic": "{topic}",
 
-  "webpage_body": "Full webpage copy in Markdown format.\\n\\n# [H1: Problem-focused headline — no product mention]\\n\\n[Opening paragraph — 50-80 words. Directly names the risk and quantifies consequences. NO viAct mention. GEO-optimized: this paragraph must directly answer the query '{topic}' for AI search citation.]\\n\\n## [H2: Why This Problem Persists on Construction Sites]\\n[Body paragraph — regulatory context. Cite MOM/BCA/UAE OSHAD data. Explain structural causes of the problem.]\\n\\n## [H2: The Cost of Getting It Wrong]\\n[Human cost paragraph — injury statistics, regulatory penalties, project delays. Cite named source or use 'industry data shows'.]\\n\\n## [H2: How viAct Helps]\\n[viAct solution introduced here for the FIRST time. Problem-to-solution bridge. Explain the detection mechanism in plain English, not technical jargon.]\\n\\n## [H2: Proven Results]\\n[Evidence paragraph — use reference material if provided. Otherwise cite: viAct's 95% accident reduction figure, 500+ deployed projects, 70% manpower cost reduction.]\\n\\n**Get a free safety audit → [contact/demo link]**",
+  "webpage_body": "Full webpage copy in Markdown format.\\n\\n# [H1: Problem-focused headline — no product mention]\\n\\n[Opening paragraph — 50-80 words. Directly names the risk and quantifies consequences. NO viAct mention. GEO-optimized: this paragraph must directly answer the query '{topic}' for AI search citation.]\\n\\n## [H2: Why This Problem Persists on Construction Sites]\\n[Body paragraph — regulatory context. Cite MOM/BCA/UAE OSHAD data. Explain structural causes of the problem.]\\n\\n## [H2: The Cost of Getting It Wrong]\\n[Human cost paragraph — injury statistics, regulatory penalties, project delays. Cite named source or use 'industry data shows'.]\\n\\n## [H2: How viAct Helps]\\n[viAct solution introduced here for the FIRST time. Problem-to-solution bridge. Explain the detection mechanism in plain English, not technical jargon.]\\n\\n## [H2: Proven Results]\\n[Evidence paragraph — use reference material if provided. Otherwise cite viAct's verified stats: 90% construction site risk reduction, 50% TRIR reduction, 65% LTI reduction, 80% safety expenditure reduction, 400+ sites deployed, 32,000+ workers protected.]\\n\\n**[Book My Demo →](/contact)**",
 
   "seo_suite": {{
     "meta_title": "Max 60 characters. Include primary keyword + viAct brand name.",
@@ -120,7 +140,7 @@ Generate the complete 6-output content suite for viact.ai. Return ONLY valid JSO
   "schema_faqs": [
     {{"question": "Regulatory FAQ — What [regulatory body] requires regarding {topic}?", "answer": "Direct answer in 40-60 words. Cite MOM/BCA/ISO/OSHAD by name."}},
     {{"question": "Problem definition FAQ — What are the main causes of [risk related to topic]?", "answer": "Direct answer in 40-60 words. Factual, cites a named data source or uses 'industry data shows'."}},
-    {{"question": "ROI FAQ — How does [solution] reduce costs for construction companies?", "answer": "Direct answer in 40-60 words. Use viAct's 70% manpower cost reduction or 95% accident reduction figures."}},
+    {{"question": "ROI FAQ — How does [solution] reduce costs for construction companies?", "answer": "Direct answer in 40-60 words. Use viAct's verified stats: 80% safety expenditure reduction, 50% TRIR reduction, 65% LTI reduction, 400+ sites deployed."}},
     {{"question": "Technical FAQ — How does viAct's system detect [specific hazard related to topic]?", "answer": "Direct answer in 40-60 words. Plain English — no jargon. Explains the detection process briefly."}},
     {{"question": "Timeline FAQ — How long does it take to deploy viAct on an active construction site?", "answer": "Direct answer in 40-60 words. Realistic and specific."}}
   ],

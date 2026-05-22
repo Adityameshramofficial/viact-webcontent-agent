@@ -42,6 +42,46 @@ ZERO-HALLUCINATION CONTRACT (non-negotiable):
 
 FULL_SYSTEM = ZERO_HALLUCINATION_BLOCK.strip() + "\n\n" + SYSTEM_INSTRUCTION
 
+# Complete viAct solutions + products catalog for internal link suggestions
+VIACT_CATALOG = [
+    # Solutions
+    "https://www.viact.ai/solutions/video-analytics-solution",
+    "https://www.viact.ai/solutions/permit-to-work-system",
+    "https://www.viact.ai/solutions/generative-ai-solutions",
+    "https://www.viact.ai/solutions/ai-for-decarbonization",
+    "https://www.viact.ai/solutions/red-zone-monitoring",
+    "https://www.viact.ai/solutions/project-control-center",
+    "https://www.viact.ai/solutions/smart-site-safety-system",
+    "https://www.viact.ai/solutions/environmental-monitoring",
+    "https://www.viact.ai/solutions/ppe-detection",
+    "https://www.viact.ai/solutions/danger-zone-detection",
+    "https://www.viact.ai/solutions/fleet-management",
+    "https://www.viact.ai/solutions/confined-space",
+    "https://www.viact.ai/solutions/work-at-height-safety",
+    "https://www.viact.ai/solutions/digital-works-supervision-system",
+    "https://www.viact.ai/solutions/incident-management-software",
+    # Products
+    "https://www.viact.ai/products/viLID-lidar",
+    "https://www.viact.ai/products/viAER-drone",
+    "https://www.viact.ai/products/viHUB-platform",
+    "https://www.viact.ai/products/viMOV-mobility",
+    "https://www.viact.ai/products/viHOI-hoisting",
+    "https://www.viact.ai/products/viMAC-machinery",
+    "https://www.viact.ai/products/viBOT-robotic",
+    "https://www.viact.ai/products/cctv-ai-modules",
+    # IoT
+    "https://www.viact.ai/iot/smart-helmet",
+    "https://www.viact.ai/iot/smart-watch",
+    "https://www.viact.ai/iot/gas-leak-detector",
+    "https://www.viact.ai/iot/fleet-tracking-system",
+    "https://www.viact.ai/iot/access-control-system",
+    # Industries
+    "https://www.viact.ai/industry/construction",
+    "https://www.viact.ai/industry/oil-and-gas",
+    "https://www.viact.ai/industry/manufacturing",
+    "https://www.viact.ai/industry/mining",
+]
+
 
 def _strip_fences(raw: str) -> str:
     raw = raw.strip()
@@ -97,11 +137,9 @@ def generate_structured_content(
     accessible_urls = [u for u, r in competitor_data.items() if r.get("success")]
     denied_urls = [u for u, r in competitor_data.items() if not r.get("success")]
 
-    viact_pages_str = (
-        "\n".join(viact_pages[:10])
-        if viact_pages
-        else "https://viact.ai/ (sitemap unavailable)"
-    )
+    # Merge sitemap pages with full known catalog, deduplicate, cap at 40
+    combined_pages = list(dict.fromkeys(list(viact_pages or []) + VIACT_CATALOG))
+    viact_pages_str = "\n".join(combined_pages[:40]) if combined_pages else "https://viact.ai/"
 
     references_str = (
         references.strip()[:1500]
@@ -150,7 +188,7 @@ Return a single JSON object with all fields below. Quality over word count — k
   "hero_section": {{
     "h1": "HERO_SECTION — H1 Headline: problem-focused, names the risk, no viAct mention, no banned marketing words",
     "subheadline": "Sub-headline: regulatory context or human cost in 1 sentence",
-    "cta_text": "Get a Free Safety Audit",
+    "cta_text": "Book My Demo",
     "cta_url": "/contact"
   }},
 
@@ -167,12 +205,12 @@ Return a single JSON object with all fields below. Quality over word count — k
     "uae": {{"standard": "OSHAD SF-AR-L01 or UAE Federal Law No. 8", "requirement": "Specific UAE requirement for {topic}"}}
   }},
 
-  "webpage_body": "WEBPAGE_BODY — Full Markdown. Sections: # [H1]\\n\\n[problem_statement]\\n\\n## Why This Problem Persists\\n[regulatory + structural causes. Cite MOM/BCA/OSHAD.]\\n\\n## The Cost of Getting It Wrong\\n[Human + financial cost. Cite named source or 'industry data shows'.]\\n\\n## How viAct Helps\\n[viAct introduced HERE for first time. Plain English. Reference solution_parameters.]\\n\\n## Proven Results\\n[95% accident reduction, 500+ projects, 70% manpower cost reduction — or reference material if provided.]\\n\\n**Get a free safety audit →**",
+  "webpage_body": "WEBPAGE_BODY — Full Markdown. Sections: # [H1]\\n\\n[problem_statement]\\n\\n## Why This Problem Persists\\n[regulatory + structural causes. Cite MOM/BCA/OSHAD. Short sentences, ≤20 words each.]\\n\\n## The Cost of Getting It Wrong\\n[Human + financial cost. Cite named source or 'industry data shows'.]\\n\\n## How viAct Helps\\n[viAct introduced HERE for first time. Outcome-first. Use feature → mechanism → benefit format. Reference solution_parameters.]\\n\\n## Proven Results\\n[Use viAct verified stats: 90% construction site risk reduction, 50% TRIR reduction, 65% LTI reduction, 80% expenditure reduction, 400+ sites deployed, 32,000+ workers protected — or reference material if provided.]\\n\\n**[Book My Demo →](/contact)**",
 
   "schema_faqs": [
     {{"question": "SCHEMA_FAQS — What does Singapore MOM / BCA require for {topic}?", "answer": "40-60 words. Cite MOM/BCA by name."}},
     {{"question": "What are the main causes of [key hazard in {topic}]?", "answer": "40-60 words. Factual, named source or 'industry data shows'."}},
-    {{"question": "How does viAct reduce costs for {topic} management?", "answer": "40-60 words. Cite 70% manpower cost reduction or 95% accident reduction."}},
+    {{"question": "How does viAct reduce costs for {topic} management?", "answer": "40-60 words. Cite viAct verified stats: 80% safety expenditure reduction, 50% TRIR reduction, 65% LTI reduction, 400+ sites deployed."}},
     {{"question": "How does viAct detect [specific hazard in {topic}]?", "answer": "40-60 words. Plain English — no jargon."}},
     {{"question": "How long does viAct deployment take on an active construction site?", "answer": "40-60 words. Realistic and specific."}}
   ],
@@ -267,7 +305,7 @@ def build_webpage_body(structured: dict) -> str:
             lines.append(f"**{p.get('feature', '')}** — {p.get('mechanism', '')} → {p.get('benefit', '')}")
         lines.append("")
 
-    lines += ["**Get a free safety audit →**", ""]
+    lines += ["**[Book My Demo →](/contact)**", ""]
     return "\n".join(lines)
 
 
