@@ -432,6 +432,25 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
 """), unsafe_allow_html=True)
 
     st.write("")
+
+    # ── Industry Vertical Selector ─────────────────────────────────────────────
+    INDUSTRY_OPTIONS = {
+        "Construction Safety":     "construction safety",
+        "Oil & Gas Safety":        "oil gas safety",
+        "Manufacturing Safety":    "manufacturing safety",
+        "Mining Safety":           "mining safety",
+        "Facility Management":     "facility management safety",
+        "Food & Beverage Safety":  "food beverage safety",
+    }
+    _ind_label = st.selectbox(
+        "🏭  Industry Vertical — which sector should Agent 1 search?",
+        options=list(INDUSTRY_OPTIONS.keys()),
+        index=0,
+        key="r3_industry_label",
+        help="Agent 1 will search competitor sites using this industry keyword.",
+    )
+    st.session_state["r3_industry"] = INDUSTRY_OPTIONS[_ind_label]
+
     st.markdown(_html("""
 <div style="background:rgba(255,106,61,0.04); border:1px solid rgba(255,106,61,0.15); border-radius:8px; padding:12px 16px; margin-bottom:12px; display:flex; align-items:center; gap:12px;">
 <span style="font-size:1.4rem;">&#9201;</span>
@@ -539,7 +558,10 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
 
         with st.spinner("Agent 1 running Tavily searches and confirming gaps..."):
             try:
-                radar_results = discover_market_gaps(progress_callback=_ui_progress)
+                radar_results = discover_market_gaps(
+                    progress_callback=_ui_progress,
+                    industry=st.session_state.get("r3_industry", "construction safety"),
+                )
                 if not radar_results.get("topics"):
                     st.warning("No confirmed gaps found. Try again or check your Tavily API key.")
                 else:
@@ -814,13 +836,14 @@ elif step == 2:
     # ── Content Preview Tabs ───────────────────────────────────────────────────
     st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL 10 SECTIONS</p>", unsafe_allow_html=True)
     (
-        tab_dl, tab_sources, tab_body, tab_seo,
+        tab_dl, tab_sources, tab_body, tab_wix, tab_seo,
         tab_faqs, tab_schema, tab_geo,
         tab_visual, tab_links, tab_raw
     ) = st.tabs([
         "📋 Decision Logic",
         "🔍 Proof & Sources",
         "📄 Page Body",
+        "🌐 Wix HTML",
         "🔎 SEO Tags",
         "❓ FAQs",
         "🏷️ Schema Markup",
@@ -902,6 +925,25 @@ It cites the exact Tavily search date, competitor names, and URLs &#8212; not ju
         st.text_area("Webpage Body (Markdown — paste into CMS)", body, height=500, key="r3_body_text")
         with st.expander("👁️ Preview — see how the page renders"):
             st.markdown(body)
+
+    with tab_wix:
+        st.markdown(_html("""
+<div style="background:rgba(255,106,61,0.05); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+<span style="font-size:1.2rem; flex-shrink:0;">&#127760;</span>
+<div style="font-size:0.83rem; color:#ff6a3d; line-height:1.5;">
+<strong>Wix-Ready HTML.</strong> Copy the code below and paste it directly into Wix &rarr; <em>Add Elements &rarr; Embed &rarr; Custom Code</em> (or the Rich Text editor). No formatting will break. Tags used: &lt;h1&gt; &lt;h2&gt; &lt;p&gt; &lt;ul&gt; &lt;li&gt; &lt;strong&gt; &lt;a&gt; only.
+</div>
+</div>
+"""), unsafe_allow_html=True)
+        html_out = content.get("webpage_html", "")
+        if not html_out:
+            try:
+                from agent3_content_architect import build_webpage_html
+                html_out = build_webpage_html(content)
+            except Exception:
+                html_out = "<p>HTML not available — regenerate content.</p>"
+        st.text_area("Clean HTML (paste into Wix Embed Code)", html_out, height=500, key="r3_wix_html")
+        st.caption("Tip: In Wix editor → Add Elements → Embed Code → Embed HTML → paste above")
 
     with tab_seo:
         st.markdown(_html("""

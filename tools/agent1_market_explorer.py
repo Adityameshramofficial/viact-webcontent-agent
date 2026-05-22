@@ -26,6 +26,30 @@ from utils import get_env
 
 import requests
 
+SEEN_TOPICS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", ".tmp", "seen_topics.json"
+)
+
+
+def _load_seen_topics() -> dict:
+    """Load {topic_slug: added_at_iso} from .tmp/seen_topics.json."""
+    try:
+        with open(SEEN_TOPICS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_seen_topics(seen: dict) -> None:
+    os.makedirs(os.path.dirname(SEEN_TOPICS_PATH), exist_ok=True)
+    with open(SEEN_TOPICS_PATH, "w", encoding="utf-8") as f:
+        json.dump(seen, f, indent=2)
+
+
+def _topic_slug(topic: str) -> str:
+    """Canonical form of a topic for deduplication matching."""
+    return " ".join(sorted(topic.lower().split()))
+
 
 def _tavily_search(query: str, max_results: int = 5, include_domains: list[str] | None = None) -> list[dict]:
     """Run a Tavily search. Returns list of {title, url, content} dicts."""
@@ -109,7 +133,7 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
     return data.get("topics", [])
 
 
-def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | None = None) -> dict:
+def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | None = None, industry: str = "construction safety") -> dict:
     """
     Main function. Discovers 3 confirmed content gaps for viAct.
 
@@ -135,6 +159,10 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # ── Topic deduplication: load seen topics (skip if within 12 weeks) ──────────
+    seen_topics = _load_seen_topics()
+    dedup_cutoff = (datetime.datetime.now() - datetime.timedelta(weeks=12)).isoformat()
+
     # ── Step 1: viAct existing pages ────────────────────────────────────────────
     emit("Fetching viAct sitemap...")
     viact_pages = scrape_viact_sitemap()
@@ -150,7 +178,7 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
     for comp in all_competitors:
         name = comp["name"]
         domain = comp["url"].split("//")[-1].split("/")[0]
-        query = f"site:{domain} construction safety"
+        query = f"site:{domain} {industry}"
         emit(f"  Tavily: {query}")
         try:
             results = _tavily_search(query, max_results=5)
@@ -284,6 +312,14 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
             break
         emit(f"  Checking viact.ai for: '{topic_name}'")
 
+        # ── Deduplication: skip topics already covered in the last 12 weeks ─────
+        slug = _topic_slug(topic_name)
+        if slug in seen_topics and seen_topics[slug] > dedup_cutoff:
+            emit(f"  ↳ Already generated {seen_topics[slug][:10]} — skipping (12-week dedup)")
+            if progress_callback:
+                progress_callback("gaps", f"SKIP|{topic_name}|seen {seen_topics[slug][:10]}")
+            continue
+
         # Layer 1 — sitemap check (no API call needed)
         sitemap_covered, sitemap_url = _covered_in_sitemap(topic_name)
         if sitemap_covered:
@@ -351,6 +387,11 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
     # ── Step 5: Score and return top 3 ──────────────────────────────────────────
     confirmed_gaps.sort(key=lambda x: x["competitor_count"], reverse=True)
     top_3 = confirmed_gaps[:3]
+
+    # Save confirmed topics so they're skipped for the next 12 weeks
+    for gap in top_3:
+        seen_topics[_topic_slug(gap["topic"])] = datetime.datetime.now().isoformat()
+    _save_seen_topics(seen_topics)
 
     # ── Step 6: Build full competitor landscape (all competitors + their pages) ─
     competitor_landscape: dict = {}

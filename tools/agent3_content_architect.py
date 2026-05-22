@@ -273,7 +273,9 @@ Return a single JSON object with all fields below. Quality over word count — k
         response_format={"type": "json_object"},
     )
 
-    return json.loads(response.choices[0].message.content)
+    result = json.loads(response.choices[0].message.content)
+    result["webpage_html"] = build_webpage_html(result)
+    return result
 
 
 def build_webpage_body(structured: dict) -> str:
@@ -307,6 +309,70 @@ def build_webpage_body(structured: dict) -> str:
 
     lines += ["**[Book My Demo →](/contact)**", ""]
     return "\n".join(lines)
+
+
+def _md_inline(text: str) -> str:
+    """Convert inline Markdown (links, bold, italic) to HTML."""
+    import re
+    import html as _h
+    text = _h.escape(text)
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', text)
+    text = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', text)
+    text = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', text)
+    return text
+
+
+def build_webpage_html(structured: dict) -> str:
+    """
+    Convert structured content to clean Wix-paste-ready HTML.
+    Output uses only <h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <a> tags
+    so it can be pasted directly into Wix's Embed Code or Rich Text editor.
+    """
+    body = structured.get("webpage_body", "")
+    if not body:
+        body = build_webpage_body(structured)
+
+    lines = body.split("\n")
+    out: list[str] = []
+    in_list = False
+
+    for line in lines:
+        line = line.strip()
+
+        if line.startswith("### "):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f"<h3>{_md_inline(line[4:])}</h3>")
+        elif line.startswith("## "):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f"<h2>{_md_inline(line[3:])}</h2>")
+        elif line.startswith("# "):
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f"<h1>{_md_inline(line[2:])}</h1>")
+        elif line.startswith("- ") or line.startswith("* "):
+            if not in_list:
+                out.append("<ul>")
+                in_list = True
+            out.append(f"<li>{_md_inline(line[2:])}</li>")
+        elif line == "":
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+        else:
+            if in_list:
+                out.append("</ul>")
+                in_list = False
+            out.append(f"<p>{_md_inline(line)}</p>")
+
+    if in_list:
+        out.append("</ul>")
+
+    return "\n".join(out)
 
 
 if __name__ == "__main__":
