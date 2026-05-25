@@ -254,7 +254,7 @@ def main():
     # ── Step 0: Competitor new-page monitor ────────────────────────────────────
     log("Step 0: Checking for new competitor pages this week...")
     from competitor_page_monitor import get_new_competitor_pages
-    new_competitor_pages = get_new_competitor_pages(progress_callback=log)
+    new_competitor_pages = get_new_competitor_pages(progress_callback=lambda phase, msg: log(msg))
     if new_competitor_pages:
         log(f"  ALERT: {len(new_competitor_pages)} new competitor page(s) detected this week:")
         for p in new_competitor_pages:
