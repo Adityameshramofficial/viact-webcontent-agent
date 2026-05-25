@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
 from agent1_market_explorer import discover_market_gaps
 from agent2_data_extractor import extract_competitor_content
-from agent3_content_architect import generate_structured_content
+from agent3_content_architect import generate_structured_content, generate_cluster_topics
 from push_to_sheets import push_webpage
 from research_competitors import scrape_viact_sitemap
 
@@ -255,9 +255,11 @@ def _validate_content(content: dict) -> list[str]:
     meta_title = seo.get("meta_title", "")
     if len(meta_title) > 60:
         warnings.append(f"meta_title too long: {len(meta_title)} chars (max 60)")
+    is_blog = content.get("content_type") == "blog"
+    expected_faqs = 3 if is_blog else 5
     faq_count = len(content.get("schema_faqs", []))
-    if faq_count != 5:
-        warnings.append(f"schema_faqs: {faq_count} items (expected 5)")
+    if faq_count != expected_faqs:
+        warnings.append(f"schema_faqs: {faq_count} items (expected {expected_faqs})")
     for field in ["hero_section", "webpage_body", "seo_suite", "schema_faqs", "internal_links"]:
         if not content.get(field):
             warnings.append(f"Missing required field: {field}")
@@ -394,8 +396,8 @@ def main():
         else:
             log("  Quality gate passed.")
 
-        # ── Step 4: Push to Google Sheets ──────────────────────────────────────
-        log("Step 4: Pushing to Google Sheets...")
+        # ── Step 4: Push pillar to Google Sheets ───────────────────────────────
+        log("Step 4: Pushing pillar page to Google Sheets...")
         try:
             count = push_webpage(
                 content=content,
@@ -413,6 +415,51 @@ def main():
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(content, f, ensure_ascii=False, indent=2)
             log(f"  Saved fallback to {out_path}")
+
+        # ── Step 4b: Topic cluster — 3 supporting blog posts ───────────────────
+        log("Step 4b: Generating topic cluster (3 supporting blog posts)...")
+        pillar_keyword = content.get("seo_suite", {}).get("primary_keyword", topic)
+        try:
+            blog_topics = generate_cluster_topics(topic, pillar_keyword)
+            log(f"  Cluster topics: {blog_topics}")
+        except Exception as exc:
+            log(f"  Cluster topic generation failed: {exc} — skipping blog cluster")
+            blog_topics = []
+
+        for j, blog_topic in enumerate(blog_topics, 1):
+            log(f"  Blog {j}/3: '{blog_topic}'")
+            try:
+                blog_content = generate_structured_content(
+                    topic=blog_topic,
+                    competitor_data=competitor_data,
+                    viact_pages=viact_pages,
+                    references=refs,
+                    radar_topic_entry={
+                        "topic": blog_topic,
+                        "competitor_evidence": [],
+                        "confirmed_at": gap.get("confirmed_at", ""),
+                        "opportunity_score": gap.get("opportunity_score", "Medium"),
+                        "competitor_count": gap.get("competitor_count", 0),
+                        "viact_search_query": f"blog cluster for: {topic}",
+                        "why_trending": f"Supporting blog for pillar: {topic}",
+                        "pillar_topic": topic,
+                    },
+                    content_type="blog",
+                )
+                blog_warnings = _validate_content(blog_content)
+                if blog_warnings:
+                    log(f"    Blog {j} quality warnings: {'; '.join(blog_warnings)}")
+                push_webpage(
+                    content=blog_content,
+                    decision_logic=blog_content.get("decision_logic", ""),
+                    input_source=f"Cluster #{autorun_base + i - 1}-blog{j}",
+                    competitor_urls=list(competitor_data.keys()),
+                    autorun_num=autorun_base + i - 1,
+                    unverified=True,
+                )
+                log(f"  Blog {j} pushed: '{blog_topic}'")
+            except Exception as exc:
+                log(f"  Blog {j} failed: {exc} — skipping")
 
     # ── Step 5: Email alert ────────────────────────────────────────────────────
     log("\nStep 5: Sending email alert to marketing@viact.ai...")

@@ -376,7 +376,21 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
                 "opportunity_score": opportunity_score,
                 "competitor_count": competitor_count,
             })
-            emit(f"  ✅ CONFIRMED GAP: '{topic_name}' ({opportunity_score}, {competitor_count} competitors){blog_only_note}")
+
+            # ── Search demand scoring (Tavily global — no site: filter) ──────────
+            try:
+                _dem_results = _tavily_search(topic_name, max_results=10)
+                _dem_count = len(_dem_results)
+                demand = "High" if _dem_count >= 10 else "Medium" if _dem_count >= 4 else "Low"
+            except Exception:
+                _dem_count = 0
+                demand = "Medium"
+            confirmed_gaps[-1]["search_demand"] = demand
+            confirmed_gaps[-1]["combined_score"] = competitor_count * (
+                3 if demand == "High" else 2 if demand == "Medium" else 1
+            )
+
+            emit(f"  ✅ CONFIRMED GAP: '{topic_name}' ({opportunity_score}, {competitor_count} competitors, demand={demand}){blog_only_note}")
             if progress_callback:
                 progress_callback("gaps", f"CONFIRMED|{topic_name}|{opportunity_score}")
         else:
@@ -385,7 +399,7 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
                 progress_callback("gaps", f"SKIP|{topic_name}|{solution_pages[0][:60]}")
 
     # ── Step 5: Score and return top 3 ──────────────────────────────────────────
-    confirmed_gaps.sort(key=lambda x: x["competitor_count"], reverse=True)
+    confirmed_gaps.sort(key=lambda x: x.get("combined_score", x["competitor_count"]), reverse=True)
     top_3 = confirmed_gaps[:3]
 
     # Save confirmed topics so they're skipped for the next 12 weeks

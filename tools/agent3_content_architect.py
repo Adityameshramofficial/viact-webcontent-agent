@@ -112,12 +112,159 @@ def _build_competitor_block(competitor_data: dict) -> str:
     return "\n\n".join(lines)
 
 
+def _generate_blog_content(
+    topic: str,
+    viact_pages: list[str],
+    references: str,
+    radar_topic_entry: dict,
+    client,
+) -> dict:
+    """Generate a shorter educational blog post (600-800 words, 3 FAQs)."""
+    combined_pages = list(dict.fromkeys(list(viact_pages or []) + VIACT_CATALOG))
+    viact_pages_str = "\n".join(combined_pages[:40]) if combined_pages else "https://viact.ai/"
+    references_str = (
+        references.strip()[:4000]
+        if references.strip()
+        else "[No reference provided. Use MOM/BCA/OSHAD/ISO 45001 data only.]"
+    )
+    topic_slug = topic.lower().replace(" ", "-").replace("/", "-")
+    why_trending = radar_topic_entry.get("why_trending", "")
+    confirmed_at = radar_topic_entry.get("confirmed_at", "")
+    opp_score = radar_topic_entry.get("opportunity_score", "Medium")
+
+    blog_prompt = f"""### CONTEXT
+Topic: {topic}
+Content Type: Educational Blog Post (600-800 words)
+Target Audience: HSE managers, safety officers, construction PMs in Singapore and UAE.
+Reference Material: {references_str}
+Context: {why_trending}
+
+VIACT KNOWN PAGES (use ONLY these for internal_links — never invent):
+{viact_pages_str}
+
+---
+### OUTPUT REQUIREMENTS
+Write an educational blog post about "{topic}". Educational tone, not a sales pitch.
+No heavy marketing language. Cite MOM/BCA/OSHAD/ISO 45001 where relevant.
+
+Return a single JSON object:
+{{
+  "topic": "{topic}",
+  "content_type": "blog",
+  "data_sources_used": [],
+  "access_denied_urls": [],
+
+  "hero_section": {{
+    "h1": "Searchable blog title — educational, specific (e.g. 'What Is X? A Guide for Singapore Construction')",
+    "subheadline": "One sentence framing why this topic matters to HSE teams",
+    "cta_text": "Book My Demo",
+    "cta_url": "/contact"
+  }},
+
+  "problem_statement": "40-60 words. What challenge does this blog address?",
+
+  "solution_parameters": [],
+
+  "regulatory_context": {{
+    "singapore": {{"standard": "MOM WSH Act or BCA", "requirement": "Specific Singapore requirement"}},
+    "uae": {{"standard": "OSHAD SF-AR-L01", "requirement": "Specific UAE requirement"}}
+  }},
+
+  "webpage_body": "BLOG_BODY — Full Markdown, 600-800 words. Structure:\\n# [H1]\\n\\n[Opening: 2-3 sentences answering '{topic}' directly — optimised for AI citation]\\n\\n## What Is [Core Concept]?\\n[Definition + why it matters, 60-80 words]\\n\\n## Why It Matters in APAC Construction\\n[Regulatory context + human cost. MOM/OSHAD data. Short sentences ≤20 words each.]\\n\\n## Key Challenges\\n[3-4 bullet points. Practical, specific, no filler.]\\n\\n## How AI Technology Helps\\n[100-150 words. Brief viAct mention. Feature → mechanism → outcome format.]\\n\\n## Frequently Asked Questions\\n[3 Q&A pairs matching schema_faqs]\\n\\n**[Book My Demo →](/contact)**",
+
+  "schema_faqs": [
+    {{"question": "What does Singapore MOM require regarding {topic}?", "answer": "40-60 words. Cite MOM by name."}},
+    {{"question": "What are the main challenges with {topic} on active construction sites?", "answer": "40-60 words. Factual, practical."}},
+    {{"question": "How does AI-powered monitoring improve {topic} management?", "answer": "40-60 words. Cite viAct stats where relevant."}}
+  ],
+
+  "extended_faqs": [],
+
+  "schema_json_ld": "FAQPage JSON-LD using the 3 schema_faqs above",
+
+  "seo_suite": {{
+    "meta_title": "Max 60 chars — blog format (e.g. '{topic}: Singapore Construction Guide')",
+    "meta_description": "Max 155 chars — summarises the blog, includes primary keyword",
+    "primary_keyword": "main search keyword for '{topic}'",
+    "secondary_keywords": ["variant 1", "variant 2"],
+    "lsi_keywords": ["regulatory term", "job role term", "location term"],
+    "canonical_url_slug": "/blog/{topic_slug}",
+    "heading_map": ["H1: ...", "H2: What Is...", "H2: Why It Matters", "H2: Key Challenges", "H2: How AI Technology Helps", "H2: FAQ"]
+  }},
+
+  "geo_package": {{
+    "opening_200_words": "First ~200 words of the blog body",
+    "citation_framing_tips": ["Tip 1: MOM/OSHAD anchor", "Tip 2: APAC market statistic"]
+  }},
+
+  "nano_banana_prompts": [
+    {{
+      "placement": "Featured Image",
+      "prompt": "Realistic documentary construction site photograph related to {topic}. Workers in full PPE (hard hats, hi-vis). Singapore or UAE site. NO CGI, no stock poses.",
+      "alt_text": "Construction workers managing {topic} on an active site"
+    }}
+  ],
+
+  "internal_links": [
+    {{"anchor_text": "anchor text", "url": "MUST be from viAct known pages list above — never invent", "context": "In the How AI Technology Helps section"}}
+  ],
+
+  "decision_logic": "Supporting blog post for topic cluster. Opportunity: {opp_score}. Confirmed: {confirmed_at}. Educational companion to pillar page on '{topic}'."
+}}"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": FULL_SYSTEM},
+            {"role": "user", "content": blog_prompt},
+        ],
+        temperature=0.65,
+        max_tokens=3072,
+        response_format={"type": "json_object"},
+    )
+    result = json.loads(response.choices[0].message.content)
+    result["webpage_html"] = build_webpage_html(result)
+    return result
+
+
+def generate_cluster_topics(pillar_topic: str, primary_keyword: str) -> list[str]:
+    """
+    Single Groq call → returns 3 supporting blog topic strings for a pillar.
+    Covers 3 angles: regulatory compliance, cost/ROI, practical how-to.
+    """
+    from groq import Groq
+
+    client = Groq(api_key=get_env("GROQ_API_KEY"))
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f'For pillar topic "{pillar_topic}" (primary keyword: "{primary_keyword}"), '
+                    "suggest 3 supporting blog post topics covering different angles:\n"
+                    "  1. Regulatory compliance angle (Singapore MOM / UAE OSHAD)\n"
+                    "  2. Cost / ROI angle (what does non-compliance or manual process cost?)\n"
+                    "  3. Practical how-to angle (step-by-step guide or checklist)\n\n"
+                    "Each topic: 5-10 words, specific, searchable, construction safety audience.\n"
+                    'Return JSON: {"topics": ["topic1", "topic2", "topic3"]}'
+                ),
+            }
+        ],
+        max_tokens=256,
+        temperature=0.4,
+        response_format={"type": "json_object"},
+    )
+    return json.loads(response.choices[0].message.content).get("topics", [])[:3]
+
+
 def generate_structured_content(
     topic: str,
     competitor_data: dict,
     viact_pages: list[str],
     references: str,
     radar_topic_entry: dict,
+    content_type: str = "pillar",
 ) -> dict:
     """
     Generate a modular structured content JSON from real scraped data.
@@ -137,6 +284,16 @@ def generate_structured_content(
     from groq import Groq
 
     client = Groq(api_key=get_env("GROQ_API_KEY"))
+
+    # ── Blog fast-path (shorter prompt, educational tone) ─────────────────────
+    if content_type == "blog":
+        return _generate_blog_content(
+            topic=topic,
+            viact_pages=viact_pages,
+            references=references,
+            radar_topic_entry=radar_topic_entry,
+            client=client,
+        )
 
     # Build context blocks
     competitor_block = _build_competitor_block(competitor_data)
