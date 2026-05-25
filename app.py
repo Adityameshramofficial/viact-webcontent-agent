@@ -18,13 +18,15 @@ def _html(s: str) -> str:
     return " ".join(part.strip() for part in s.splitlines() if part.strip())
 
 # ── Load secrets (localhost: .env  |  Streamlit Cloud: st.secrets) ───────────
+# override=True ensures an updated .env is picked up without restarting the process
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(override=True)
 except Exception:
     pass
 
-# Explicitly pull every expected key from st.secrets so cloud works reliably
+# Streamlit Cloud fallback: if a key wasn't set by .env (cloud has no .env),
+# pull from st.secrets.  Locally, .env wins because load_dotenv already set it.
 _SECRET_KEYS = [
     "GROQ_API_KEY", "TAVILY_API_KEY", "FIRECRAWL_API_KEY",
     "SHEET_ID", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET",
@@ -33,7 +35,7 @@ _SECRET_KEYS = [
 for _k in _SECRET_KEYS:
     try:
         if not os.environ.get(_k):
-            os.environ[_k] = st.secrets[_k]
+            os.environ[_k] = str(st.secrets[_k])
     except Exception:
         pass
 
