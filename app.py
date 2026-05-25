@@ -660,10 +660,78 @@ elif step == 1:
     selected_idx = topic_options.index(selected_option)
 
     st.write("")
-    st.markdown("**📄 Reference Material** — optional but makes content better")
+
+    # ── Reference Library — persistent storage in Google Sheets ───────────────
+    with st.expander("📚 Reference Library — auto-loaded in every run (Manual + GitHub Actions)", expanded=False):
+        st.caption(
+            "Add viAct project stats, case studies, MOM/OSHAD data here ONCE. "
+            "Every future pipeline run — including Monday's automated run — will load these automatically."
+        )
+        _ref_svc = None
+        _ref_sheet_id = os.getenv("SHEET_ID", "")
+        _lib_rows = []
+        try:
+            from push_to_sheets import get_sheets_service, read_reference_library, add_reference, ensure_reference_tab
+            from googleapiclient.discovery import build as _gsa_build
+            _ref_svc = get_sheets_service()
+            ensure_reference_tab(_ref_svc, _ref_sheet_id)
+            # Load raw rows for display
+            _raw = _ref_svc.spreadsheets().values().get(
+                spreadsheetId=_ref_sheet_id,
+                range="Reference_Library!A:D"
+            ).execute()
+            _lib_rows = _raw.get("values", [])[1:]  # skip header
+        except Exception:
+            pass
+
+        selected_topic_name = topics[selected_idx]["topic"] if topics else ""
+
+        if _lib_rows:
+            st.markdown(f"**{len(_lib_rows)} reference(s) stored** — auto-loaded for every Agent 3 run")
+            _display = []
+            for r in _lib_rows:
+                _type = r[0] if len(r) > 0 else ""
+                _filter = r[1] if len(r) > 1 else "—"
+                _text = r[2][:80] + "..." if len(r) > 2 and len(r[2]) > 80 else (r[2] if len(r) > 2 else "")
+                _date = r[3] if len(r) > 3 else ""
+                _display.append({"Type": _type, "Topic Filter": _filter or "—", "Text Preview": _text, "Added": _date})
+            st.dataframe(_display, use_container_width=True, hide_index=True)
+        else:
+            st.info("No references stored yet. Add your first one below.")
+
+        st.markdown("**Add a new reference:**")
+        _col1, _col2 = st.columns([1, 2])
+        with _col1:
+            _ref_type = st.selectbox("Type", ["global", "topic"], key="ref_lib_type",
+                help="global = always included  |  topic = only when topic name matches filter")
+            _topic_filter = st.text_input("Topic Filter (for topic type)", key="ref_lib_filter",
+                placeholder="e.g. fatigue, permit, confined",
+                help="Leave blank for global. Enter keyword that must appear in the topic name.")
+        with _col2:
+            _ref_text = st.text_area("Reference Text", key="ref_lib_text", height=100,
+                placeholder=(
+                    "e.g. Marina Bay Sands: 0 incidents, 18 months, 2400 workers\n"
+                    "MOM WSH 2024: 35% of fatalities from falls\n"
+                    "viAct: 90% risk reduction, 400+ sites, $2.5M savings"
+                ))
+        if st.button("💾 Save to Reference Library", key="ref_lib_save"):
+            if _ref_text.strip() and _ref_svc:
+                try:
+                    add_reference(_ref_svc, _ref_sheet_id, _ref_type, _topic_filter.strip(), _ref_text.strip())
+                    st.success("Saved! This reference will be loaded in all future runs.")
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Save failed: {exc}")
+            elif not _ref_text.strip():
+                st.warning("Please enter reference text before saving.")
+            else:
+                st.warning("Sheets not connected — check SHEET_ID and service account credentials.")
+
+    st.write("")
+    st.markdown("**📄 Additional Reference Material** — for this run only (optional)")
     st.caption(
-        "Add real data so Agent 3 can cite it. Without this, content uses public MOM/BCA/OSHAD data. "
-        "What to paste: MOM/BCA report stats · viAct project case study data · accident rate figures · regulatory quotes"
+        "Already have a Reference Library above? This is for one-off data specific to this run only. "
+        "What to paste: MOM/BCA report stats · viAct project data · regulatory quotes"
     )
 
     references = st.text_area(
@@ -672,9 +740,9 @@ elif step == 1:
             "e.g. MOM WSH Report 2024: falls from height = 35% of fatalities\n"
             "viAct Marina Bay Sands project: 0 incidents across 18 months\n"
             "BCA: construction sector accounts for 28% of workplace fatalities\n"
-            "Leave blank to proceed with public regulatory data only"
+            "Leave blank — Reference Library entries are loaded automatically"
         ),
-        height=130,
+        height=100,
         key="r3_refs_input",
     )
 
@@ -702,8 +770,17 @@ elif step == 1:
         use_container_width=True,
         key="r3_generate",
     ):
-        raw_refs = references.strip()
+        # Merge: Reference Library (persistent) + manual textarea (this-run only)
         selected_topic = topics[selected_idx]
+        _lib_refs = ""
+        try:
+            from push_to_sheets import get_sheets_service as _gss2, read_reference_library as _rrl
+            _svc2 = _gss2()
+            _lib_refs = _rrl(_svc2, os.getenv("SHEET_ID", ""), topic=selected_topic["topic"])
+        except Exception:
+            pass
+        manual_refs = references.strip()
+        raw_refs = "\n".join(filter(None, [_lib_refs, manual_refs]))
 
         st.session_state["r3_selected_idx"] = selected_idx
         st.session_state["r3_references"] = raw_refs

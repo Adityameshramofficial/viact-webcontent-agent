@@ -225,6 +225,84 @@ def push_webpage(
     return 1
 
 
+# ── Reference Library tab — persistent user-provided reference material ──────
+REFERENCE_TAB = "Reference_Library"
+REF_COLUMNS = ["Type", "Topic Filter", "Reference Text", "Added At"]
+
+
+def ensure_reference_tab(service, sheet_id: str) -> None:
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing_titles = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if REFERENCE_TAB not in existing_titles:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": REFERENCE_TAB}}}]},
+        ).execute()
+    result = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id, range=f"{REFERENCE_TAB}!A1:D1"
+    ).execute()
+    if not result.get("values"):
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"{REFERENCE_TAB}!A1",
+            valueInputOption="RAW",
+            body={"values": [REF_COLUMNS]},
+        ).execute()
+
+
+def read_reference_library(service, sheet_id: str, topic: str = "") -> str:
+    """
+    Load reference material from the Reference_Library tab.
+
+    Returns combined text of:
+      - All rows where Type == 'global' (always included)
+      - All rows where Type == 'topic' AND Topic Filter keyword appears in topic name
+
+    Combined result stripped to 4000 chars for Agent 3 prompt.
+    Returns "" if tab is empty or unavailable.
+    """
+    try:
+        ensure_reference_tab(service, sheet_id)
+        result = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range=f"{REFERENCE_TAB}!A:D"
+        ).execute()
+        rows = result.get("values", [])[1:]  # skip header
+        topic_lower = topic.lower()
+        parts: list[str] = []
+        for row in rows:
+            if len(row) < 3:
+                continue
+            ref_type = row[0].strip().lower()
+            topic_filter = row[1].strip().lower() if len(row) > 1 else ""
+            ref_text = row[2].strip() if len(row) > 2 else ""
+            if not ref_text:
+                continue
+            if ref_type == "global":
+                parts.append(ref_text)
+            elif ref_type == "topic" and topic_filter and topic_filter in topic_lower:
+                parts.append(ref_text)
+        combined = "\n".join(parts)
+        return combined[:4000]
+    except Exception:
+        return ""
+
+
+def add_reference(service, sheet_id: str, ref_type: str, topic_filter: str, ref_text: str) -> None:
+    """Append one row to the Reference_Library tab."""
+    from datetime import date as _date
+    try:
+        ensure_reference_tab(service, sheet_id)
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=f"{REFERENCE_TAB}!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [[ref_type, topic_filter, ref_text, _date.today().isoformat()]]},
+        ).execute()
+    except Exception as exc:
+        print(f"[ref_lib] add_reference failed: {exc}", flush=True)
+
+
 # ── Dedup Log tab — persists seen_topics across GitHub Actions runs ──────────
 DEDUP_TAB = "Dedup_Log"
 

@@ -297,7 +297,7 @@ def main():
 
     # ── Step 0c: Load dedup log from Google Sheets ────────────────────────────
     log("Step 0c: Loading topic dedup log from Google Sheets...")
-    from push_to_sheets import get_sheets_service, read_dedup_log, write_dedup_log
+    from push_to_sheets import get_sheets_service, read_dedup_log, write_dedup_log, read_reference_library
     _sheets_svc = None
     _sheet_id = os.getenv("SHEET_ID", "")
     seen_topics: dict = {}
@@ -360,12 +360,25 @@ def main():
 
         # ── Step 3: Agent 3 — generate content ────────────────────────────────
         log("Step 3: Agent 3 generating content suite via Groq/Llama...")
+
+        # Load reference library from Sheets for this specific topic
+        refs = ""
+        if _sheets_svc and _sheet_id:
+            try:
+                refs = read_reference_library(_sheets_svc, _sheet_id, topic=topic)
+                if refs:
+                    log(f"  Reference library: {len(refs)} chars loaded (global + topic-specific).")
+                else:
+                    log("  Reference library: empty — using public regulatory data only.")
+            except Exception as exc:
+                log(f"  Reference library unavailable ({exc}) — using public data only.")
+
         try:
             content = generate_structured_content(
                 topic=topic,
                 competitor_data=competitor_data,
                 viact_pages=viact_pages,
-                references="",
+                references=refs,
                 radar_topic_entry=gap,
             )
         except Exception as exc:

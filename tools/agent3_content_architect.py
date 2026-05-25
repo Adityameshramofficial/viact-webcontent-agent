@@ -38,6 +38,13 @@ ZERO-HALLUCINATION CONTRACT (non-negotiable):
   MOM WSH Act, BCA, UAE OSHAD, ISO 45001, or ILO. Write "industry data shows" if none available.
 - List all source URLs you used in the data_sources_used field.
 - List all ACCESS DENIED URLs in access_denied_urls field.
+
+REFERENCE PRIORITY RULE:
+- If Reference Material is provided below, these are REAL viAct internal project data and verified
+  stats — treat them as ground truth, higher priority than any public estimate.
+- Cite exact numbers from references. Do NOT round, paraphrase, or replace with generic figures.
+- The problem_statement and regulatory_context sections MUST incorporate these figures where relevant.
+- If a reference stat conflicts with a public estimate, always use the reference stat.
 """
 
 FULL_SYSTEM = ZERO_HALLUCINATION_BLOCK.strip() + "\n\n" + SYSTEM_INSTRUCTION
@@ -142,7 +149,7 @@ def generate_structured_content(
     viact_pages_str = "\n".join(combined_pages[:40]) if combined_pages else "https://viact.ai/"
 
     references_str = (
-        references.strip()[:1500]
+        references.strip()[:4000]
         if references.strip()
         else "[No reference provided. Use MOM/BCA/OSHAD/ISO 45001 data only.]"
     )
