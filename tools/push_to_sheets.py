@@ -225,6 +225,62 @@ def push_webpage(
     return 1
 
 
+# ── Dedup Log tab — persists seen_topics across GitHub Actions runs ──────────
+DEDUP_TAB = "Dedup_Log"
+
+
+def ensure_dedup_tab(service, sheet_id: str) -> None:
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing_titles = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if DEDUP_TAB not in existing_titles:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": DEDUP_TAB}}}]},
+        ).execute()
+    result = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id, range=f"{DEDUP_TAB}!A1:B1"
+    ).execute()
+    if not result.get("values"):
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"{DEDUP_TAB}!A1",
+            valueInputOption="RAW",
+            body={"values": [["topic_slug", "added_at"]]},
+        ).execute()
+
+
+def read_dedup_log(service, sheet_id: str) -> dict:
+    """Return {topic_slug: added_at_iso} from Dedup_Log tab. {} on first run."""
+    try:
+        ensure_dedup_tab(service, sheet_id)
+        result = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range=f"{DEDUP_TAB}!A:B"
+        ).execute()
+        seen = {}
+        for row in result.get("values", [])[1:]:
+            if len(row) >= 2:
+                seen[row[0]] = row[1]
+        return seen
+    except Exception:
+        return {}
+
+
+def write_dedup_log(service, sheet_id: str, seen: dict) -> None:
+    """Overwrite Dedup_Log tab with the current seen_topics dict."""
+    try:
+        ensure_dedup_tab(service, sheet_id)
+        rows = [["topic_slug", "added_at"]]
+        rows.extend([slug, str(added_at)] for slug, added_at in seen.items())
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"{DEDUP_TAB}!A1",
+            valueInputOption="RAW",
+            body={"values": rows},
+        ).execute()
+    except Exception as exc:
+        print(f"[dedup] Sheets write failed: {exc}", flush=True)
+
+
 if __name__ == "__main__":
     import argparse
 

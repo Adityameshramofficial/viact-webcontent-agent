@@ -248,25 +248,92 @@ def send_marketing_email(gaps: list, processed_topic: str, processed_count: int)
         return False
 
 
+def _validate_content(content: dict) -> list[str]:
+    """Quality gate — returns list of warning strings (non-blocking)."""
+    warnings = []
+    seo = content.get("seo_suite", {})
+    meta_title = seo.get("meta_title", "")
+    if len(meta_title) > 60:
+        warnings.append(f"meta_title too long: {len(meta_title)} chars (max 60)")
+    faq_count = len(content.get("schema_faqs", []))
+    if faq_count != 5:
+        warnings.append(f"schema_faqs: {faq_count} items (expected 5)")
+    for field in ["hero_section", "webpage_body", "seo_suite", "schema_faqs", "internal_links"]:
+        if not content.get(field):
+            warnings.append(f"Missing required field: {field}")
+    return warnings
+
+
 def main():
     log("=== viAct Weekly Market Radar — Auto Run ===")
 
-    # ── Step 0: Competitor new-page monitor ────────────────────────────────────
-    log("Step 0: Checking for new competitor pages this week...")
+    # ── Step 0a: Competitor new-page + freshness monitor ──────────────────────
+    log("Step 0a: Checking for new/updated competitor pages this week...")
     from competitor_page_monitor import get_new_competitor_pages
-    new_competitor_pages = get_new_competitor_pages(progress_callback=lambda phase, msg: log(msg))
+    all_competitor_signals = get_new_competitor_pages(progress_callback=lambda phase, msg: log(msg))
+    new_competitor_pages = [p for p in all_competitor_signals if p.get("change_type") != "updated_page"]
+    updated_pages = [p for p in all_competitor_signals if p.get("change_type") == "updated_page"]
     if new_competitor_pages:
-        log(f"  ALERT: {len(new_competitor_pages)} new competitor page(s) detected this week:")
+        log(f"  ALERT: {len(new_competitor_pages)} new competitor page(s):")
         for p in new_competitor_pages:
-            log(f"    [{p['competitor']}] {p['url']}")
+            log(f"    [NEW] [{p['competitor']}] {p['url']}")
+    if updated_pages:
+        log(f"  ALERT: {len(updated_pages)} competitor page(s) updated (title changed):")
+        for p in updated_pages:
+            log(f"    [UPDATED] [{p['competitor']}] {p['url']}")
+    if not all_competitor_signals:
+        log("  No new or updated competitor pages detected this week.")
+
+    # ── Step 0b: Regulatory trigger scanner ───────────────────────────────────
+    log("Step 0b: Scanning MOM / OSHAD / BCA / ISO for new regulatory publications...")
+    from regulatory_scanner import scan_regulatory_updates
+    regulatory_updates = scan_regulatory_updates(progress_callback=lambda phase, msg: log(msg))
+    if regulatory_updates:
+        log(f"  ALERT: {len(regulatory_updates)} new regulatory publication(s) found:")
+        for r in regulatory_updates:
+            log(f"    [{r['source']}] {r['title'][:70]}")
     else:
-        log("  No new competitor pages detected this week.")
+        log("  No new regulatory publications detected.")
+
+    # ── Step 0c: Load dedup log from Google Sheets ────────────────────────────
+    log("Step 0c: Loading topic dedup log from Google Sheets...")
+    from push_to_sheets import get_sheets_service, read_dedup_log, write_dedup_log
+    _sheets_svc = None
+    _sheet_id = os.getenv("SHEET_ID", "")
+    seen_topics: dict = {}
+    try:
+        _sheets_svc = get_sheets_service()
+        seen_topics = read_dedup_log(_sheets_svc, _sheet_id)
+        log(f"  {len(seen_topics)} previously seen topic(s) loaded from Sheets.")
+    except Exception as exc:
+        log(f"  Dedup log unavailable ({exc}) — deduplication skipped this run.")
 
     # ── Step 1: Agent 1 — discover gaps ───────────────────────────────────────
     log("Step 1: Agent 1 scanning competitors via Tavily...")
-    radar = discover_market_gaps(injected_pages=new_competitor_pages or None)
+    injected = (new_competitor_pages or []) + [
+        {
+            "competitor": r["source"],
+            "url": r["url"],
+            "title": r["title"],
+            "snippet": r["snippet"],
+        }
+        for r in regulatory_updates
+    ]
+    radar = discover_market_gaps(
+        injected_pages=injected or None,
+        seen_topics_override=seen_topics if seen_topics else None,
+    )
     gaps = radar.get("topics", [])
     viact_pages = radar.get("viact_known_pages", [])
+
+    # Write updated dedup log back to Sheets
+    updated_seen = radar.get("updated_seen_topics", {})
+    if updated_seen and _sheets_svc:
+        try:
+            write_dedup_log(_sheets_svc, _sheet_id, updated_seen)
+            log(f"  Dedup log saved to Sheets ({len(updated_seen)} entries).")
+        except Exception as exc:
+            log(f"  Dedup log write failed: {exc}")
 
     if not gaps:
         log("No confirmed gaps found. Check TAVILY_API_KEY and competitor list. Exiting.")
@@ -275,7 +342,6 @@ def main():
     log(f"Found {len(gaps)} gap(s): {[g['topic'] for g in gaps]}")
 
     # ── Process top 1 gap per weekly run (stay within free API limits) ─────────
-    # Change gaps[:1] to gaps[:3] to process all 3 if API quotas allow
     autorun_base = int(os.getenv("GITHUB_RUN_NUMBER", "1"))
     processed_topic = gaps[0]["topic"] if gaps else "Content Gap Discovery"
 
@@ -305,6 +371,15 @@ def main():
         except Exception as exc:
             log(f"  Agent 3 failed: {exc}")
             continue
+
+        # ── Step 3b: Content quality gate ─────────────────────────────────────
+        quality_warnings = _validate_content(content)
+        if quality_warnings:
+            log(f"  Quality gate — {len(quality_warnings)} warning(s):")
+            for w in quality_warnings:
+                log(f"    ⚠ {w}")
+        else:
+            log("  Quality gate passed.")
 
         # ── Step 4: Push to Google Sheets ──────────────────────────────────────
         log("Step 4: Pushing to Google Sheets...")

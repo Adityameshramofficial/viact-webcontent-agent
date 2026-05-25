@@ -127,9 +127,10 @@ def get_new_competitor_pages(progress_callback=None) -> list[dict]:
     is_first_run = not previous
     current: dict = {}
     new_pages: list[dict] = []
+    updated_pages: list[dict] = []
 
     all_competitors = get_all_competitors()
-    emit(f"Checking {len(all_competitors)} competitors for new pages...")
+    emit(f"Checking {len(all_competitors)} competitors for new/updated pages...")
 
     for comp in all_competitors:
         name = comp["name"]
@@ -137,34 +138,64 @@ def get_new_competitor_pages(progress_callback=None) -> list[dict]:
 
         page_entries = _get_competitor_urls(comp)
         current_urls = list(dict.fromkeys(e["url"] for e in page_entries if e["url"]))
+        # Store title map for freshness detection
+        current_titles = {
+            e["url"]: e.get("title", "")
+            for e in page_entries if e["url"]
+        }
 
         current[name] = {
             "urls": current_urls,
+            "titles": current_titles,
             "saved_at": datetime.datetime.now().isoformat(),
         }
 
         if not is_first_run:
             prev_urls = set(previous.get(name, {}).get("urls", []))
+            prev_titles = previous.get(name, {}).get("titles", {})
+
             for entry in page_entries:
                 url = entry["url"]
-                if url and url not in prev_urls:
+                title = entry.get("title", "")
+                if not url:
+                    continue
+
+                if url not in prev_urls:
                     new_pages.append({
                         "competitor": name,
                         "domain": comp["url"],
                         "url": url,
-                        "title": entry.get("title", ""),
+                        "title": title,
                         "snippet": entry.get("snippet", ""),
+                        "change_type": "new_page",
                     })
-                    emit(f"    NEW: {url}")
+                    emit(f"    NEW PAGE: {url}")
+                elif (
+                    title
+                    and url in prev_titles
+                    and prev_titles[url]
+                    and title != prev_titles[url]
+                ):
+                    updated_pages.append({
+                        "competitor": name,
+                        "domain": comp["url"],
+                        "url": url,
+                        "title": title,
+                        "old_title": prev_titles[url],
+                        "snippet": entry.get("snippet", ""),
+                        "change_type": "updated_page",
+                    })
+                    emit(f"    UPDATED: {url} (title changed)")
 
     save_snapshot(current)
 
     if is_first_run:
-        emit("First run — baseline snapshot saved. No new pages reported.")
+        emit("First run — baseline snapshot saved. No pages reported.")
     else:
-        emit(f"Scan complete. {len(new_pages)} new competitor page(s) found.")
+        emit(f"Scan complete. {len(new_pages)} new page(s), {len(updated_pages)} updated page(s).")
 
-    return new_pages
+    # Return new pages first, then updated pages (both are high-priority signals)
+    return new_pages + updated_pages
 
 
 if __name__ == "__main__":

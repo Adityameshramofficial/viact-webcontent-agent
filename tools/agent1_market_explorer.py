@@ -133,7 +133,7 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
     return data.get("topics", [])
 
 
-def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | None = None, industry: str = "construction safety") -> dict:
+def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | None = None, industry: str = "construction safety", seen_topics_override: dict | None = None) -> dict:
     """
     Main function. Discovers 3 confirmed content gaps for viAct.
 
@@ -159,8 +159,8 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    # ── Topic deduplication: load seen topics (skip if within 12 weeks) ──────────
-    seen_topics = _load_seen_topics()
+    # ── Topic deduplication: prefer Sheets-based override, fall back to local file ─
+    seen_topics = seen_topics_override if seen_topics_override is not None else _load_seen_topics()
     dedup_cutoff = (datetime.datetime.now() - datetime.timedelta(weeks=12)).isoformat()
 
     # ── Step 1: viAct existing pages ────────────────────────────────────────────
@@ -391,7 +391,9 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
     # Save confirmed topics so they're skipped for the next 12 weeks
     for gap in top_3:
         seen_topics[_topic_slug(gap["topic"])] = datetime.datetime.now().isoformat()
-    _save_seen_topics(seen_topics)
+    # Only write local file if not using Sheets-based override (caller writes Sheets)
+    if seen_topics_override is None:
+        _save_seen_topics(seen_topics)
 
     # ── Step 6: Build full competitor landscape (all competitors + their pages) ─
     competitor_landscape: dict = {}
@@ -412,6 +414,7 @@ def discover_market_gaps(progress_callback=None, injected_pages: list[dict] | No
         "total_competitors_scanned": scanned_count,
         "scan_timestamp": timestamp,
         "competitor_landscape": competitor_landscape,
+        "updated_seen_topics": seen_topics,  # caller writes this back to Sheets
     }
 
 
