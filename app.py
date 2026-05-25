@@ -475,9 +475,32 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
 
         st.markdown("<hr/>", unsafe_allow_html=True)
 
-        # ── 3-phase progress panel ─────────────────────────────────────────────
-        if "r3_progress" not in st.session_state:
-            st.session_state["r3_progress"] = {"competitors": [], "topics": [], "gaps": []}
+        # ── Pre-flight: quick Tavily key validation ────────────────────────────
+        _tavily_key = os.getenv("TAVILY_API_KEY", "")
+        _tavily_ok = False
+        try:
+            import requests as _rq
+            _r = _rq.post("https://api.tavily.com/search", json={
+                "api_key": _tavily_key, "query": "test", "max_results": 1
+            }, timeout=12)
+            _tavily_ok = _r.status_code == 200
+            if not _tavily_ok:
+                _err_body = _r.json() if _r.headers.get("content-type","").startswith("application/json") else {}
+                _err_msg = _err_body.get("message") or _err_body.get("detail") or f"HTTP {_r.status_code}"
+                st.error(
+                    f"**Tavily API key failed** ({_err_msg}).  "
+                    f"Key in use: `{_tavily_key[:20]}...`  \n\n"
+                    "**Fix:** Get a new free key at [tavily.com](https://tavily.com) "
+                    "and update it in `.env` (local) or Streamlit Cloud → Settings → Secrets."
+                )
+        except Exception as _te:
+            st.error(f"Tavily connection error: {_te}")
+
+        if not _tavily_ok:
+            st.stop()
+
+        # ── 3-phase progress panel (reset on every new run) ───────────────────
+        st.session_state["r3_progress"] = {"competitors": [], "topics": [], "gaps": [], "logs": []}
 
         progress_placeholder = st.empty()
 
@@ -486,6 +509,7 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
             comp_items  = prog["competitors"]   # "Name|N" strings
             topic_items = prog["topics"]         # plain topic name strings
             gap_items   = prog["gaps"]           # "CONFIRMED|name|score" or "SKIP|name|url"
+            log_items   = prog.get("logs", [])   # general agent1 messages
 
             n_comp  = len(comp_items)
             n_topic = len(topic_items)
@@ -549,6 +573,18 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
                 f"</div>"
                 + (f"<div style='padding:8px 14px;'>{gap_rows}</div>" if gap_rows else "")
 
+                # Log panel — shows errors, dedup notices, viact.ai check details
+                + (
+                    f"<div style='padding:10px 14px; background:rgba(139,148,158,0.04); border-top:1px solid #2d303a;'>"
+                    f"<div style='color:#8b949e; font-size:0.74rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;'>Agent Log</div>"
+                    + "".join(
+                        f"<div style='padding:2px 0; color:{'#f85149' if any(w in m.lower() for w in ('failed','error','warn','missing')) else '#484f58'}; font-size:0.76rem; font-family:monospace;'>{_t(m)}</div>"
+                        for m in log_items[-20:]
+                    )
+                    + "</div>"
+                    if log_items else ""
+                )
+
                 + "</div>"
             )
             progress_placeholder.markdown(html_out, unsafe_allow_html=True)
@@ -556,7 +592,10 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
         def _ui_progress(phase: str, message: str):
             if phase in ("competitors", "topics", "gaps"):
                 st.session_state["r3_progress"][phase].append(message)
-                _render_progress()
+            else:
+                # agent1 general log — capture errors, dedup notices, etc.
+                st.session_state["r3_progress"]["logs"].append(message)
+            _render_progress()
 
         with st.spinner("Agent 1 running Tavily searches and confirming gaps..."):
             try:
@@ -565,7 +604,16 @@ COMPETITOR WEBSITES AGENT 1 WILL SCAN &nbsp;<span style="color:#ff6a3d;">({len(_
                     industry=st.session_state.get("r3_industry", "construction safety"),
                 )
                 if not radar_results.get("topics"):
-                    st.warning("No confirmed gaps found. Try again or check your Tavily API key.")
+                    _logs = st.session_state.get("r3_progress", {}).get("logs", [])
+                    _last_logs = "  \n".join(f"`{m}`" for m in _logs[-5:]) if _logs else ""
+                    st.warning(
+                        "**No confirmed gaps found this run.**  \n"
+                        "Possible reasons: all topics are already covered by viact.ai, "
+                        "topics were recently generated (12-week dedup), or all competitor "
+                        "searches returned low-signal results.  \n\n"
+                        + (f"**Last agent messages:**  \n{_last_logs}  \n\n" if _last_logs else "")
+                        + "Try a different **Industry Vertical** or click **Run again**."
+                    )
                 else:
                     st.session_state["r3_results"] = radar_results
                     st.session_state["r3_step"] = 1
