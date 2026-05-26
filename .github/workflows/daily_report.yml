@@ -1,0 +1,32 @@
+name: Daily Automation Report Email
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Every day at 1:00 AM UTC = 9:00 AM SGT
+  workflow_dispatch:        # Manual trigger from GitHub Actions tab
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send Daily Report Email
+        env:
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_TO_EMAIL: ${{ secrets.REPORT_TO_EMAIL }}
+          REPORT_CC_EMAIL: ${{ secrets.REPORT_CC_EMAIL }}
+        run: python daily_report_script.py
