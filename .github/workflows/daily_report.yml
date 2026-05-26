@@ -3,12 +3,7 @@ name: Daily Automation Report Email
 on:
   schedule:
     - cron: '25 12 * * *'   # Every day at 12:25 UTC = 5:55 PM IST
-  workflow_dispatch:
-    inputs:
-      approved:
-        description: "Send to Gary & Surendra? Type 'yes' to approve and send."
-        required: false
-        default: 'no'
+  workflow_dispatch:         # Manual trigger for testing
 
 jobs:
   send-report:
@@ -32,5 +27,4 @@ jobs:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          APPROVED: ${{ github.event.inputs.approved || 'no' }}
         run: python daily_report_script.py

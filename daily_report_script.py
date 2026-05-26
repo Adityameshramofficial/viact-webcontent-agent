@@ -1,17 +1,8 @@
 """
 viAct Automation — Daily Report Email
 
-HOW IT WORKS (two-step approval):
-
-  STEP 1 — Auto-preview at 5:55 PM IST every day (GitHub Actions cron):
-    Generates today's report and emails a PREVIEW to Aditya only.
-    Gary and Surendra do NOT receive anything yet.
-
-  STEP 2 — Aditya approves:
-    Review the preview email. If happy, go to:
-    GitHub → Actions → "Daily Automation Report Email" → Run workflow
-    In the 'approved' input, type: yes
-    This sends the final email to Gary and Surendra.
+Runs every day at 5:55 PM IST via GitHub Actions cron.
+Sends report automatically to Gary and Surendra (CC: Aditya).
 
 Required GitHub Secrets:
   GCP_SERVICE_ACCOUNT  — Google Sheets service account JSON
@@ -19,7 +10,6 @@ Required GitHub Secrets:
   RESEND_API_KEY       — re_ds6KxJPG_BWrArVtb5aAh6hcYfcfFZYQu
 """
 import datetime
-import json
 import os
 import subprocess
 import sys
@@ -28,11 +18,10 @@ import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
-ADITYA_EMAIL  = "aditya.meshram@viact.ai"
-GARY_EMAIL    = "gary.ng@viact.ai"
+GARY_EMAIL     = "gary.ng@viact.ai"
 SURENDRA_EMAIL = "surendra.singh@viact.ai"
-
-RESEND_FROM   = "Aditya Meshram <onboarding@resend.dev>"
+ADITYA_EMAIL   = "aditya.meshram@viact.ai"
+RESEND_FROM    = "Aditya Meshram <onboarding@resend.dev>"
 
 
 def _env(key: str, default: str = "") -> str:
@@ -61,10 +50,9 @@ def _get_sheets_data() -> dict:
         week_start = (today - datetime.timedelta(days=today.weekday())).isoformat()
         today_str  = today.isoformat()
 
-        total_pages    = len(rows)
-        this_week_rows = [r for r in rows if r and r[0] >= week_start]
-        today_rows     = [r for r in rows if r and r[0] == today_str]
-
+        total_pages     = len(rows)
+        this_week_rows  = [r for r in rows if r and r[0] >= week_start]
+        today_rows      = [r for r in rows if r and r[0] == today_str]
         this_week_pages = len(this_week_rows)
         today_pages     = len(today_rows)
 
@@ -79,7 +67,6 @@ def _get_sheets_data() -> dict:
             latest_topics.append({
                 "date":         r[0]  if len(r) > 0  else "",
                 "topic":        r[2]  if len(r) > 2  else "",
-                "source":       r[13] if len(r) > 13 else "",
                 "content_type": "Blog" if is_blog else "Pillar",
             })
             if len(latest_topics) >= 5:
@@ -132,8 +119,8 @@ def _get_todays_commits() -> list[dict]:
         return []
 
 
-# ── 3. Build report HTML ──────────────────────────────────────────────────────
-def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tuple[str, str]:
+# ── 3. Build HTML email ───────────────────────────────────────────────────────
+def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
 
     run_date      = datetime.datetime.now(
         datetime.timezone(datetime.timedelta(hours=5, minutes=30))
@@ -155,7 +142,6 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
         if sheet_id else "https://docs.google.com/spreadsheets"
     )
     dashboard_url = "https://viact-webcontent-agent-a7yrhfuaifju4prfqntzku.streamlit.app/"
-    approve_url   = "https://github.com/Adityameshramofficial/viact-webcontent-agent/actions/workflows/daily_report.yml"
 
     days_to_monday = (7 - datetime.date.today().weekday()) % 7 or 7
     next_monday    = (datetime.date.today() + datetime.timedelta(days=days_to_monday)).strftime("%d %b %Y")
@@ -164,45 +150,27 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
     status_label = "Content Generated Today" if today_new > 0 else ("Run Day" if is_run_day else "Monitoring Active")
     status_color = "#22c55e" if today_new > 0 else ("#f59e0b" if is_run_day else "#3b82f6")
 
-    # Preview banner (only shown in preview email to Aditya)
-    preview_banner = ""
-    if is_preview:
-        preview_banner = f"""
-  <div style="background:#7c3aed22;border:2px solid #7c3aed;border-radius:8px;
-    padding:14px 18px;margin-bottom:20px;text-align:center;">
-    <p style="margin:0 0 6px;color:#a78bfa;font-weight:800;font-size:14px;
-      text-transform:uppercase;letter-spacing:1px;">⚠ PREVIEW — Not Sent Yet</p>
-    <p style="margin:0 0 12px;color:#94a3b8;font-size:13px;">
-      This is your approval preview. Gary and Surendra have NOT received this email.<br>
-      Review the report below. If everything looks correct, click the button to send.
-    </p>
-    <a href="{approve_url}" style="display:inline-block;background:#7c3aed;color:#fff;
-      padding:10px 24px;border-radius:7px;text-decoration:none;font-size:13px;
-      font-weight:700;">✅ Go to GitHub Actions → Run Workflow → Type 'yes' to Send</a>
-  </div>"""
-
     # Topic rows
     topic_rows_html = ""
     topic_rows_text = ""
     for t in topics:
         badge_color = "#7c3aed" if t["content_type"] == "Blog" else "#0891b2"
-        topic_rows_html += f"""
-        <tr style="border-bottom:1px solid #1e293b;">
-          <td style="padding:8px 12px;color:#64748b;font-size:12px;white-space:nowrap;">{t['date']}</td>
-          <td style="padding:8px 12px;color:#e2e8f0;font-size:13px;font-weight:500;">{t['topic'][:65]}</td>
-          <td style="padding:8px 12px;text-align:center;">
-            <span style="background:{badge_color}22;color:{badge_color};border:1px solid {badge_color}55;
-              border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;">{t['content_type']}</span>
-          </td>
-        </tr>"""
+        topic_rows_html += (
+            f"<tr style='border-bottom:1px solid #1e293b;'>"
+            f"<td style='padding:8px 12px;color:#64748b;font-size:12px;white-space:nowrap;'>{t['date']}</td>"
+            f"<td style='padding:8px 12px;color:#e2e8f0;font-size:13px;font-weight:500;'>{t['topic'][:65]}</td>"
+            f"<td style='padding:8px 12px;text-align:center;'>"
+            f"<span style='background:{badge_color}22;color:{badge_color};border:1px solid {badge_color}55;"
+            f"border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;'>{t['content_type']}</span>"
+            f"</td></tr>"
+        )
         topic_rows_text += f"  {t['date']}  {t['topic'][:55]}  [{t['content_type']}]\n"
 
-    # Improvements section
+    # Improvements
     if commits:
         commit_rows_html = "".join(
             f"<tr style='border-bottom:1px solid #1e293b;'>"
-            f"<td style='padding:7px 12px;width:60px;'>"
-            f"<span style='font-family:monospace;color:#475569;font-size:11px;'>{c['hash']}</span></td>"
+            f"<td style='padding:7px 12px;width:60px;font-family:monospace;color:#475569;font-size:11px;'>{c['hash']}</td>"
             f"<td style='padding:7px 12px;color:#e2e8f0;font-size:13px;'>{c['display'][:90]}</td>"
             f"</tr>"
             for c in commits
@@ -229,7 +197,7 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
         improvements_section = ""
         improvements_text    = ""
 
-    # Input / Output section
+    # Input / Output
     input_output_section = f"""
     <div style="margin-bottom:20px;">
       <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
@@ -245,7 +213,7 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
                 <li>viAct.ai sitemap (auto-fetched, live)</li>
                 <li>5 regulatory sources (MOM, WSH, BCA, OSHAD, ISO 45001)</li>
                 <li>Reference Library (viAct project stats &amp; case studies)</li>
-                <li>12-week dedup log — {dedup} topics tracked so far</li>
+                <li>12-week dedup log — {dedup} topics tracked</li>
               </ul>
             </div>
           </td>
@@ -255,7 +223,7 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
                 text-transform:uppercase;letter-spacing:1px;">OUTPUT (per Monday run)</p>
               <ul style="margin:0;padding-left:16px;color:#94a3b8;font-size:12px;line-height:1.9;">
                 <li><strong style="color:#e2e8f0;">1 Pillar Page</strong> — hero, 5 FAQs, regulatory context, schema JSON-LD</li>
-                <li><strong style="color:#e2e8f0;">3 Supporting Blogs</strong> — regulatory / ROI / how-to angles, 3 FAQs each</li>
+                <li><strong style="color:#e2e8f0;">3 Supporting Blogs</strong> — regulatory / ROI / how-to, 3 FAQs each</li>
                 <li>SEO meta title + description + primary keyword</li>
                 <li>Internal links (34+ viAct product pages)</li>
                 <li>2 AI image prompts (Nano Banana ready)</li>
@@ -275,6 +243,25 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
       </div>
     </div>"""
 
+    topics_section = ""
+    if topics:
+        topics_section = (
+            '<div style="margin-bottom:20px;">'
+            '<p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;'
+            'letter-spacing:1.5px;margin:0 0 10px;">Latest Generated Topics</p>'
+            '<table style="width:100%;border-collapse:collapse;background:#0f172a;'
+            'border:1px solid #334155;border-radius:8px;overflow:hidden;">'
+            '<thead><tr style="background:#1e293b;border-bottom:1px solid #334155;">'
+            '<th style="padding:8px 12px;text-align:left;color:#64748b;font-size:11px;'
+            'font-weight:700;text-transform:uppercase;">Date</th>'
+            '<th style="padding:8px 12px;text-align:left;color:#64748b;font-size:11px;'
+            'font-weight:700;text-transform:uppercase;">Topic</th>'
+            '<th style="padding:8px 12px;text-align:center;color:#64748b;font-size:11px;'
+            'font-weight:700;text-transform:uppercase;">Type</th>'
+            '</tr></thead>'
+            f'<tbody>{topic_rows_html}</tbody></table></div>'
+        )
+
     html_body = f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -282,62 +269,47 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
 <div style="max-width:680px;margin:28px auto;background:#1e293b;border-radius:12px;
   overflow:hidden;border:1px solid #334155;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
 
-  <!-- Header -->
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1a2744 100%);
     padding:26px 32px;border-bottom:1px solid #334155;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;
-      flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
       <div>
         <p style="color:#475569;margin:0 0 4px;font-size:11px;letter-spacing:2px;
           text-transform:uppercase;font-weight:700;">viAct Automation System</p>
-        <h1 style="color:#f1f5f9;margin:0;font-size:20px;font-weight:800;">
-          Daily Automation Report</h1>
-        <p style="color:#475569;margin:5px 0 0;font-size:12px;">
-          {run_date} &nbsp;·&nbsp; {today_weekday}</p>
+        <h1 style="color:#f1f5f9;margin:0;font-size:20px;font-weight:800;">Daily Automation Report</h1>
+        <p style="color:#475569;margin:5px 0 0;font-size:12px;">{run_date} &nbsp;·&nbsp; {today_weekday}</p>
       </div>
-      <span style="background:{status_color}18;color:{status_color};
-        border:1px solid {status_color}44;border-radius:20px;padding:5px 14px;
-        font-size:12px;font-weight:700;white-space:nowrap;">{status_label}</span>
+      <span style="background:{status_color}18;color:{status_color};border:1px solid {status_color}44;
+        border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;
+        white-space:nowrap;">{status_label}</span>
     </div>
   </div>
 
   <div style="padding:24px 32px;">
 
-    {preview_banner}
-
-    <!-- Metrics -->
     <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
       <tr>
         <td style="width:25%;padding-right:6px;vertical-align:top;">
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;
-            padding:14px;text-align:center;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
             <div style="color:#ff6a3d;font-size:30px;font-weight:800;line-height:1;">{total}</div>
-            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;
-              letter-spacing:1px;margin-top:5px;">Total Pages</div>
+            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Total Pages</div>
           </div>
         </td>
         <td style="width:25%;padding:0 6px;vertical-align:top;">
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;
-            padding:14px;text-align:center;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
             <div style="color:#3b82f6;font-size:30px;font-weight:800;line-height:1;">{this_week}</div>
-            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;
-              letter-spacing:1px;margin-top:5px;">This Week</div>
+            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">This Week</div>
           </div>
         </td>
         <td style="width:25%;padding:0 6px;vertical-align:top;">
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;
-            padding:14px;text-align:center;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
             <div style="color:#22c55e;font-size:30px;font-weight:800;line-height:1;">{today_new}</div>
-            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;
-              letter-spacing:1px;margin-top:5px;">Today</div>
+            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Today</div>
           </div>
         </td>
         <td style="width:25%;padding-left:6px;vertical-align:top;">
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;
-            padding:14px;text-align:center;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
             <div style="color:#a855f7;font-size:30px;font-weight:800;line-height:1;">{dedup}</div>
-            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;
-              letter-spacing:1px;margin-top:5px;">Topics Tracked</div>
+            <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Topics Tracked</div>
           </div>
         </td>
       </tr>
@@ -347,10 +319,8 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
 
     {input_output_section}
 
-    <!-- Latest Topics -->
-    {'<div style="margin-bottom:20px;"><p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 10px;">Latest Generated Topics</p><table style="width:100%;border-collapse:collapse;background:#0f172a;border:1px solid #334155;border-radius:8px;overflow:hidden;"><thead><tr style="background:#1e293b;border-bottom:1px solid #334155;"><th style="padding:8px 12px;text-align:left;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Date</th><th style="padding:8px 12px;text-align:left;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Topic</th><th style="padding:8px 12px;text-align:center;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Type</th></tr></thead><tbody>' + topic_rows_html + '</tbody></table></div>' if topics else ""}
+    {topics_section}
 
-    <!-- System Status -->
     <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;
       padding:14px 16px;margin-bottom:20px;">
       <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
@@ -362,38 +332,30 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
         </tr>
         <tr>
           <td style="padding:4px 0;color:#64748b;">Next Scheduled Run</td>
-          <td style="padding:4px 0;color:#e2e8f0;text-align:right;font-weight:600;">
-            Monday, {next_monday} &nbsp;·&nbsp; 9:30 AM IST</td>
+          <td style="padding:4px 0;color:#e2e8f0;text-align:right;font-weight:600;">Monday, {next_monday} &nbsp;·&nbsp; 9:30 AM IST</td>
         </tr>
         <tr>
           <td style="padding:4px 0;color:#64748b;">Automation</td>
-          <td style="padding:4px 0;color:#22c55e;text-align:right;font-weight:700;">
-            LIVE &nbsp;·&nbsp; GitHub Actions (zero manual input)</td>
+          <td style="padding:4px 0;color:#22c55e;text-align:right;font-weight:700;">LIVE &nbsp;·&nbsp; GitHub Actions (zero manual input)</td>
         </tr>
         <tr>
           <td style="padding:4px 0;color:#64748b;">Anti-hallucination</td>
-          <td style="padding:4px 0;color:#e2e8f0;text-align:right;font-weight:600;">
-            Tavily live-search verified &nbsp;+&nbsp; Firecrawl only</td>
+          <td style="padding:4px 0;color:#e2e8f0;text-align:right;font-weight:600;">Tavily live-search + Firecrawl verified</td>
         </tr>
       </table>
     </div>
 
-    <!-- CTAs -->
     <table style="width:100%;border-collapse:collapse;">
       <tr>
         <td style="padding-right:6px;">
           <a href="{sheet_url}" style="display:block;background:#ff6a3d;color:#fff;
             padding:12px 0;border-radius:7px;text-decoration:none;font-size:13px;
-            font-weight:700;text-align:center;">
-            View Output in Google Sheets &rarr;
-          </a>
+            font-weight:700;text-align:center;">View Output in Google Sheets &rarr;</a>
         </td>
         <td style="padding-left:6px;">
           <a href="{dashboard_url}" style="display:block;background:#1e293b;color:#94a3b8;
             padding:12px 0;border-radius:7px;text-decoration:none;font-size:13px;
-            font-weight:600;text-align:center;border:1px solid #334155;">
-            Open Live Dashboard &rarr;
-          </a>
+            font-weight:600;text-align:center;border:1px solid #334155;">Open Live Dashboard &rarr;</a>
         </td>
       </tr>
     </table>
@@ -411,46 +373,43 @@ def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tup
 </html>"""
 
     text_body = (
-        f"viAct Automation — Daily Report\n"
-        f"{run_date}\n"
-        f"{'='*60}\n\n"
+        f"viAct Automation — Daily Report\n{run_date}\n{'='*60}\n\n"
         f"METRICS:\n"
         f"  Total Pages    : {total}\n"
         f"  This Week      : {this_week} ({pillar_cnt} pillar + {blog_cnt} blog)\n"
         f"  Today          : {today_new}\n"
         f"  Topics Tracked : {dedup}\n\n"
         f"{improvements_text}"
-        f"INPUT:\n"
-        f"  - 8 competitor sites (Protex AI, Intenseye, Visionify, Wakecap, etc.)\n"
-        f"  - viAct.ai sitemap (live)\n"
-        f"  - 5 regulatory sources (MOM, WSH, BCA, OSHAD, ISO 45001)\n"
-        f"  - Reference Library ({dedup} topics tracked)\n\n"
-        f"OUTPUT (per Monday run):\n"
-        f"  - 1 Pillar page (hero, 5 FAQs, regulatory context, schema JSON-LD)\n"
-        f"  - 3 Supporting blogs (regulatory / ROI / how-to)\n"
-        f"  - SEO meta, internal links, image prompts\n"
-        f"  - Auto-pushed to Google Sheets\n\n"
+        f"INPUT: 8 competitors, viAct sitemap, 5 regulatory sources, Reference Library\n"
+        f"OUTPUT: 1 pillar + 3 blogs + SEO meta + internal links → auto-pushed to Sheets\n\n"
         f"LATEST TOPICS:\n{topic_rows_text}\n"
-        f"STATUS: Last run {last_run} | Next: Monday {next_monday} 9:30 AM IST\n\n"
-        f"Google Sheet : {sheet_url}\n"
-        f"Dashboard    : {dashboard_url}\n"
+        f"Last run: {last_run} | Next Monday run: {next_monday} 9:30 AM IST\n\n"
+        f"Sheet: {sheet_url}\nDashboard: {dashboard_url}\n"
     )
 
     return html_body, text_body
 
 
 # ── 4. Send via Resend ────────────────────────────────────────────────────────
-def _send(api_key: str, to: list[str], cc: list[str],
-          subject: str, html: str, text: str) -> bool:
-    payload: dict = {
-        "from":    RESEND_FROM,
-        "to":      to,
-        "subject": subject,
-        "html":    html,
-        "text":    text,
-    }
-    if cc:
-        payload["cc"] = cc
+def send_daily_report() -> bool:
+    api_key = _env("RESEND_API_KEY")
+    if not api_key:
+        log("RESEND_API_KEY not set — add to GitHub Secrets.")
+        return False
+
+    today_str = datetime.date.today().strftime("%d %b %Y")
+    subject   = f"viAct Automation Daily Report — {today_str}"
+
+    log("Reading Sheets data...")
+    data = _get_sheets_data() or {}
+    log(f"  Total: {data.get('total_pages', 0)} pages | This week: {data.get('this_week_pages', 0)}")
+
+    log("Reading today's git commits...")
+    commits = _get_todays_commits()
+    log(f"  {len(commits)} commit(s) today")
+
+    html_body, text_body = _build_email(data, commits)
+
     try:
         resp = requests.post(
             "https://api.resend.com/emails",
@@ -458,61 +417,23 @@ def _send(api_key: str, to: list[str], cc: list[str],
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type":  "application/json",
             },
-            json=payload,
+            json={
+                "from":    RESEND_FROM,
+                "to":      [GARY_EMAIL, SURENDRA_EMAIL],
+                "cc":      [ADITYA_EMAIL],
+                "subject": subject,
+                "html":    html_body,
+                "text":    text_body,
+            },
             timeout=15,
         )
         resp.raise_for_status()
-        log(f"Sent to {to} CC {cc} — id: {resp.json().get('id', '?')}")
+        log(f"Report sent → Gary ({GARY_EMAIL}), Surendra ({SURENDRA_EMAIL}), CC: Aditya")
+        log(f"Resend ID: {resp.json().get('id', '?')}")
         return True
     except Exception as exc:
         log(f"Send failed: {exc}")
         return False
-
-
-def send_daily_report() -> bool:
-    api_key  = _env("RESEND_API_KEY")
-    approved = _env("APPROVED", "no").strip().lower() == "yes"
-
-    if not api_key:
-        log("RESEND_API_KEY not set — add to GitHub Secrets.")
-        return False
-
-    today_str = datetime.date.today().strftime("%d %b %Y")
-
-    log("Reading Sheets data...")
-    data = _get_sheets_data() or {}
-    log(f"  Total: {data.get('total_pages',0)} pages | This week: {data.get('this_week_pages',0)}")
-
-    log("Reading today's git commits...")
-    commits = _get_todays_commits()
-    log(f"  {len(commits)} commit(s) today")
-
-    if not approved:
-        # ── STEP 1: Preview email to Aditya only ──────────────────────────────
-        log("Mode: PREVIEW — sending to Aditya for approval...")
-        html, text = _build_report_html(data, commits, is_preview=True)
-        subject    = f"[PREVIEW — APPROVE TO SEND] viAct Daily Report — {today_str}"
-        ok = _send(api_key,
-                   to=[ADITYA_EMAIL], cc=[],
-                   subject=subject, html=html, text=text)
-        if ok:
-            log("Preview sent to Aditya.")
-            log("To send to Gary & Surendra:")
-            log("  GitHub → Actions → 'Daily Automation Report Email'")
-            log("  → Run workflow → approved = yes")
-        return ok
-
-    else:
-        # ── STEP 2: Final email to Gary + Surendra (CC Aditya) ────────────────
-        log("Mode: APPROVED — sending final report to Gary & Surendra...")
-        html, text = _build_report_html(data, commits, is_preview=False)
-        subject    = f"viAct Automation Daily Report — {today_str}"
-        ok = _send(api_key,
-                   to=[GARY_EMAIL, SURENDRA_EMAIL], cc=[ADITYA_EMAIL],
-                   subject=subject, html=html, text=text)
-        if ok:
-            log(f"Final report sent to Gary ({GARY_EMAIL}) and Surendra ({SURENDRA_EMAIL}).")
-        return ok
 
 
 if __name__ == "__main__":
