@@ -203,7 +203,7 @@ def push_webpage(
         content.get("webpage_body", ""),
         json.dumps(seo, ensure_ascii=False),
         json.dumps(content.get("schema_faqs", []), ensure_ascii=False),
-        content.get("schema_json_ld", ""),
+        content.get("schema_json_ld", "") if isinstance(content.get("schema_json_ld", ""), str) else json.dumps(content.get("schema_json_ld", {}), ensure_ascii=False),
         json.dumps(content.get("extended_faqs", []), ensure_ascii=False),
         json.dumps(content.get("geo_package", {}), ensure_ascii=False),
         json.dumps(content.get("nano_banana_prompts", content.get("visual_strategy", [])), ensure_ascii=False),

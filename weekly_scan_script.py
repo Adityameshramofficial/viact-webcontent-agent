@@ -343,11 +343,11 @@ def main():
 
     log(f"Found {len(gaps)} gap(s): {[g['topic'] for g in gaps]}")
 
-    # ── Process top 1 gap per weekly run (stay within free API limits) ─────────
+    # ── Process top 2 gaps per weekly run (1 pillar + 3 blogs each) ────────────
     autorun_base = int(os.getenv("GITHUB_RUN_NUMBER", "1"))
     processed_topic = gaps[0]["topic"] if gaps else "Content Gap Discovery"
 
-    for i, gap in enumerate(gaps[:1], 1):
+    for i, gap in enumerate(gaps[:2], 1):
         topic = gap["topic"]
         log(f"\n--- Gap {i}: '{topic}' ---")
 
