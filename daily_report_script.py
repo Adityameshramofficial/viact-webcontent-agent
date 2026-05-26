@@ -18,6 +18,8 @@ import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
+# TEST MODE — sending to Shoyab first for review before Gary/Surendra
+SHOYAB_EMAIL   = "shoyab.ali@viact.ai"
 GARY_EMAIL     = "gary.ng@viact.ai"
 SURENDRA_EMAIL = "surendra.singh@viact.ai"
 ADITYA_EMAIL   = "aditya.meshram@viact.ai"
@@ -419,7 +421,7 @@ def send_daily_report() -> bool:
             },
             json={
                 "from":    RESEND_FROM,
-                "to":      [GARY_EMAIL, SURENDRA_EMAIL],
+                "to":      [SHOYAB_EMAIL],  # TEST — switch to [GARY_EMAIL, SURENDRA_EMAIL] after approval
                 "cc":      [ADITYA_EMAIL],
                 "subject": subject,
                 "html":    html_body,
@@ -428,7 +430,7 @@ def send_daily_report() -> bool:
             timeout=15,
         )
         resp.raise_for_status()
-        log(f"Report sent → Gary ({GARY_EMAIL}), Surendra ({SURENDRA_EMAIL}), CC: Aditya")
+        log(f"Test report sent → Shoyab ({SHOYAB_EMAIL}), CC: Aditya (Gary/Surendra pending approval)")
         log(f"Resend ID: {resp.json().get('id', '?')}")
         return True
     except Exception as exc:
