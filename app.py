@@ -1344,14 +1344,15 @@ with tab_industry:
         st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL SECTIONS</p>", unsafe_allow_html=True)
 
         (
-            _ip_tab_dl, _ip_tab_sources, _ip_tab_body, _ip_tab_wix, _ip_tab_seo,
-            _ip_tab_faqs, _ip_tab_schema, _ip_tab_geo,
+            _ip_tab_dl, _ip_tab_sources, _ip_tab_body, _ip_tab_wix, _ip_tab_cms,
+            _ip_tab_seo, _ip_tab_faqs, _ip_tab_schema, _ip_tab_geo,
             _ip_tab_visual, _ip_tab_links, _ip_tab_raw,
         ) = st.tabs([
             "📋 Decision Logic",
             "🔍 Proof & Sources",
             "📄 Page Body",
             "🌐 Wix HTML",
+            "🗂️ Wix CMS Fields",
             "🔎 SEO Tags",
             "❓ FAQs",
             "🏷️ Schema Markup",
@@ -1396,6 +1397,54 @@ with tab_industry:
                     _ip_html_out = "<p>HTML not available — regenerate content.</p>"
             st.text_area("Clean HTML (paste into Wix Embed Code)", _ip_html_out, height=500, key="ip_wix_html")
             st.caption("Tip: In Wix editor → Add Elements → Embed Code → Embed HTML → paste above")
+
+        with _ip_tab_cms:
+            _ip_cms = _ip_content.get("industry_cms_fields", {})
+            if not _ip_cms:
+                st.info("No CMS fields in this output — regenerate to get individual Wix CMS copy-paste fields.")
+            else:
+                st.markdown(
+                    "<div style='background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.83rem; color:#58a6ff;'>"
+                    "<strong>Wix CMS Fields</strong> — Each field maps to one dynamic field in your Wix CMS dataset. Copy one field at a time directly into the matching CMS field."
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:10px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Hero Section</div>", unsafe_allow_html=True)
+                st.text_input("Hero Subheadline", _ip_cms.get("hero_subheadline", ""), key="ip_cms_hero_sub")
+                st.text_area("Hero Body Copy", _ip_cms.get("hero_body_copy", ""), height=90, key="ip_cms_hero_body")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Impact Section</div>", unsafe_allow_html=True)
+                st.text_input("Impact Section Title", _ip_cms.get("impact_section_title", ""), key="ip_cms_impact_title")
+                st.text_input("Impact Subtitle", _ip_cms.get("impact_subtitle", ""), key="ip_cms_impact_sub")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Metrics (3 Stats)</div>", unsafe_allow_html=True)
+                for _mi, _met in enumerate(_ip_cms.get("metrics", []), 1):
+                    _mc1, _mc2 = st.columns([1, 2])
+                    with _mc1:
+                        st.text_input(f"Metric {_mi} Label", _met.get("label", ""), key=f"ip_cms_met_label_{_mi}")
+                    with _mc2:
+                        st.text_input(f"Metric {_mi} Description", _met.get("description", ""), key=f"ip_cms_met_desc_{_mi}")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Use Cases Section</div>", unsafe_allow_html=True)
+                st.text_input("Use Cases Section Title", _ip_cms.get("use_cases_section_title", ""), key="ip_cms_uc_section_title")
+                for _uci, _uc in enumerate(_ip_cms.get("use_cases", []), 1):
+                    with st.expander(f"Use Case {_uci}: {_uc.get('title', '')}"):
+                        st.text_input(f"UC{_uci} Title", _uc.get("title", ""), key=f"ip_cms_uc_title_{_uci}")
+                        st.text_area(f"UC{_uci} Description", _uc.get("description", ""), height=80, key=f"ip_cms_uc_desc_{_uci}")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Solutions & viGent</div>", unsafe_allow_html=True)
+                st.text_area("Solutions Description", _ip_cms.get("solutions_description", ""), height=80, key="ip_cms_solutions")
+                st.text_area("viGent Description", _ip_cms.get("vigent_description", ""), height=100, key="ip_cms_vigent")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Testimonials (5)</div>", unsafe_allow_html=True)
+                for _ti, _test in enumerate(_ip_cms.get("testimonials", []), 1):
+                    with st.expander(f"Testimonial {_ti} — {_test.get('source', '')}"):
+                        st.text_area(f"T{_ti} Quote", _test.get("quote", ""), height=90, key=f"ip_cms_test_quote_{_ti}")
+                        st.text_input(f"T{_ti} Source", _test.get("source", ""), key=f"ip_cms_test_src_{_ti}")
+
+                st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>CTA Section</div>", unsafe_allow_html=True)
+                st.text_input("CTA Headline", _ip_cms.get("cta_headline", ""), key="ip_cms_cta_headline")
+                st.text_area("CTA Description", _ip_cms.get("cta_description", ""), height=80, key="ip_cms_cta_desc")
 
         with _ip_tab_seo:
             _ip_seo = _ip_content.get("seo_suite", {})

@@ -351,135 +351,187 @@ def generate_industry_page(
             "outcome-first, no buzzwords.]"
         )
 
-    prompt = f"""Generate a complete industry vertical landing page for viAct.ai — {industry_name} sector.
+    # ── Reference example from viAct manufacturing page (exact format to match) ─
+    # Hero subheadline: "Reduce unplanned downtime by 70% through unified intelligence..."
+    # Metric label format: "65% ↑ Increase in Efficiency"
+    # Metric description: "improving OEE across 100+ production lines among factories across 20+ countries"
+    # Use cases section title: "Built for 200+ Real [Industry] Scenarios (AI CCTV Use Cases)"
+    # Testimonial source: "Health & Safety Lead, Packaging Plant, UK"
+    # 5 testimonials, CTA: "Try World Class AI Safety Solution for [Industry]"
 
-=== VIACT EXISTING PAGE (TONE REFERENCE) ===
+    prompt = f"""Generate DYNAMIC CONTENT for viAct.ai's {industry_name} industry landing page.
+These are the TEXT FIELDS that go into the Wix CMS dynamic page — match the exact format of the manufacturing reference below.
+
+MANUFACTURING PAGE REFERENCE (match this tone, format, and specificity):
+Hero subheadline: "Reduce unplanned downtime by 70% through unified intelligence across CCTV, IoT, wearables"
+Hero body: "Turn your factory into a predictive intelligence system with viAct—capturing risks across machines, people, and processes, anticipating failures, and triggering instant actions to enhance safety, and elevate operational performance."
+Impact title: "Proven Impact Across 100+ Enterprises"
+Metric 1: "65% ↑ Increase in Efficiency" | "improving OEE across 100+ production lines among factories across 20+ countries"
+Metric 2: "30% ↓ Operational Cost Reduction" | "saving $3M+ annually by cutting maintenance and production losses in FY24–25"
+Metric 3: "75% ↓ Faster SIF Prevention" | "preventing 15,000+ unsafe events annually across 500,000+ sq ft manufacturing facilities"
+Use cases section: "Built for 200+ Real Manufacturing Scenarios (AI CCTV Use Cases)"
+Use Case 1: "Forklift Safety Monitoring" | "Detect unsafe forklift movement in floors, worker proximity risks, blind spots, and improper pallet handling to prevent collisions and injuries."
+viGent: "Manufacturing facilities generate continuous safety data across lines and shifts. viGent AI empowers safety managers, plant managers, and shopfloor supervisors with real-time insights—detecting risks, prioritizing incidents, and enabling faster, safer decisions."
+CTA: "Try World Class AI Safety Solution for Manufacturing" | "Book a demo for plant managers, production managers, and shopfloor supervisors..."
+Testimonial format: "viAct gives us better awareness..." | "Health & Safety Lead, Packaging Plant, UK"
+
+=== VIACT EXISTING PAGE (TONE REFERENCE — scraped) ===
 {viact_block}
 
-=== COMPETITOR INDUSTRY PAGES (RESEARCH — Firecrawl scraped) ===
+=== COMPETITOR INDUSTRY PAGES (RESEARCH) ===
 {competitor_block}
 
-=== REFERENCE MATERIAL (real viAct data — use EXACTLY, do not paraphrase) ===
+=== REFERENCE MATERIAL (real viAct data — use EXACTLY) ===
 {references_str}
 
-=== VIACT KNOWN PAGES (internal_links must ONLY use these — never invent URLs) ===
+=== VIACT KNOWN PAGES (internal_links only) ===
 {viact_pages_str}
 
 ---
-VIACT VERIFIED STATS (use these numbers — never make up different stats):
-• 90% construction/industrial site risk reduction
-• 50% TRIR reduction | 65% LTI reduction
-• 80% safety expenditure reduction
-• $2.5M+ savings per project
-• 400+ sites deployed | 32,000+ workers protected | 7,200+ lost workdays prevented
+VIACT VERIFIED STATS — use ONLY these numbers:
+• 90% site risk reduction | 50% TRIR reduction | 65% LTI reduction
+• 80% safety expenditure reduction | $2.5M+ savings per project
+• 400+ sites | 32,000+ workers protected | 7,200+ lost workdays prevented
 
-BRAND VOICE (mandatory):
-• Max 20 words per sentence. Short punchy fragments OK.
-• Numbers beat adjectives: "90% reduction" not "significant reduction".
-• CTA = "Book My Demo" — never "Get a Free Safety Audit".
-• Feature format: [Name] → [how it works ≤8 words] → [measurable outcome].
-• H2s: outcome-first. Start with the result, not the process.
+RULES:
+• Metric labels must include a % and direction arrow: "X% ↑ Short Label" or "X% ↓ Short Label"
+• Metric descriptions must include REAL specific numbers (enterprise counts, cost figures, facility sizes, event counts)
+• Use Case titles: max 6 words, specific hazard not generic
+• 5 testimonials (not 4) — each from a DIFFERENT person, role, and country
+• Testimonial source format: "Job Title, Facility Type, Country"
+• Max 20 words per sentence. No buzzwords.
 
 ---
-Return a single JSON object. Populate EVERY field — do not leave placeholders.
+Return a single JSON object. Every field must be fully written out — no placeholders.
 
 {{
   "topic": "{industry_name} Industry Landing Page",
   "content_type": "industry_page",
-  "data_sources_used": ["list URLs you actually used from competitor_content above"],
+  "data_sources_used": ["list URLs you used from competitor_content"],
   "access_denied_urls": {json.dumps(denied_urls)},
 
   "hero_section": {{
     "h1": "AI for Safety & Productivity in {industry_name}",
-    "subheadline": "Bold metric headline, max 20 words. Specific stat (e.g. '90% Risk Reduction Across {industry_name} Sites'). Wrap in **bold**.",
+    "subheadline": "Max 20 words. Specific % metric + what it reduces. E.g. 'Reduce [key risk] by X% through unified intelligence across CCTV, IoT, wearables'",
     "cta_text": "Book My Demo",
     "cta_url": "/contact"
   }},
 
-  "problem_statement": "60-80 words. 2-3 {industry_name}-specific risks + regulatory anchor (MOM WSH Act / OSHAD). No viAct mention. Short sentences ≤20 words each.",
+  "problem_statement": "35-45 words. Body copy for hero. 'Turn your [industry] site into a predictive intelligence system with viAct—capturing risks across [machines/equipment/people], anticipating failures, triggering instant actions to enhance safety and elevate operational performance.'",
 
   "solution_parameters": [
-    {{"feature": "AI CCTV Use Case 1 title (max 6 words)", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}},
-    {{"feature": "AI CCTV Use Case 2 title", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}},
-    {{"feature": "AI CCTV Use Case 3 title", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}},
-    {{"feature": "AI CCTV Use Case 4 title", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}},
-    {{"feature": "AI CCTV Use Case 5 title", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}},
-    {{"feature": "AI CCTV Use Case 6 title", "mechanism": "specific hazard detected, ≤8 words", "benefit": "specific injury/loss prevented"}}
+    {{"feature": "Use Case 1 Title (max 6 words)", "mechanism": "specific hazard detected in ≤8 words", "benefit": "specific injury/loss prevented (20-30 words total for use case description)"}},
+    {{"feature": "Use Case 2 Title", "mechanism": "specific hazard, ≤8 words", "benefit": "20-30 word description"}},
+    {{"feature": "Use Case 3 Title", "mechanism": "specific hazard, ≤8 words", "benefit": "20-30 word description"}},
+    {{"feature": "Use Case 4 Title", "mechanism": "specific hazard, ≤8 words", "benefit": "20-30 word description"}},
+    {{"feature": "Use Case 5 Title", "mechanism": "specific hazard, ≤8 words", "benefit": "20-30 word description"}},
+    {{"feature": "Use Case 6 Title", "mechanism": "specific hazard, ≤8 words", "benefit": "20-30 word description"}}
   ],
 
   "regulatory_context": {{
-    "singapore": {{"standard": "MOM WSH Act / BCA", "requirement": "{industry_name}-specific Singapore regulatory requirement"}},
-    "uae": {{"standard": "OSHAD SF-AR-L01", "requirement": "{industry_name}-specific UAE regulatory requirement"}}
+    "singapore": {{"standard": "MOM WSH Act / BCA", "requirement": "{industry_name}-specific Singapore requirement"}},
+    "uae": {{"standard": "OSHAD SF-AR-L01", "requirement": "{industry_name}-specific UAE requirement"}}
   }},
 
-  "webpage_body": "FULL MARKDOWN — all 8 sections in order:\\n\\n# AI for Safety & Productivity in {industry_name}\\n\\n## **[Bold metric headline, max 20 words]**\\n[H3 description 35-45 words: predictive intelligence system, capturing risks across machines/people/processes, mentioning viAct]\\n\\n## One Intelligent Platform — [Industry-Specific Subtitle max 7 words]\\n[25-35 words: AI CCTV + IoT + edge AI + wearables + SIF prevention, complete {industry_name} site visibility]\\n\\n## Proven Impact Across 400+ {industry_name} Sites\\n*Driving safety, efficiency, and uptime via AI-driven {industry_name} intelligence.*\\n\\n**[Stat 1: Number%↑/↓]** — [Metric 1 title, max 4 words]\\n[10-15 words with specific numbers — enterprise counts, cost savings, event counts]\\n\\n**[Stat 2]** — [Metric 2 title]\\n[10-15 words with specific numbers]\\n\\n**[Stat 3]** — [Metric 3 title]\\n[10-15 words with specific numbers]\\n\\n## AI CCTV Use Cases for {industry_name}\\n\\n**[Use Case 1 title]**\\n[20-30 words: specific hazard detected + specific injury/loss prevented]\\n\\n**[Use Case 2 title]**\\n[20-30 words]\\n\\n**[Use Case 3 title]**\\n[20-30 words]\\n\\n**[Use Case 4 title]**\\n[20-30 words]\\n\\n**[Use Case 5 title]**\\n[20-30 words]\\n\\n**[Use Case 6 title]**\\n[20-30 words]\\n\\n## Pre-Built AI Safety Solutions for Every {industry_name} Risk\\n[15-20 words: ready-to-deploy packages, complete visibility and control across {industry_name}-specific work environment]\\n\\n## viGent: EHS AI Agent\\n[30-40 words: {industry_name} operations generate continuous safety data across sites and shifts. viGent AI empowers HSE managers with real-time insights — detecting risks, prioritizing incidents, enabling faster safer decisions.]\\n\\n## Voices from the Field\\n> **\\"[35-50 words: specific operational problem + how viAct solved it + measurable result. First-person. Realistic.]\\"**\\n> *[Senior Safety/Operations Job Title], [Type of facility], [Country]*\\n\\n> **\\"[35-50 words: DIFFERENT problem from above]\\"**\\n> *[Job Title], [Facility type], [Country]*\\n\\n> **\\"[35-50 words: DIFFERENT problem]\\"**\\n> *[Job Title], [Facility type], [Country]*\\n\\n> **\\"[35-50 words: DIFFERENT problem]\\"**\\n> *[Job Title], [Facility type], [Country]*\\n\\n## Try #1 AI Safety Solutions for {industry_name}\\n[20-30 words: book a demo, name 2+ specific senior roles in this industry, mention how viAct fits daily operations]\\n\\n**[Book My Demo →](/contact)**",
+  "industry_cms_fields": {{
+    "hero_subheadline": "Max 20 words. Specific % metric. E.g. 'Reduce [risk] by X% through unified intelligence across CCTV, IoT, wearables'",
+    "hero_body_copy": "35-45 words. Turn your {industry_name} site into a predictive intelligence system with viAct...",
+    "impact_section_title": "Proven Impact Across [X]+ [Industry Sites or Enterprises]",
+    "impact_subtitle": "Driving safety, efficiency, and uptime via AI-driven {industry_name} intelligence.",
+    "metrics": [
+      {{"label": "X% ↑ Short Label (max 5 words)", "description": "10-15 words with REAL numbers — enterprise counts, cost savings, event counts, facility sizes"}},
+      {{"label": "X% ↓ Short Label", "description": "10-15 words with REAL specific numbers"}},
+      {{"label": "X% ↓ Short Label", "description": "10-15 words with REAL specific numbers"}}
+    ],
+    "use_cases_section_title": "Built for 200+ Real {industry_name} Scenarios (AI CCTV Use Cases)",
+    "use_cases": [
+      {{"title": "Use Case 1 (max 6 words)", "description": "20-30 words: specific hazard detected + specific injury/loss prevented"}},
+      {{"title": "Use Case 2", "description": "20-30 words"}},
+      {{"title": "Use Case 3", "description": "20-30 words"}},
+      {{"title": "Use Case 4", "description": "20-30 words"}},
+      {{"title": "Use Case 5", "description": "20-30 words"}},
+      {{"title": "Use Case 6", "description": "20-30 words"}}
+    ],
+    "solutions_description": "Explore ready-to-deploy packages that provide complete visibility and control across your {industry_name} operations",
+    "vigent_description": "30-40 words. '{industry_name} operations generate continuous safety data across sites and shifts. viGent AI empowers [specific job titles] with real-time insights—detecting risks, prioritizing incidents, and enabling faster, safer decisions.'",
+    "testimonials": [
+      {{"quote": "35-50 words, first-person. Specific operational problem + how viAct solved it + measurable result. No generic praise.", "source": "Job Title, Facility/Company Type, Country"}},
+      {{"quote": "35-50 words, DIFFERENT problem from testimonial 1.", "source": "Different Job Title, Different Facility, Different Country"}},
+      {{"quote": "35-50 words, DIFFERENT problem.", "source": "Different Job Title, Facility, Country"}},
+      {{"quote": "35-50 words, DIFFERENT problem.", "source": "Different Job Title, Facility, Country"}},
+      {{"quote": "35-50 words, DIFFERENT problem.", "source": "Different Job Title, Facility, Country"}}
+    ],
+    "cta_headline": "Try World Class AI Safety Solution for {industry_name}",
+    "cta_description": "20-30 words. Book a demo for [2+ specific senior roles in {industry_name}] to see how viAct fits into your daily {industry_name} operations."
+  }},
+
+  "webpage_body": "FULL CONTENT — exact format of the viAct manufacturing page:\\n\\n# AI for Safety & Productivity in {industry_name}\\n\\n[hero_subheadline — specific % metric, max 20 words]\\n\\n[hero_body_copy — 35-45 words, predictive intelligence, viAct mention]\\n\\n## [impact_section_title]\\n*[impact_subtitle]*\\n\\n**[Metric 1 label]**\\n[Metric 1 description — 10-15 words with specific numbers]\\n\\n**[Metric 2 label]**\\n[Metric 2 description]\\n\\n**[Metric 3 label]**\\n[Metric 3 description]\\n\\n## Built for 200+ Real {industry_name} Scenarios (AI CCTV Use Cases)\\n\\n**[Use Case 1 Title]**\\n[20-30 words: specific hazard detected + specific injury/loss prevented]\\n\\n**[Use Case 2 Title]**\\n[20-30 words]\\n\\n**[Use Case 3 Title]**\\n[20-30 words]\\n\\n**[Use Case 4 Title]**\\n[20-30 words]\\n\\n**[Use Case 5 Title]**\\n[20-30 words]\\n\\n**[Use Case 6 Title]**\\n[20-30 words]\\n\\n## Pre-Built AI Safety Solutions for Every {industry_name} Risk\\nExplore ready-to-deploy packages that provide complete visibility and control across your {industry_name} operations\\n\\n## viGent: EHS AI AGENT\\n[vigent_description — 30-40 words]\\n\\n## Voices from the Field: Impact That Matters\\n\\n\\"[Testimonial 1 quote — 35-50 words, first-person]\\"\\n[Job Title], [Facility], [Country]\\n\\n\\"[Testimonial 2 quote]\\"\\n[Job Title], [Facility], [Country]\\n\\n\\"[Testimonial 3 quote]\\"\\n[Job Title], [Facility], [Country]\\n\\n\\"[Testimonial 4 quote]\\"\\n[Job Title], [Facility], [Country]\\n\\n\\"[Testimonial 5 quote]\\"\\n[Job Title], [Facility], [Country]\\n\\n## Try World Class AI Safety Solution for {industry_name}\\n[cta_description — 20-30 words]\\n\\n**[Book My Demo →](/contact)**",
 
   "schema_faqs": [
-    {{"question": "What {industry_name} safety risks does viAct detect?", "answer": "40-60 words. List 3-4 specific hazards viAct detects in {industry_name}. Mention 90% risk reduction."}},
-    {{"question": "How does AI CCTV work in {industry_name} environments?", "answer": "40-60 words. Edge AI + CCTV mechanism specific to {industry_name} conditions (dust, heat, low-light etc)."}},
-    {{"question": "What regulations apply to {industry_name} safety in Singapore and UAE?", "answer": "40-60 words. Cite MOM WSH Act and OSHAD SF-AR-L01 requirements specific to {industry_name}."}},
-    {{"question": "How quickly can viAct be deployed in a {industry_name} facility?", "answer": "40-60 words. Deployment timeline, pre-built AI models, minimal disruption to operations."}},
-    {{"question": "What ROI can {industry_name} companies expect from viAct?", "answer": "40-60 words. $2.5M+ savings, 80% expenditure reduction, 400+ sites already deployed as proof."}}
+    {{"question": "What {industry_name} safety risks does viAct detect?", "answer": "40-60 words. List 3-4 specific hazards. Cite 90% risk reduction."}},
+    {{"question": "How does AI CCTV work in {industry_name} environments?", "answer": "40-60 words. Edge AI mechanism for {industry_name}-specific conditions."}},
+    {{"question": "What regulations apply to {industry_name} safety in Singapore and UAE?", "answer": "40-60 words. MOM WSH Act + OSHAD SF-AR-L01, {industry_name}-specific."}},
+    {{"question": "How quickly can viAct be deployed in a {industry_name} facility?", "answer": "40-60 words. Deployment timeline, pre-built AI models, minimal disruption."}},
+    {{"question": "What ROI can {industry_name} companies expect from viAct?", "answer": "40-60 words. $2.5M+ savings, 80% expenditure reduction, 400+ sites proof."}}
   ],
 
   "extended_faqs": [
-    {{"question": "How does viAct handle {industry_name}-specific environmental challenges like dust, heat, or low light?", "answer": "80-120 words. Specific {industry_name} environmental factors and how viAct edge AI handles each one."}},
-    {{"question": "Can viAct integrate with existing {industry_name} management systems (ERP, SCADA, or HSE software)?", "answer": "80-120 words. Integration capabilities, API connectivity, no rip-and-replace required."}}
+    {{"question": "How does viAct handle {industry_name}-specific environmental challenges like dust, heat, or low light?", "answer": "80-120 words. {industry_name}-specific challenges + how viAct edge AI handles each."}},
+    {{"question": "Can viAct integrate with existing {industry_name} management systems (ERP, SCADA, HSE software)?", "answer": "80-120 words. Integration, API, no rip-and-replace."}}
   ],
 
-  "schema_json_ld": "FAQPage JSON-LD using all 5 schema_faqs. Valid JSON string format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
+  "schema_json_ld": "FAQPage JSON-LD using 5 schema_faqs. Format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
 
   "seo_suite": {{
-    "meta_title": "Max 60 chars. Primary keyword + | viAct.ai. E.g. 'AI Safety for {industry_name} | viAct.ai'",
-    "meta_description": "Max 155 chars. Pain point first, mention CCTV + IoT/Edge/Wearables + {industry_name}-specific risks. Soft CTA.",
-    "primary_keyword": "primary search keyword for {industry_name} AI safety (long-tail, 3+ words)",
+    "meta_title": "≤60 chars. E.g. 'AI Safety for {industry_name} | viAct.ai'",
+    "meta_description": "≤155 chars. Pain point, CCTV + IoT/Edge/Wearables, {industry_name} risks. Soft CTA.",
+    "primary_keyword": "primary keyword for {industry_name} AI safety (3+ words, long-tail)",
     "secondary_keywords": ["{industry_name} AI safety platform", "AI CCTV {industry_name}", "{industry_name} HSE software"],
-    "lsi_keywords": ["edge AI {industry_name}", "wearable safety sensors", "predictive safety analytics", "SIF prevention {industry_name}", "{industry_name} regulatory compliance"],
+    "lsi_keywords": ["edge AI {industry_name}", "wearable safety sensors", "predictive safety analytics", "SIF prevention", "{industry_name} compliance"],
     "canonical_url_slug": "/industry/{industry_slug}",
     "heading_map": [
       "H1: AI for Safety & Productivity in {industry_name}",
-      "H2: [Bold metric headline]",
-      "H2: One Intelligent Platform",
-      "H2: Proven Impact Across 400+ Sites",
-      "H2: AI CCTV Use Cases for {industry_name}",
-      "H2: Pre-Built AI Safety Solutions",
-      "H2: viGent: EHS AI Agent",
-      "H2: Voices from the Field",
-      "H2: Try #1 AI Safety Solutions"
+      "H2: [impact_section_title]",
+      "H2: Built for 200+ Real {industry_name} Scenarios",
+      "H2: Pre-Built AI Safety Solutions for Every {industry_name} Risk",
+      "H2: viGent: EHS AI AGENT",
+      "H2: Voices from the Field: Impact That Matters",
+      "H2: Try World Class AI Safety Solution for {industry_name}"
     ]
   }},
 
   "geo_package": {{
     "opening_200_words": "First ~200 words of webpage_body verbatim",
     "citation_framing_tips": [
-      "Singapore MOM WSH anchor point for {industry_name}",
-      "APAC market statistic grounding the {industry_name} safety problem",
-      "Regulatory framing for UAE OSHAD compliance"
+      "MOM WSH / OSHAD anchor for {industry_name}",
+      "APAC {industry_name} safety market statistic",
+      "Regulatory framing for {industry_name} compliance"
     ]
   }},
 
   "nano_banana_prompts": [
-    {{"placement": "Use Case 1 (520x327px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, highly realistic {industry_name} site, [use case 1 specific hazard], workers in full PPE, modern industrial lighting, 4k resolution, 520x327 px", "alt_text": "AI CCTV detecting [use case 1 hazard] in {industry_name} facility — viAct safety monitoring"}},
-    {{"placement": "Use Case 2 (488x293px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, {industry_name} environment, [use case 2 specific hazard], industrial lighting, 4k resolution, 488x293 px", "alt_text": "AI safety monitoring for [use case 2] in {industry_name}"}},
-    {{"placement": "Use Case 3 (520x303px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, {industry_name} site, [use case 3 hazard], industrial lighting, 4k resolution, 520x303 px", "alt_text": "Computer vision AI detecting [use case 3] — {industry_name} safety"}},
-    {{"placement": "Use Case 4 (520x303px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, {industry_name} site, [use case 4 hazard], industrial lighting, 4k resolution, 520x303 px", "alt_text": "AI CCTV preventing [use case 4] in {industry_name}"}},
-    {{"placement": "Use Case 5 (520x303px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, {industry_name} site, [use case 5 hazard], industrial lighting, 4k resolution, 520x303 px", "alt_text": "Real-time hazard detection for [use case 5] — {industry_name}"}},
-    {{"placement": "Use Case 6 (520x317px)", "prompt": "CCTV perspective, high angle, AI bounding boxes neon green and red, {industry_name} site, [use case 6 hazard], industrial lighting, 4k resolution, 520x317 px", "alt_text": "AI safety system detecting [use case 6] in {industry_name} facility"}},
-    {{"placement": "viGent Dashboard (422x377px)", "prompt": "Ultra-realistic dark-mode AI safety operations dashboard on large monitors, real-time incident heatmaps, alert timelines, worker status panels, {industry_name}-specific data widgets, viAct.ai interface, ambient blue lighting, 422x377 px", "alt_text": "viGent EHS AI Agent — {industry_name} safety operations dashboard"}},
-    {{"placement": "Reviewer 1 Headshot (56x56px)", "prompt": "Professional headshot photo, neutral expression, senior safety professional appearance, plain background, 56x56 px", "alt_text": "Senior HSE Manager at {industry_name} facility"}},
-    {{"placement": "Reviewer 2 Headshot (56x56px)", "prompt": "Professional headshot photo, neutral expression, operations director appearance, corporate attire, plain background, 56x56 px", "alt_text": "Operations Director at {industry_name} company"}},
-    {{"placement": "Reviewer 3 Headshot (56x56px)", "prompt": "Professional headshot photo, neutral expression, plant manager appearance, plain background, 56x56 px", "alt_text": "Plant Safety Manager at {industry_name} enterprise"}},
-    {{"placement": "Reviewer 4 Headshot (56x56px)", "prompt": "Professional headshot photo, neutral expression, HSE professional appearance, plain background, 56x56 px", "alt_text": "HSE Officer at {industry_name} site — viAct customer"}}
+    {{"placement": "Use Case 1 (520x327px)", "prompt": "CCTV high-angle perspective, AI bounding boxes neon green and red, {industry_name} environment, [use case 1 specific hazard from solution_parameters], workers in PPE, industrial lighting, 4k, 520x327 px", "alt_text": "AI CCTV detecting [use case 1] in {industry_name} — viAct safety monitoring"}},
+    {{"placement": "Use Case 2 (488x293px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 2 hazard], industrial lighting, 4k, 488x293 px", "alt_text": "AI safety monitoring [use case 2] in {industry_name}"}},
+    {{"placement": "Use Case 3 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 3 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "Computer vision detecting [use case 3] — {industry_name}"}},
+    {{"placement": "Use Case 4 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 4 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "AI CCTV preventing [use case 4] in {industry_name}"}},
+    {{"placement": "Use Case 5 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 5 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "Real-time hazard detection [use case 5] — {industry_name}"}},
+    {{"placement": "Use Case 6 (520x317px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 6 hazard], industrial lighting, 4k, 520x317 px", "alt_text": "AI safety system detecting [use case 6] in {industry_name}"}},
+    {{"placement": "viGent Dashboard (422x377px)", "prompt": "Ultra-realistic dark-mode AI safety operations dashboard on large monitors, real-time incident heatmaps, alert timelines, worker status panels, {industry_name} data widgets, viAct.ai interface, ambient blue lighting, 422x377 px", "alt_text": "viGent EHS AI Agent dashboard — {industry_name} safety operations"}},
+    {{"placement": "Reviewer 1 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, senior safety manager appearance, plain background, 56x56 px", "alt_text": "Senior HSE Manager, {industry_name} facility — viAct customer"}},
+    {{"placement": "Reviewer 2 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, EHS manager appearance, plain background, 56x56 px", "alt_text": "EHS Manager at {industry_name} company — viAct customer"}},
+    {{"placement": "Reviewer 3 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, plant manager appearance, plain background, 56x56 px", "alt_text": "Plant Manager, {industry_name} enterprise — viAct customer"}},
+    {{"placement": "Reviewer 4 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, production supervisor appearance, plain background, 56x56 px", "alt_text": "Production Supervisor, {industry_name} facility — viAct customer"}},
+    {{"placement": "Reviewer 5 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, quality/operations manager appearance, plain background, 56x56 px", "alt_text": "Operations Manager, {industry_name} site — viAct customer"}}
   ],
 
   "internal_links": [
-    {{"anchor_text": "viAct Video Analytics Solution", "url": "https://www.viact.ai/solutions/video-analytics-solution", "context": "In the AI CCTV Use Cases section"}},
+    {{"anchor_text": "viAct Video Analytics", "url": "https://www.viact.ai/solutions/video-analytics-solution", "context": "In the AI CCTV Use Cases section"}},
     {{"anchor_text": "AI PPE Detection", "url": "https://www.viact.ai/solutions/ppe-detection", "context": "In the Use Cases section"}},
     {{"anchor_text": "Red Zone Monitoring", "url": "https://www.viact.ai/solutions/red-zone-monitoring", "context": "In the Pre-Built Solutions section"}},
-    {{"anchor_text": "viAct {industry_name} industry page", "url": "https://www.viact.ai/industry/{industry_slug}", "context": "Canonical internal link"}}
+    {{"anchor_text": "viAct {industry_name} solutions", "url": "https://www.viact.ai/industry/{industry_slug}", "context": "Canonical industry link"}}
   ],
 
-  "decision_logic": "Industry vertical landing page for {industry_name}. viAct existing page scraped as tone reference. Competitor industry pages analyzed via Firecrawl. Content follows viAct 8-section structure (Hero → Metrics → Use Cases → viGent → Testimonials → CTA). Stats: 90% risk reduction, 400+ sites, 32,000+ workers. Canonical: /industry/{industry_slug}."
+  "decision_logic": "Industry page for {industry_name}. viAct page scraped as tone reference. Competitor pages analyzed via Firecrawl. Matches viAct dynamic page format: Hero + 3 Metrics + 6 Use Cases + viGent + 5 Testimonials + CTA. Canonical: /industry/{industry_slug}."
 }}"""
 
     response = client.chat.completions.create(
