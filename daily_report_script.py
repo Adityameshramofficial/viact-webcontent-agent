@@ -1,14 +1,22 @@
 """
 viAct Automation — Daily Report Email
 
-Reads live data from Google Sheets + git log and sends a daily summary
-email to Gary/CEO every day at 9:00 AM SGT via GitHub Actions.
+HOW IT WORKS (two-step approval):
+
+  STEP 1 — Auto-preview at 5:55 PM IST every day (GitHub Actions cron):
+    Generates today's report and emails a PREVIEW to Aditya only.
+    Gary and Surendra do NOT receive anything yet.
+
+  STEP 2 — Aditya approves:
+    Review the preview email. If happy, go to:
+    GitHub → Actions → "Daily Automation Report Email" → Run workflow
+    In the 'approved' input, type: yes
+    This sends the final email to Gary and Surendra.
 
 Required GitHub Secrets:
   GCP_SERVICE_ACCOUNT  — Google Sheets service account JSON
   SHEET_ID             — Google Sheet ID
-  RESEND_API_KEY       — Resend.com API key (free at resend.com)
-  REPORT_TO_EMAIL      — Recipient email (e.g. gary@viact.ai)
+  RESEND_API_KEY       — re_ds6KxJPG_BWrArVtb5aAh6hcYfcfFZYQu
 """
 import datetime
 import json
@@ -19,6 +27,12 @@ import sys
 import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+
+ADITYA_EMAIL  = "aditya.meshram@viact.ai"
+GARY_EMAIL    = "gary.ng@viact.ai"
+SURENDRA_EMAIL = "surendra.singh@viact.ai"
+
+RESEND_FROM   = "Aditya Meshram <onboarding@resend.dev>"
 
 
 def _env(key: str, default: str = "") -> str:
@@ -72,7 +86,7 @@ def _get_sheets_data() -> dict:
                 break
 
         try:
-            dedup_res  = svc.spreadsheets().values().get(
+            dedup_res   = svc.spreadsheets().values().get(
                 spreadsheetId=sheet_id, range="Dedup_Log!A:B"
             ).execute()
             total_dedup = max(len(dedup_res.get("values", [])) - 1, 0)
@@ -82,14 +96,14 @@ def _get_sheets_data() -> dict:
         last_run_date = rows[-1][0] if rows and rows[-1] else "No runs yet"
 
         return {
-            "total_pages":    total_pages,
+            "total_pages":     total_pages,
             "this_week_pages": this_week_pages,
-            "today_pages":    today_pages,
-            "pillar_count":   pillar_count,
-            "blog_count":     blog_count,
-            "latest_topics":  latest_topics,
-            "total_dedup":    total_dedup,
-            "last_run_date":  last_run_date,
+            "today_pages":     today_pages,
+            "pillar_count":    pillar_count,
+            "blog_count":      blog_count,
+            "latest_topics":   latest_topics,
+            "total_dedup":     total_dedup,
+            "last_run_date":   last_run_date,
         }
     except Exception as exc:
         log(f"Sheets read failed: {exc}")
@@ -98,7 +112,6 @@ def _get_sheets_data() -> dict:
 
 # ── 2. Get today's git improvements ──────────────────────────────────────────
 def _get_todays_commits() -> list[dict]:
-    """Return list of {hash, message} committed in the last 24 hours."""
     try:
         result = subprocess.run(
             ["git", "log", "--since=24 hours ago", "--pretty=format:%h|%s", "--no-merges"],
@@ -108,7 +121,6 @@ def _get_todays_commits() -> list[dict]:
         for line in result.stdout.strip().splitlines():
             if "|" in line:
                 h, msg = line.split("|", 1)
-                # Clean up conventional commit prefixes for readability
                 display = msg.strip()
                 for prefix in ("feat: ", "fix: ", "chore: ", "refactor: ", "docs: "):
                     if display.lower().startswith(prefix):
@@ -120,12 +132,12 @@ def _get_todays_commits() -> list[dict]:
         return []
 
 
-# ── 3. Build HTML email ───────────────────────────────────────────────────────
-def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
+# ── 3. Build report HTML ──────────────────────────────────────────────────────
+def _build_report_html(data: dict, commits: list[dict], is_preview: bool) -> tuple[str, str]:
 
-    run_date = datetime.datetime.now(
-        datetime.timezone(datetime.timedelta(hours=8))
-    ).strftime("%d %b %Y, %I:%M %p SGT")
+    run_date      = datetime.datetime.now(
+        datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+    ).strftime("%d %b %Y, %I:%M %p IST")
     today_weekday = datetime.date.today().strftime("%A")
 
     total      = data.get("total_pages", 0)
@@ -143,6 +155,7 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
         if sheet_id else "https://docs.google.com/spreadsheets"
     )
     dashboard_url = "https://viact-webcontent-agent-a7yrhfuaifju4prfqntzku.streamlit.app/"
+    approve_url   = "https://github.com/Adityameshramofficial/viact-webcontent-agent/actions/workflows/daily_report.yml"
 
     days_to_monday = (7 - datetime.date.today().weekday()) % 7 or 7
     next_monday    = (datetime.date.today() + datetime.timedelta(days=days_to_monday)).strftime("%d %b %Y")
@@ -151,7 +164,24 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
     status_label = "Content Generated Today" if today_new > 0 else ("Run Day" if is_run_day else "Monitoring Active")
     status_color = "#22c55e" if today_new > 0 else ("#f59e0b" if is_run_day else "#3b82f6")
 
-    # ── Topic rows ────────────────────────────────────────────────────────────
+    # Preview banner (only shown in preview email to Aditya)
+    preview_banner = ""
+    if is_preview:
+        preview_banner = f"""
+  <div style="background:#7c3aed22;border:2px solid #7c3aed;border-radius:8px;
+    padding:14px 18px;margin-bottom:20px;text-align:center;">
+    <p style="margin:0 0 6px;color:#a78bfa;font-weight:800;font-size:14px;
+      text-transform:uppercase;letter-spacing:1px;">⚠ PREVIEW — Not Sent Yet</p>
+    <p style="margin:0 0 12px;color:#94a3b8;font-size:13px;">
+      This is your approval preview. Gary and Surendra have NOT received this email.<br>
+      Review the report below. If everything looks correct, click the button to send.
+    </p>
+    <a href="{approve_url}" style="display:inline-block;background:#7c3aed;color:#fff;
+      padding:10px 24px;border-radius:7px;text-decoration:none;font-size:13px;
+      font-weight:700;">✅ Go to GitHub Actions → Run Workflow → Type 'yes' to Send</a>
+  </div>"""
+
+    # Topic rows
     topic_rows_html = ""
     topic_rows_text = ""
     for t in topics:
@@ -167,7 +197,7 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
         </tr>"""
         topic_rows_text += f"  {t['date']}  {t['topic'][:55]}  [{t['content_type']}]\n"
 
-    # ── Today's improvements (commits) ───────────────────────────────────────
+    # Improvements section
     if commits:
         commit_rows_html = "".join(
             f"<tr style='border-bottom:1px solid #1e293b;'>"
@@ -197,9 +227,9 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
         ) + "\n\n"
     else:
         improvements_section = ""
-        improvements_text = ""
+        improvements_text    = ""
 
-    # ── Input / Output breakdown ──────────────────────────────────────────────
+    # Input / Output section
     input_output_section = f"""
     <div style="margin-bottom:20px;">
       <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
@@ -224,7 +254,7 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
               <p style="margin:0 0 10px;font-weight:700;color:#ff6a3d;font-size:12px;
                 text-transform:uppercase;letter-spacing:1px;">OUTPUT (per Monday run)</p>
               <ul style="margin:0;padding-left:16px;color:#94a3b8;font-size:12px;line-height:1.9;">
-                <li><strong style="color:#e2e8f0;">1 Pillar Page</strong> — hero, 5 FAQs, regulatory context (MOM/OSHAD), schema JSON-LD</li>
+                <li><strong style="color:#e2e8f0;">1 Pillar Page</strong> — hero, 5 FAQs, regulatory context, schema JSON-LD</li>
                 <li><strong style="color:#e2e8f0;">3 Supporting Blogs</strong> — regulatory / ROI / how-to angles, 3 FAQs each</li>
                 <li>SEO meta title + description + primary keyword</li>
                 <li>Internal links (34+ viAct product pages)</li>
@@ -236,16 +266,15 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
         </tr>
       </table>
       <div style="margin-top:8px;background:#0f172a;border:1px solid #334155;border-radius:8px;
-        padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <span style="color:#94a3b8;font-size:12px;">This week's output:</span>
+        padding:10px 14px;">
+        <span style="color:#94a3b8;font-size:12px;">This week: </span>
         <span style="color:#22c55e;font-size:13px;font-weight:700;">{this_week} pages
-          ({pillar_cnt} pillar + {blog_cnt} blog)</span>
-        <span style="color:#94a3b8;font-size:12px;">All time:</span>
+          ({pillar_cnt} pillar + {blog_cnt} blog) &nbsp;·&nbsp; </span>
+        <span style="color:#94a3b8;font-size:12px;">All time: </span>
         <span style="color:#ff6a3d;font-size:13px;font-weight:700;">{total} pages total</span>
       </div>
     </div>"""
 
-    # ── Full HTML ─────────────────────────────────────────────────────────────
     html_body = f"""<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -273,6 +302,8 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
   </div>
 
   <div style="padding:24px 32px;">
+
+    {preview_banner}
 
     <!-- Metrics -->
     <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
@@ -371,8 +402,8 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
 
   <div style="padding:14px 32px;border-top:1px solid #334155;background:#0a0f1a;">
     <p style="font-size:11px;color:#334155;margin:0;text-align:center;">
-      Sent automatically · viAct Automation System ·
-      Market Radar Agent Team · Tavily + Firecrawl + Groq/Llama 3.3
+      Sent by Aditya Meshram &nbsp;·&nbsp; viAct Automation System &nbsp;·&nbsp;
+      Tavily + Firecrawl + Groq / Llama 3.3
     </p>
   </div>
 </div>
@@ -409,19 +440,44 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
 
 
 # ── 4. Send via Resend ────────────────────────────────────────────────────────
-def send_daily_report() -> bool:
-    api_key = _env("RESEND_API_KEY")
-    if not api_key:
-        log("RESEND_API_KEY not set — cannot send. Add to GitHub Secrets.")
+def _send(api_key: str, to: list[str], cc: list[str],
+          subject: str, html: str, text: str) -> bool:
+    payload: dict = {
+        "from":    RESEND_FROM,
+        "to":      to,
+        "subject": subject,
+        "html":    html,
+        "text":    text,
+    }
+    if cc:
+        payload["cc"] = cc
+    try:
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type":  "application/json",
+            },
+            json=payload,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        log(f"Sent to {to} CC {cc} — id: {resp.json().get('id', '?')}")
+        return True
+    except Exception as exc:
+        log(f"Send failed: {exc}")
         return False
 
-    to_email  = _env("REPORT_TO_EMAIL", "")
-    cc_email  = _env("REPORT_CC_EMAIL", "")
-    if not to_email:
-        log("REPORT_TO_EMAIL not set — cannot send. Add to GitHub Secrets.")
+
+def send_daily_report() -> bool:
+    api_key  = _env("RESEND_API_KEY")
+    approved = _env("APPROVED", "no").strip().lower() == "yes"
+
+    if not api_key:
+        log("RESEND_API_KEY not set — add to GitHub Secrets.")
         return False
+
     today_str = datetime.date.today().strftime("%d %b %Y")
-    subject   = f"viAct Automation Daily Report — {today_str}"
 
     log("Reading Sheets data...")
     data = _get_sheets_data() or {}
@@ -431,32 +487,32 @@ def send_daily_report() -> bool:
     commits = _get_todays_commits()
     log(f"  {len(commits)} commit(s) today")
 
-    html_body, text_body = _build_email(data, commits)
+    if not approved:
+        # ── STEP 1: Preview email to Aditya only ──────────────────────────────
+        log("Mode: PREVIEW — sending to Aditya for approval...")
+        html, text = _build_report_html(data, commits, is_preview=True)
+        subject    = f"[PREVIEW — APPROVE TO SEND] viAct Daily Report — {today_str}"
+        ok = _send(api_key,
+                   to=[ADITYA_EMAIL], cc=[],
+                   subject=subject, html=html, text=text)
+        if ok:
+            log("Preview sent to Aditya.")
+            log("To send to Gary & Surendra:")
+            log("  GitHub → Actions → 'Daily Automation Report Email'")
+            log("  → Run workflow → approved = yes")
+        return ok
 
-    try:
-        resp = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type":  "application/json",
-            },
-            json={
-                "from":    "Aditya Meshram (viAct Automation) <onboarding@resend.dev>",
-                "to":      [to_email],
-                **({"cc": [cc_email]} if cc_email else {}),
-                "subject": subject,
-                "html":    html_body,
-                "text":    text_body,
-            },
-            timeout=15,
-        )
-        resp.raise_for_status()
-        log(f"Email sent to {to_email} — id: {resp.json().get('id','?')}")
-        log(f"Subject: {subject}")
-        return True
-    except Exception as exc:
-        log(f"Send failed: {exc}")
-        return False
+    else:
+        # ── STEP 2: Final email to Gary + Surendra (CC Aditya) ────────────────
+        log("Mode: APPROVED — sending final report to Gary & Surendra...")
+        html, text = _build_report_html(data, commits, is_preview=False)
+        subject    = f"viAct Automation Daily Report — {today_str}"
+        ok = _send(api_key,
+                   to=[GARY_EMAIL, SURENDRA_EMAIL], cc=[ADITYA_EMAIL],
+                   subject=subject, html=html, text=text)
+        if ok:
+            log(f"Final report sent to Gary ({GARY_EMAIL}) and Surendra ({SURENDRA_EMAIL}).")
+        return ok
 
 
 if __name__ == "__main__":
