@@ -23,7 +23,7 @@ SHOYAB_EMAIL   = "shoyab.ali@viact.ai"
 GARY_EMAIL     = "gary.ng@viact.ai"
 SURENDRA_EMAIL = "surendra.singh@viact.ai"
 ADITYA_EMAIL   = "aditya.meshram@viact.ai"
-RESEND_FROM    = "Aditya Meshram <onboarding@resend.dev>"
+RESEND_FROM    = "Aditya Meshram <aditya.meshram@viact.ai>"  # requires viact.ai domain verified in Resend
 
 
 def _env(key: str, default: str = "") -> str:
