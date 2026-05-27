@@ -1298,11 +1298,19 @@ with tab_industry:
                     _viact_md = ""
                 _comp_data_all = {_viact_url: {"success": bool(_viact_md), "markdown": _viact_md, "word_count": len(_viact_md.split())}}
             else:
-                _viact_md = ""
+                # Custom industry: scrape viact.ai case-studies page as reference
+                with _prog.container():
+                    st.info("Step 1/3 — Scraping viAct case studies (custom industry reference)...")
+                try:
+                    from agent3_content_architect import INDUSTRY_CASE_STUDY_URL
+                    _cs_scraped = extract_competitor_content([INDUSTRY_CASE_STUDY_URL])
+                    _viact_md = _cs_scraped.get(INDUSTRY_CASE_STUDY_URL, {}).get("markdown", "")
+                except Exception:
+                    _viact_md = ""
                 _comp_data_all = {}
 
             with _prog.container():
-                st.info(f"Step 2/3 — Scraping {len(_comp_urls)} competitor industry pages (Firecrawl)..." if _comp_urls else "Step 2/3 — No competitor URLs for this industry (custom). Generating from viAct data...")
+                st.info(f"Step 2/3 — Scraping {len(_comp_urls)} competitor industry pages (Firecrawl)..." if _comp_urls else "Step 2/3 — No competitor URLs for this industry. Generating from viAct data...")
             try:
                 _comp_data = extract_competitor_content(_comp_urls) if _comp_urls else {}
             except Exception:

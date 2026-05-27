@@ -367,6 +367,40 @@ def generate_cluster_topics(pillar_topic: str, primary_keyword: str) -> list[str
     return json.loads(response.choices[0].message.content).get("topics", [])[:3]
 
 
+# Fallback case-study page for custom industries that have no viact.ai industry page
+INDUSTRY_CASE_STUDY_URL = "https://www.viact.ai/post/case-studies"
+
+
+def _extract_viact_client_data(viact_markdown: str, industry_name: str, client) -> str:
+    """
+    Quick Groq call to extract real client names, project stats, and use case titles
+    from a scraped viact.ai page. Returns compact JSON string (~400 chars).
+    Called before the main generation so real data reaches the prompt.
+    """
+    if not viact_markdown or viact_markdown in ("[ACCESS DENIED]", ""):
+        return ""
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": (
+                f"From this viact.ai {industry_name} page content, extract ONLY:\n"
+                "1. Client or company names mentioned (any company viAct worked with)\n"
+                "2. Specific project stats (numbers, %, worker counts, timeframes, cost savings)\n"
+                "3. Use case or hazard titles actually mentioned\n\n"
+                f"Page:\n{viact_markdown[:3500]}\n\n"
+                'Return JSON: {"clients": ["name1", "name2"], '
+                '"stats": ["stat with number", "stat2"], '
+                '"use_cases": ["hazard title 1", "title 2"]}'
+            )}],
+            max_tokens=350,
+            temperature=0.1,
+            response_format={"type": "json_object"},
+        )
+        return response.choices[0].message.content
+    except Exception:
+        return ""
+
+
 def generate_industry_page(
     industry_name: str,
     industry_slug: str,
@@ -409,9 +443,12 @@ def generate_industry_page(
     denied_urls = [u for u, r in competitor_content.items() if not r.get("success")]
     env_desc = _industry_visual_env(industry_name)
 
+    # Extract real client data from viact.ai page (compact facts, not raw truncated markdown)
+    viact_client_data = _extract_viact_client_data(viact_page_content, industry_name, client)
+
     if viact_page_content and viact_page_content not in ("[ACCESS DENIED]", ""):
         viact_block = (
-            f"viAct existing {industry_name} page (match this tone and style):\n"
+            f"viAct existing {industry_name} page (tone reference):\n"
             + viact_page_content[:1200]
         )
     else:
@@ -445,7 +482,11 @@ viGent: "Manufacturing facilities generate continuous safety data across lines a
 CTA: "Try World Class AI Safety Solution for Manufacturing" | "Book a demo for plant managers, production managers, and shopfloor supervisors..."
 Testimonial format: "viAct gives us better awareness..." | "Health & Safety Lead, Packaging Plant, UK"
 
-=== VIACT EXISTING PAGE (TONE REFERENCE — scraped) ===
+=== REAL VIACT CLIENT DATA (extracted from viact.ai — use these facts directly) ===
+{viact_client_data if viact_client_data else "[No existing viAct page for this industry — generate industry-appropriate content using verified stats below]"}
+INSTRUCTIONS: Use client names above for testimonial sources (company type, not exact name if sensitive). Use stats above for metric descriptions where more specific than generic numbers. Base the 6 use case titles on the use_cases list above.
+
+=== VIACT EXISTING PAGE (TONE REFERENCE) ===
 {viact_block}
 
 === COMPETITOR INDUSTRY PAGES (RESEARCH) ===
