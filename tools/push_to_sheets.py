@@ -225,6 +225,142 @@ def push_webpage(
     return 1
 
 
+# ── Industry Pages — one dedicated tab per industry ──────────────────────────
+INDUSTRY_PAGE_COLUMNS = [
+    "Date",                    # A
+    "Hero Subheadline",        # B
+    "Hero Body Copy",          # C
+    "Impact Section Title",    # D
+    "Impact Subtitle",         # E
+    "Metric 1 Label",          # F
+    "Metric 1 Description",    # G
+    "Metric 2 Label",          # H
+    "Metric 2 Description",    # I
+    "Metric 3 Label",          # J
+    "Metric 3 Description",    # K
+    "Use Cases Section Title",  # L
+    "UC1 Title",               # M
+    "UC1 Description",         # N
+    "UC2 Title",               # O
+    "UC2 Description",         # P
+    "UC3 Title",               # Q
+    "UC3 Description",         # R
+    "UC4 Title",               # S
+    "UC4 Description",         # T
+    "UC5 Title",               # U
+    "UC5 Description",         # V
+    "UC6 Title",               # W
+    "UC6 Description",         # X
+    "Solutions Description",   # Y
+    "viGent Description",      # Z
+    "T1 Quote",                # AA
+    "T1 Source",               # AB
+    "T2 Quote",                # AC
+    "T2 Source",               # AD
+    "T3 Quote",                # AE
+    "T3 Source",               # AF
+    "T4 Quote",                # AG
+    "T4 Source",               # AH
+    "T5 Quote",                # AI
+    "T5 Source",               # AJ
+    "CTA Headline",            # AK
+    "CTA Description",         # AL
+    "Meta Title",              # AM
+    "Meta Description",        # AN
+    "Canonical Slug",          # AO
+    "Webpage Body",            # AP
+    "Image Prompts (JSON)",    # AQ
+    "Status",                  # AR
+]
+
+
+def _ensure_industry_tab(service, sheet_id: str, tab_name: str) -> None:
+    """Create the industry-specific tab if it doesn't exist and write the header."""
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": [INDUSTRY_PAGE_COLUMNS]},
+    ).execute()
+
+
+def push_industry_page(content: dict, industry_name: str) -> int:
+    """
+    Append one row to a dedicated industry tab (created if absent).
+    Tab name = industry_name, e.g. "Mining Safety", "Oil & Gas Safety".
+    Each CMS field gets its own column for easy copy-paste.
+    Returns 1 on success.
+    """
+    sheet_id = get_env("SHEET_ID")
+    service = get_sheets_service()
+    tab_name = industry_name.strip()
+    _ensure_industry_tab(service, sheet_id, tab_name)
+
+    cms = content.get("industry_cms_fields", {})
+    metrics = cms.get("metrics", [{}, {}, {}])
+    use_cases = cms.get("use_cases", [{} for _ in range(6)])
+    testimonials = cms.get("testimonials", [{} for _ in range(5)])
+    seo = content.get("seo_suite", {})
+
+    def _m(lst, i, key):
+        try:
+            return lst[i].get(key, "")
+        except IndexError:
+            return ""
+
+    row = [
+        date.today().isoformat(),
+        cms.get("hero_subheadline", ""),
+        cms.get("hero_body_copy", ""),
+        cms.get("impact_section_title", ""),
+        cms.get("impact_subtitle", ""),
+        _m(metrics, 0, "label"),
+        _m(metrics, 0, "description"),
+        _m(metrics, 1, "label"),
+        _m(metrics, 1, "description"),
+        _m(metrics, 2, "label"),
+        _m(metrics, 2, "description"),
+        cms.get("use_cases_section_title", ""),
+        _m(use_cases, 0, "title"), _m(use_cases, 0, "description"),
+        _m(use_cases, 1, "title"), _m(use_cases, 1, "description"),
+        _m(use_cases, 2, "title"), _m(use_cases, 2, "description"),
+        _m(use_cases, 3, "title"), _m(use_cases, 3, "description"),
+        _m(use_cases, 4, "title"), _m(use_cases, 4, "description"),
+        _m(use_cases, 5, "title"), _m(use_cases, 5, "description"),
+        cms.get("solutions_description", ""),
+        cms.get("vigent_description", ""),
+        _m(testimonials, 0, "quote"), _m(testimonials, 0, "source"),
+        _m(testimonials, 1, "quote"), _m(testimonials, 1, "source"),
+        _m(testimonials, 2, "quote"), _m(testimonials, 2, "source"),
+        _m(testimonials, 3, "quote"), _m(testimonials, 3, "source"),
+        _m(testimonials, 4, "quote"), _m(testimonials, 4, "source"),
+        cms.get("cta_headline", ""),
+        cms.get("cta_description", ""),
+        seo.get("meta_title", ""),
+        seo.get("meta_description", ""),
+        seo.get("canonical_url_slug", ""),
+        content.get("webpage_body", ""),
+        json.dumps(content.get("nano_banana_prompts", []), ensure_ascii=False),
+        "Draft",
+    ]
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": [row]},
+    ).execute()
+    return 1
+
+
 # ── Reference Library tab — persistent user-provided reference material ──────
 REFERENCE_TAB = "Reference_Library"
 REF_COLUMNS = ["Type", "Topic Filter", "Reference Text", "Added At"]

@@ -1363,25 +1363,22 @@ with tab_industry:
 
         _ip_push_col, _ip_info_col = st.columns([1, 3])
         with _ip_push_col:
-            if st.button("📊  Push to Google Sheets", type="primary", key="ip_push", use_container_width=True):
+            if st.button("📊  Save to Google Sheets", type="primary", key="ip_push", use_container_width=True):
                 try:
-                    from push_to_sheets import push_webpage
-                    push_webpage(
+                    from push_to_sheets import push_industry_page
+                    push_industry_page(
                         content=_ip_content,
-                        decision_logic=_ip_content.get("decision_logic", ""),
-                        input_source=f"Industry Page — {_ip_label}",
-                        competitor_urls=list(_ip_comp_data.keys()),
-                        unverified=False,
+                        industry_name=_ip_label,
                     )
-                    _sheet_url = f"https://docs.google.com/spreadsheets/d/{os.getenv('SHEET_ID', '')}/edit#gid=1093335602"
-                    st.success(f"✅ Industry page pushed — [Open Sheet ↗]({_sheet_url})")
+                    _sheet_url = f"https://docs.google.com/spreadsheets/d/{os.getenv('SHEET_ID', '')}/edit"
+                    st.success(f"✅ Saved to **'{_ip_label}'** tab in your Sheet — [Open Sheet ↗]({_sheet_url})")
                 except Exception as _e:
                     st.error(f"Sheets error: {_e}")
         with _ip_info_col:
             st.markdown(_html(
-                '<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">'
-                '&#128221; Writes to the <strong style="color:#c9d1d9;">Webpage Content</strong> tab. Input Source = "Industry Page — [name]".'
-                '</div>'
+                f'<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">'
+                f'&#128221; Creates a <strong style="color:#c9d1d9;">{_ip_label}</strong> tab in your Sheet. Each CMS field gets its own column — copy any field directly.'
+                f'</div>'
             ), unsafe_allow_html=True)
 
         st.markdown("<hr/>", unsafe_allow_html=True)
