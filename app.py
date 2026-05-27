@@ -1373,12 +1373,14 @@ with tab_industry:
         with _ip_push_col:
             if st.button("📊  Save to Google Sheets", type="primary", key="ip_push", use_container_width=True):
                 try:
-                    from push_to_sheets import push_industry_page
-                    push_industry_page(
+                    from push_to_sheets import push_industry_page_vertical
+                    _ip_sheet_id = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+                    push_industry_page_vertical(
                         content=_ip_content,
                         industry_name=_ip_label,
+                        sheet_id=_ip_sheet_id,
                     )
-                    _sheet_url = f"https://docs.google.com/spreadsheets/d/{os.getenv('SHEET_ID', '')}/edit"
+                    _sheet_url = f"https://docs.google.com/spreadsheets/d/{_ip_sheet_id}/edit"
                     st.success(f"✅ Saved to **'{_ip_label}'** tab in your Sheet — [Open Sheet ↗]({_sheet_url})")
                 except Exception as _e:
                     st.error(f"Sheets error: {_e}")
