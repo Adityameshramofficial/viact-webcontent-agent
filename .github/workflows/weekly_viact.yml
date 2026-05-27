@@ -1,8 +1,8 @@
-name: Weekly viAct Market Radar
+name: Daily viAct Market Radar
 
 on:
   schedule:
-    - cron: '0 4 * * 1'   # Every Monday at 4:00 AM UTC = 9:30 AM IST
+    - cron: '0 4 * * *'   # Every day at 4:00 AM UTC = 9:30 AM IST
   workflow_dispatch:       # Manual trigger button in GitHub Actions tab
 
 jobs:
