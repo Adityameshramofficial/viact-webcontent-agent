@@ -13,7 +13,7 @@
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────────
 const SHEET_ID     = '1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec';
-const RECIPIENTS   = ['marketing@viact.ai'];  // add: ['a@viact.ai', 'b@viact.ai']
+const RECIPIENTS   = ['adityameshramofficial@gmail.com'];  // add more: ['marketing@viact.ai', 'b@viact.ai']
 const TIMEZONE     = 'Asia/Kolkata';
 const BRAND_COLOR  = '#ff6a3d';
 const SHEET_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
