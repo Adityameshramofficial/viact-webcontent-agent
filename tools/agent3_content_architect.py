@@ -395,7 +395,7 @@ def generate_industry_page(
     viact_pages_str = "\n".join(combined_pages[:40]) if combined_pages else "https://viact.ai/"
 
     references_str = (
-        references.strip()[:4000]
+        references.strip()[:1500]
         if references.strip()
         else (
             "[No reference provided. Use viAct verified stats ONLY: "
@@ -412,7 +412,7 @@ def generate_industry_page(
     if viact_page_content and viact_page_content not in ("[ACCESS DENIED]", ""):
         viact_block = (
             f"viAct existing {industry_name} page (match this tone and style):\n"
-            + viact_page_content[:3000]
+            + viact_page_content[:1200]
         )
     else:
         viact_block = (
@@ -613,7 +613,7 @@ Return a single JSON object. Every field must be fully written out — no placeh
             {"role": "user", "content": prompt},
         ],
         temperature=0.65,
-        max_tokens=6000,
+        max_tokens=5000,
         response_format={"type": "json_object"},
     )
     result = json.loads(response.choices[0].message.content)
