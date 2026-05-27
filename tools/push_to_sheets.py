@@ -361,6 +361,186 @@ def push_industry_page(content: dict, industry_name: str) -> int:
     return 1
 
 
+# ── Industry Pages — VERTICAL format (field: value rows, green section headers) ─
+def push_industry_page_vertical(content: dict, industry_name: str, sheet_id: str) -> int:
+    """
+    Write industry page content vertically: field name in col A, value in col B.
+    Section headers get green background (#b7e1cc) and bold text.
+    Each run clears and rewrites the tab so it stays fresh.
+    Returns 1 on success.
+    """
+    service = get_sheets_service()
+    tab_name = industry_name.strip()
+
+    # Create tab or clear existing
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    else:
+        service.spreadsheets().values().clear(
+            spreadsheetId=sheet_id,
+            range=f"'{tab_name}'!A:B",
+        ).execute()
+
+    cms = content.get("industry_cms_fields", {})
+    metrics    = cms.get("metrics",     [{}, {}, {}])
+    use_cases  = cms.get("use_cases",   [{} for _ in range(6)])
+    testimonials = cms.get("testimonials", [{} for _ in range(5)])
+    seo  = content.get("seo_suite", {})
+    nano = content.get("nano_banana_prompts", [])
+
+    def _g(lst, i, key):
+        try:
+            return str(lst[i].get(key, "") or "")
+        except IndexError:
+            return ""
+
+    rows = []          # list of [col_A, col_B]
+    section_rows = []  # 0-based row indices that are section headers
+
+    def sec(title):
+        section_rows.append(len(rows))
+        rows.append([title, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # ── SEO & Meta ──────────────────────────────────────────────────────────────
+    sec("SEO & META")
+    f("Meta Title",          seo.get("meta_title", ""))
+    f("Meta Description",    seo.get("meta_description", ""))
+    f("Primary Keyword",     seo.get("primary_keyword", ""))
+    f("Secondary Keywords",  ", ".join(seo.get("secondary_keywords", [])))
+    f("Canonical URL Slug",  seo.get("canonical_url_slug", ""))
+    blank()
+
+    # ── Hero Section ─────────────────────────────────────────────────────────────
+    sec("1st Section - Hero")
+    f("H1 Eyebrow",               f"AI for Safety & Productivity in {industry_name}")
+    f("Hero Subheadline [H2]",    cms.get("hero_subheadline", ""))
+    f("Hero Body Copy [H3]",      cms.get("hero_body_copy", ""))
+    blank()
+
+    # ── Proven Impact ────────────────────────────────────────────────────────────
+    sec("2nd Section - Proven Impact")
+    f("Impact Section Title",  cms.get("impact_section_title", ""))
+    f("Impact Subtitle",       cms.get("impact_subtitle", ""))
+    for i in range(3):
+        f(f"Metric {i+1} Label",       _g(metrics, i, "label"))
+        f(f"Metric {i+1} Description", _g(metrics, i, "description"))
+    blank()
+
+    # ── AI CCTV Use Cases ────────────────────────────────────────────────────────
+    sec("3rd Section - AI CCTV Use Cases")
+    f("Use Cases Section Title",  cms.get("use_cases_section_title", ""))
+    for i in range(6):
+        f(f"Use Case {i+1} Title [H3]", _g(use_cases, i, "title"))
+        f(f"Use Case {i+1} Description", _g(use_cases, i, "description"))
+        f(f"Use Case {i+1} Image Prompt", _g(nano, i, "prompt"))
+        f(f"Use Case {i+1} Alt Text",    _g(nano, i, "alt_text"))
+    blank()
+
+    # ── Pre-Built Solutions ───────────────────────────────────────────────────────
+    sec("4th Section - Pre-Built Solutions")
+    f("Solutions Description", cms.get("solutions_description", ""))
+    blank()
+
+    # ── viGent (nano index 6) ────────────────────────────────────────────────────
+    sec("5th Section - viGent AI Agent")
+    f("viGent Description",   cms.get("vigent_description", ""))
+    f("viGent Image Prompt",  _g(nano, 6, "prompt"))
+    f("viGent Image Alt Text", _g(nano, 6, "alt_text"))
+    blank()
+
+    # ── Voices from the Field — Testimonials (nano headshots: indices 7-10) ──────
+    sec("6th Section - Voices from the Field")
+    for i in range(5):
+        f(f"Testimonial {i+1} Quote",  _g(testimonials, i, "quote"))
+        f(f"Testimonial {i+1} Source", _g(testimonials, i, "source"))
+        if i < 4:
+            f(f"Reviewer {i+1} Image Prompt",  _g(nano, 7 + i, "prompt"))
+            f(f"Reviewer {i+1} Alt Text",       _g(nano, 7 + i, "alt_text"))
+        blank()
+
+    # ── CTA ───────────────────────────────────────────────────────────────────────
+    sec("7th Section - CTA")
+    f("CTA Headline",     cms.get("cta_headline", ""))
+    f("CTA Description",  cms.get("cta_description", ""))
+    blank()
+
+    # ── Full Webpage Body ──────────────────────────────────────────────────────────
+    sec("Full Webpage Body (H-tagged Markdown)")
+    f("Webpage Body", content.get("webpage_body", ""))
+
+    # Write all rows in one call
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    # Get the numeric sheetId for formatting
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+
+    fmt_requests = []
+    # Green background + bold for section header rows
+    for row_idx in section_rows:
+        fmt_requests.append({
+            "repeatCell": {
+                "range": {
+                    "sheetId": sheet_gid,
+                    "startRowIndex": row_idx,
+                    "endRowIndex": row_idx + 1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": 2,
+                },
+                "cell": {
+                    "userEnteredFormat": {
+                        "backgroundColor": {"red": 0.718, "green": 0.882, "blue": 0.804},
+                        "textFormat": {"bold": True, "fontSize": 10},
+                    }
+                },
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+    # Column widths: A=260px, B=650px
+    fmt_requests += [
+        {
+            "updateDimensionProperties": {
+                "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+                "properties": {"pixelSize": 260},
+                "fields": "pixelSize",
+            }
+        },
+        {
+            "updateDimensionProperties": {
+                "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+                "properties": {"pixelSize": 650},
+                "fields": "pixelSize",
+            }
+        },
+    ]
+
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id,
+        body={"requests": fmt_requests},
+    ).execute()
+    return 1
+
+
 # ── Reference Library tab — persistent user-provided reference material ──────
 REFERENCE_TAB = "Reference_Library"
 REF_COLUMNS = ["Type", "Topic Filter", "Reference Text", "Added At"]
