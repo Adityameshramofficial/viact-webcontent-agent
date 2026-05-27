@@ -425,7 +425,7 @@ def push_webpage_vertical(
     topic_rows.append(len(rows))
     rows.append([f"TOPIC: {content.get('topic', input_source)}", ""])
     f("Input Source",  input_source or "Manual")
-    f("Date",          tab_name)
+    f("Date",          date.today().isoformat())
     f("Unverified",    "Yes" if unverified else "No")
     f("Competitor URLs", ", ".join(competitor_urls or []))
     blank()
