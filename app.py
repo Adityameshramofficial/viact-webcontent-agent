@@ -216,9 +216,9 @@ st.markdown(_html("""
 <div class="glass-card" style="padding:1.8rem 2rem; margin-bottom:1.2rem; border-color:rgba(255,106,61,0.3);">
 <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
 <div>
-<div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;">viAct &middot; Content Intelligence</div>
+<div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;">viAct &middot; Content Intelligence &middot; 2 Agents</div>
 <h1 style="margin:0; font-size:1.85rem; color:#e6edf3; font-weight:700; line-height:1.2;">Webpage Content Agent</h1>
-<p style="margin:8px 0 0; color:#8b949e; font-size:0.92rem; max-width:520px; line-height:1.5;">Finds topics your competitors rank for that <strong style="color:#e6edf3;">viAct doesn't have yet</strong> &#8212; then writes a complete, publish-ready webpage in under 3 minutes.</p>
+<p style="margin:8px 0 0; color:#8b949e; font-size:0.92rem; max-width:560px; line-height:1.5;">Two AI agents in one tool — <strong style="color:#e6edf3;">find content gaps</strong> your competitors rank for, or <strong style="color:#e6edf3;">generate full industry landing pages</strong> ready for Wix CMS. Pick a tab below.</p>
 </div>
 <div style="display:flex; gap:8px; flex-wrap:wrap;">
 <span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#128225; Tavily Search</span>
@@ -229,7 +229,50 @@ st.markdown(_html("""
 </div>
 """), unsafe_allow_html=True)
 
-# =============================================================================
+# ── Agent quick-guide (helps teammates understand what each tab does) ─────────
+st.markdown(_html("""
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.2rem;">
+
+  <div class="glass-card" style="padding:1.2rem 1.4rem; border-color:rgba(255,106,61,0.25);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <span style="font-size:1.4rem;">📡</span>
+      <div>
+        <div style="color:#e6edf3; font-weight:700; font-size:0.95rem;">Market Radar</div>
+        <div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Blog &amp; Pillar Pages</div>
+      </div>
+    </div>
+    <p style="margin:0; color:#8b949e; font-size:0.82rem; line-height:1.55;">
+      Scans 8 competitors weekly, finds topics viAct doesn't cover yet, and writes a <strong style="color:#c9d1d9;">full SEO page + 3 cluster blog posts</strong>.
+      Runs automatically every Monday — or manually any time from this tab.
+    </p>
+    <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Tavily gap check</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Firecrawl scrape</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Auto Monday run</span>
+    </div>
+  </div>
+
+  <div class="glass-card" style="padding:1.2rem 1.4rem; border-color:rgba(63,185,80,0.25);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <span style="font-size:1.4rem;">🏭</span>
+      <div>
+        <div style="color:#e6edf3; font-weight:700; font-size:0.95rem;">Industry Pages</div>
+        <div style="color:#3fb950; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Dynamic Landing Pages</div>
+      </div>
+    </div>
+    <p style="margin:0; color:#8b949e; font-size:0.82rem; line-height:1.55;">
+      Generates a <strong style="color:#c9d1d9;">complete 8-section industry landing page</strong> — hero, metrics, 6 use cases, testimonials, CTA, 11 image prompts — ready to paste into Wix CMS.
+      Just pick an industry and click Generate.
+    </p>
+    <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+      <span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Construction · Oil &amp; Gas · Mining</span>
+      <span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">+ any custom industry</span>
+    </div>
+  </div>
+
+</div>
+"""), unsafe_allow_html=True)
+
 # =============================================================================
 # TABS — Market Radar  |  Industry Pages
 # =============================================================================
