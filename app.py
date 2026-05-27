@@ -990,7 +990,7 @@ with tab_radar:
         with _push_col:
             if st.button("📊  Push to Google Sheets", type="primary", key="r3_push", use_container_width=True):
                 try:
-                    from push_to_sheets import push_webpage_vertical
+                    from push_to_sheets import push_webpage_vertical, WEBPAGE_VERTICAL_TAB
                     competitor_urls_list = list(competitor_data.keys())
                     push_webpage_vertical(
                         content=content,
@@ -999,16 +999,14 @@ with tab_radar:
                         competitor_urls=competitor_urls_list,
                         unverified=unverified,
                     )
-                    from datetime import date as _dt
-                    _tab = _dt.today().isoformat()
                     sheet_url = f"https://docs.google.com/spreadsheets/d/{os.getenv('SHEET_ID', '')}"
-                    st.success(f"✅ Saved to **'{_tab}'** tab in vertical format — [Open Sheet ↗]({sheet_url})")
+                    st.success(f"✅ Saved to **'{WEBPAGE_VERTICAL_TAB}'** tab — [Open Sheet ↗]({sheet_url})")
                 except Exception as e:
                     st.error(f"Sheets error: {e}")
         with _info_col:
             st.markdown(_html("""
     <div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">
-    &#128221; Saves to a <strong style="color:#c9d1d9;">date-named tab</strong> (e.g. 2026-05-27) in vertical format — field name in col A, value in col B. Multiple topics on the same day stack in the same tab.
+    &#128221; Saves to the <strong style="color:#c9d1d9;">Webpage Content</strong> tab in vertical format — field name in col A, value in col B. Every push stacks below the previous one.
     </div>
     """), unsafe_allow_html=True)
 
@@ -1044,7 +1042,7 @@ with tab_radar:
 
             if _gen_cluster:
                 from agent3_content_architect import generate_cluster_topics, generate_structured_content
-                from push_to_sheets import push_webpage_vertical as _pwv
+                from push_to_sheets import push_webpage_vertical as _pwv, WEBPAGE_VERTICAL_TAB as _WVT
                 _prim_kw = content.get("seo_suite", {}).get("primary_keyword", topic_str)
                 _blog_results = []
                 _cluster_err = None
@@ -1085,6 +1083,7 @@ with tab_radar:
                                 input_source=f"Blog Cluster — {topic_str[:40]} ({_j}/3)",
                                 competitor_urls=list(competitor_data.keys()),
                                 unverified=unverified,
+                                tab_name=_WVT,
                             )
                             _blog_results.append(_bc)
                         except Exception as _be:

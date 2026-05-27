@@ -361,23 +361,28 @@ def push_industry_page(content: dict, industry_name: str) -> int:
     return 1
 
 
-# ── Webpage Content — VERTICAL format, date-named tabs ──────────────────────────
+# ── Webpage Content — VERTICAL format ────────────────────────────────────────────
+WEBPAGE_VERTICAL_TAB = "Webpage Content"   # fixed tab for all market radar pushes
+
 def push_webpage_vertical(
     content: dict,
     decision_logic: str = "",
     input_source: str = "",
     competitor_urls: list | None = None,
     unverified: bool = False,
+    tab_name: str | None = None,
 ) -> int:
     """
-    Append one content block vertically to a date-named tab (e.g. '2026-05-27').
+    Append one content block vertically to a named tab.
+    tab_name defaults to WEBPAGE_VERTICAL_TAB ("Webpage Content").
+    Pass tab_name=date.today().isoformat() for date-based tabs.
     Field name in col A, value in col B. Section headers = blue background.
     Multiple topics pushed on the same day are stacked in the same tab with a spacer.
     Returns 1 on success.
     """
     sheet_id = get_env("SHEET_ID")
     service = get_sheets_service()
-    tab_name = date.today().isoformat()          # e.g. "2026-05-27"
+    tab_name = tab_name or WEBPAGE_VERTICAL_TAB
 
     # Create tab if it doesn't exist yet
     meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()

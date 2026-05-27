@@ -402,9 +402,8 @@ def main():
             count = push_webpage(
                 content=content,
                 decision_logic=content.get("decision_logic", ""),
-                input_source=f"Weekly Auto-Run #{autorun_base + i - 1}",
+                input_source=f"Daily Auto-Run #{autorun_base + i - 1}",
                 competitor_urls=list(competitor_data.keys()),
-                autorun_num=autorun_base + i - 1,
                 unverified=True,
             )
             log(f"  Pushed {count} row(s) to Google Sheets. Topic: '{topic}'")
@@ -454,7 +453,6 @@ def main():
                     decision_logic=blog_content.get("decision_logic", ""),
                     input_source=f"Cluster #{autorun_base + i - 1}-blog{j}",
                     competitor_urls=list(competitor_data.keys()),
-                    autorun_num=autorun_base + i - 1,
                     unverified=True,
                 )
                 log(f"  Blog {j} pushed: '{blog_topic}'")
