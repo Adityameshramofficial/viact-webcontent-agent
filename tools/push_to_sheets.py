@@ -361,6 +361,232 @@ def push_industry_page(content: dict, industry_name: str) -> int:
     return 1
 
 
+# ── Webpage Content — VERTICAL format, date-named tabs ──────────────────────────
+def push_webpage_vertical(
+    content: dict,
+    decision_logic: str = "",
+    input_source: str = "",
+    competitor_urls: list | None = None,
+    unverified: bool = False,
+) -> int:
+    """
+    Append one content block vertically to a date-named tab (e.g. '2026-05-27').
+    Field name in col A, value in col B. Section headers = blue background.
+    Multiple topics pushed on the same day are stacked in the same tab with a spacer.
+    Returns 1 on success.
+    """
+    sheet_id = get_env("SHEET_ID")
+    service = get_sheets_service()
+    tab_name = date.today().isoformat()          # e.g. "2026-05-27"
+
+    # Create tab if it doesn't exist yet
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+
+    # Find the next empty row (so multiple topics stack in the same day-tab)
+    existing_vals = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id, range=f"'{tab_name}'!A:A"
+    ).execute()
+    start_row = len(existing_vals.get("values", [])) + 1   # 1-based
+
+    seo   = content.get("seo_suite", {}) or {}
+    hero  = content.get("hero_section", {}) or {}
+    faqs  = content.get("schema_faqs", []) or []
+    efaqs = content.get("extended_faqs", []) or []
+    geo   = content.get("geo_package", {}) or {}
+    nano  = content.get("nano_banana_prompts", content.get("visual_strategy", [])) or []
+    links = content.get("internal_links", []) or []
+
+    rows = []
+    section_rows  = []   # 0-based within this block (for blue formatting)
+    topic_rows    = []   # topic header row index (for orange formatting)
+
+    def sec(title):
+        section_rows.append(len(rows))
+        rows.append([title, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # ── Topic header ─────────────────────────────────────────────────────────────
+    topic_rows.append(len(rows))
+    rows.append([f"TOPIC: {content.get('topic', input_source)}", ""])
+    f("Input Source",  input_source or "Manual")
+    f("Date",          tab_name)
+    f("Unverified",    "Yes" if unverified else "No")
+    f("Competitor URLs", ", ".join(competitor_urls or []))
+    blank()
+
+    # ── SEO & Meta ───────────────────────────────────────────────────────────────
+    sec("SEO & META")
+    f("Meta Title",         seo.get("meta_title", ""))
+    f("Meta Description",   seo.get("meta_description", ""))
+    f("Primary Keyword",    seo.get("primary_keyword", ""))
+    f("Secondary Keywords", ", ".join(seo.get("secondary_keywords", [])))
+    f("LSI Keywords",       ", ".join(seo.get("lsi_keywords", [])))
+    f("Canonical Slug",     seo.get("canonical_url_slug", ""))
+    blank()
+
+    # ── Hero Section ─────────────────────────────────────────────────────────────
+    sec("HERO SECTION")
+    f("H1",           hero.get("h1", ""))
+    f("Subheadline",  hero.get("subheadline", ""))
+    f("CTA Text",     hero.get("cta_text", ""))
+    f("CTA URL",      hero.get("cta_url", ""))
+    blank()
+
+    # ── Problem Statement ────────────────────────────────────────────────────────
+    sec("PROBLEM STATEMENT")
+    f("Problem Statement", content.get("problem_statement", ""))
+    blank()
+
+    # ── Webpage Body ─────────────────────────────────────────────────────────────
+    sec("WEBPAGE BODY (H-tagged Markdown)")
+    f("Webpage Body", content.get("webpage_body", ""))
+    blank()
+
+    # ── Schema FAQs ──────────────────────────────────────────────────────────────
+    sec("SCHEMA FAQs (5 items — paste into FAQ schema)")
+    for i, faq in enumerate(faqs[:5], 1):
+        f(f"FAQ {i} Question", faq.get("question", "") if isinstance(faq, dict) else "")
+        f(f"FAQ {i} Answer",   faq.get("answer", "")   if isinstance(faq, dict) else str(faq))
+    blank()
+
+    # ── Extended FAQs ────────────────────────────────────────────────────────────
+    sec("EXTENDED FAQs (on-page only)")
+    for i, faq in enumerate(efaqs[:3], 1):
+        f(f"Extended FAQ {i} Question", faq.get("question", "") if isinstance(faq, dict) else "")
+        f(f"Extended FAQ {i} Answer",   faq.get("answer", "")   if isinstance(faq, dict) else str(faq))
+    blank()
+
+    # ── Schema JSON-LD ───────────────────────────────────────────────────────────
+    sec("SCHEMA JSON-LD (paste into <head>)")
+    jld = content.get("schema_json_ld", "")
+    f("Schema JSON-LD", jld if isinstance(jld, str) else json.dumps(jld, ensure_ascii=False))
+    blank()
+
+    # ── GEO Package ──────────────────────────────────────────────────────────────
+    sec("GEO PACKAGE")
+    f("Opening 200 Words",     geo.get("opening_200_words", ""))
+    for i, tip in enumerate(geo.get("citation_framing_tips", [])[:3], 1):
+        f(f"Citation Tip {i}", tip)
+    blank()
+
+    # ── Image Prompts ────────────────────────────────────────────────────────────
+    sec("IMAGE PROMPTS (Nano Banana)")
+    for i, img in enumerate(nano, 1):
+        if isinstance(img, dict):
+            f(f"Image {i} Placement", img.get("placement", ""))
+            f(f"Image {i} Prompt",    img.get("prompt", ""))
+            f(f"Image {i} Alt Text",  img.get("alt_text", ""))
+        else:
+            f(f"Image {i}", str(img))
+    blank()
+
+    # ── Internal Links ───────────────────────────────────────────────────────────
+    sec("INTERNAL LINKS")
+    for i, lnk in enumerate(links[:10], 1):
+        if isinstance(lnk, dict):
+            f(f"Link {i} Anchor",  lnk.get("anchor_text", ""))
+            f(f"Link {i} URL",     lnk.get("url", ""))
+            f(f"Link {i} Context", lnk.get("context", ""))
+    blank()
+
+    # ── Decision Logic ───────────────────────────────────────────────────────────
+    sec("DECISION LOGIC (for email to Gary / Surendra)")
+    f("Decision Logic", decision_logic or content.get("decision_logic", ""))
+
+    # Write rows
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A{start_row}",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    # Apply formatting
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+
+    offset = start_row - 1   # convert to 0-based
+    fmt_reqs = []
+
+    # Blue section headers
+    for ri in section_rows:
+        fmt_reqs.append({
+            "repeatCell": {
+                "range": {
+                    "sheetId": sheet_gid,
+                    "startRowIndex": offset + ri,
+                    "endRowIndex":   offset + ri + 1,
+                    "startColumnIndex": 0, "endColumnIndex": 2,
+                },
+                "cell": {"userEnteredFormat": {
+                    "backgroundColor": {"red": 0.643, "green": 0.761, "blue": 0.957},
+                    "textFormat": {"bold": True, "fontSize": 10},
+                }},
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+
+    # Orange topic header
+    for ri in topic_rows:
+        fmt_reqs.append({
+            "repeatCell": {
+                "range": {
+                    "sheetId": sheet_gid,
+                    "startRowIndex": offset + ri,
+                    "endRowIndex":   offset + ri + 1,
+                    "startColumnIndex": 0, "endColumnIndex": 2,
+                },
+                "cell": {"userEnteredFormat": {
+                    "backgroundColor": {"red": 1.0, "green": 0.6, "blue": 0.2},
+                    "textFormat": {"bold": True, "fontSize": 11, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                }},
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+
+    # Column widths (only set on first topic in tab — start_row == 1)
+    if start_row == 1:
+        fmt_reqs += [
+            {
+                "updateDimensionProperties": {
+                    "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+                    "properties": {"pixelSize": 240},
+                    "fields": "pixelSize",
+                }
+            },
+            {
+                "updateDimensionProperties": {
+                    "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+                    "properties": {"pixelSize": 700},
+                    "fields": "pixelSize",
+                }
+            },
+        ]
+
+    if fmt_reqs:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": fmt_reqs},
+        ).execute()
+
+    return 1
+
+
 # ── Industry Pages — VERTICAL format (field: value rows, green section headers) ─
 def push_industry_page_vertical(content: dict, industry_name: str, sheet_id: str) -> int:
     """

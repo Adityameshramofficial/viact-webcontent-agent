@@ -947,23 +947,25 @@ with tab_radar:
         with _push_col:
             if st.button("📊  Push to Google Sheets", type="primary", key="r3_push", use_container_width=True):
                 try:
-                    from push_to_sheets import push_webpage
+                    from push_to_sheets import push_webpage_vertical
                     competitor_urls_list = list(competitor_data.keys())
-                    push_webpage(
+                    push_webpage_vertical(
                         content=content,
                         decision_logic=content.get("decision_logic", ""),
                         input_source=f"3-Agent Radar — {radar.get('scan_timestamp', '')}",
                         competitor_urls=competitor_urls_list,
                         unverified=unverified,
                     )
+                    from datetime import date as _dt
+                    _tab = _dt.today().isoformat()
                     sheet_url = f"https://docs.google.com/spreadsheets/d/{os.getenv('SHEET_ID', '')}"
-                    st.success(f"✅ Row written to 'Webpage Content' tab — [Open Sheet ↗]({sheet_url})")
+                    st.success(f"✅ Saved to **'{_tab}'** tab in vertical format — [Open Sheet ↗]({sheet_url})")
                 except Exception as e:
                     st.error(f"Sheets error: {e}")
         with _info_col:
             st.markdown(_html("""
     <div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">
-    &#128221; Sends all 10 sections to the <strong style="color:#c9d1d9;">Webpage Content</strong> tab in your Google Sheet. Each topic gets its own row. Open the sheet to copy content into your CMS.
+    &#128221; Saves to a <strong style="color:#c9d1d9;">date-named tab</strong> (e.g. 2026-05-27) in vertical format — field name in col A, value in col B. Multiple topics on the same day stack in the same tab.
     </div>
     """), unsafe_allow_html=True)
 

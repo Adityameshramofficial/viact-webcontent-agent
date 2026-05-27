@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 from agent1_market_explorer import discover_market_gaps
 from agent2_data_extractor import extract_competitor_content
 from agent3_content_architect import generate_structured_content, generate_cluster_topics
-from push_to_sheets import push_webpage
+from push_to_sheets import push_webpage_vertical as push_webpage
 from research_competitors import scrape_viact_sitemap
 
 
