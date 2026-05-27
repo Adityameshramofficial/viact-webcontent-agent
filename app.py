@@ -1374,7 +1374,7 @@ with tab_industry:
             if st.button("📊  Save to Google Sheets", type="primary", key="ip_push", use_container_width=True):
                 try:
                     from push_to_sheets import push_industry_page_vertical
-                    _ip_sheet_id = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+                    _ip_sheet_id = os.getenv("SHEET_ID", "")
                     push_industry_page_vertical(
                         content=_ip_content,
                         industry_name=_ip_label,
