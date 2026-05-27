@@ -49,6 +49,74 @@ REFERENCE PRIORITY RULE:
 
 FULL_SYSTEM = ZERO_HALLUCINATION_BLOCK.strip() + "\n\n" + SYSTEM_INSTRUCTION
 
+# Industry page system — 3 expert personas merged from dedicated industry agent
+INDUSTRY_SYSTEM = ZERO_HALLUCINATION_BLOCK.strip() + """
+
+AGENT PERSONAS (follow all three simultaneously):
+
+━━ ARIA SINGH — Content Strategist (14 years B2B, enterprise safety) ━━
+• Metrics MUST include real numbers: enterprise counts, cost figures, countries, sq ft, event counts
+• Use cases: name the specific hazard AND the specific injury/loss it prevents. Never generic.
+• Testimonials: first-person, specific problem → viAct solved it → measurable result. 35-50 words.
+• Hero: reader sees their exact job problem in the first line. Immediate recognition.
+• Banned words: cutting-edge, revolutionary, state-of-the-art, innovative, transformative
+
+━━ MARCUS WEBB — Technical SEO Director (12 years, 200+ ranked pages) ━━
+• Meta title: [Primary Keyword] | viAct.ai — ≤60 chars, count every character
+• Meta description: industry pain point + primary keyword + differentiator + soft CTA, 150-160 chars exactly
+• Long-tail keywords (3+ words) convert 3-5× better than head terms
+• Alt texts: ≤125 chars, [image description] + [primary keyword naturally] + [context]
+
+━━ DANI CRUZ — AI Art Director (10 years, 50+ AI safety image campaigns) ━━
+• Every CCTV field image MUST start: "CCTV perspective, high angle, ..."
+• AI overlay MUST include: neon green #00FF41 bounding boxes (safe zones), red #FF3B3B (hazards), 2px stroke, monospace confidence labels
+• viGent MUST start: "Ultra-realistic render of a dark-mode dashboard (#0D1117 bg), ..." — NEVER "CCTV perspective"
+• Reviewer headshots: "Professional headshot, [ethnicity/gender], business casual, plain dark background (#1a1a1a), 56x56px, LinkedIn-style"
+• Every prompt string MUST embed the exact pixel dimensions (e.g. "520x327px")
+
+QUALITY GATES — output fails validation if any are violated:
+• Hero [H3] description: 35-45 words
+• Metrics: exactly 3 blocks, each description 10-15 words with REAL numbers (not just %)
+• Use cases: exactly 6 blocks, each description 20-30 words (hazard + consequence prevented)
+• Testimonials: exactly 5 blocks, 35-50 words each, first-person, specific outcome, different countries
+• CTA description: 20-30 words, names specific senior job titles
+• nano_banana_prompts: exactly 11 items (6 use cases + 1 viGent + 4 reviewer headshots)
+• Every image prompt string contains pixel dimensions
+
+H-TAG RULES (must appear in webpage_body):
+• [H1]: exactly one per page — "AI for Safety & Productivity in [Industry]"
+• [H2]: hero % headline + every section title
+• [H3]: hero description, metric titles, use case titles
+• NEVER use [H4]
+"""
+
+
+def _industry_visual_env(industry_name: str) -> str:
+    """Return industry-specific visual environment string for image prompts."""
+    n = industry_name.lower()
+    if "mining" in n:
+        return "underground tunnel, rock face walls, dust haze, harsh LED strip lighting, hard-hat workers with cap lamps, heavy drill machinery"
+    if "oil" in n or "gas" in n:
+        return "offshore platform steel grating deck, pipe manifolds, flare stack in background, workers in flame-resistant coveralls"
+    if "manufactur" in n or "factory" in n:
+        return "factory floor, conveyor lines, robotic arms, overhead fluorescent lighting, workers in hi-vis and safety glasses"
+    if "facility" in n:
+        return "multi-storey car park or plant room, HVAC corridor, mixed artificial lighting, maintenance workers"
+    if "food" in n or "beverage" in n:
+        return "food processing line, stainless steel surfaces, hygiene caps and aprons, cold white LED lighting"
+    if "construct" in n or "building" in n:
+        return "open construction site, scaffolding, concrete pour, overcast sky, workers in full PPE"
+    if "maritime" in n or "port" in n or "ship" in n:
+        return "port terminal or ship deck, container stacks, crane arms, harsh outdoor lighting, dock workers"
+    if "logistic" in n or "warehouse" in n:
+        return "large warehouse interior, racking systems, forklift operations, sodium vapour overhead lighting"
+    if "automotive" in n or " ev" in n:
+        return "automotive assembly line, robotic welding stations, workers in anti-static suits, clean factory floor"
+    if "pharma" in n or "chemical" in n:
+        return "cleanroom or chemical plant, workers in full protective suits, bright white lighting, sterile environment"
+    return "industrial facility, workers in hi-vis PPE, industrial overhead lighting"
+
+
 # Complete viAct solutions + products catalog for internal link suggestions
 VIACT_CATALOG = [
     # Solutions
@@ -306,6 +374,7 @@ def generate_industry_page(
     competitor_content: dict,
     references: str,
     viact_pages: list[str],
+    custom_instructions: str = "",
 ) -> dict:
     """
     Generate a full industry vertical landing page for viAct.ai.
@@ -338,6 +407,7 @@ def generate_industry_page(
 
     competitor_block = _build_competitor_block(competitor_content)
     denied_urls = [u for u, r in competitor_content.items() if not r.get("success")]
+    env_desc = _industry_visual_env(industry_name)
 
     if viact_page_content and viact_page_content not in ("[ACCESS DENIED]", ""):
         viact_block = (
@@ -510,18 +580,17 @@ Return a single JSON object. Every field must be fully written out — no placeh
   }},
 
   "nano_banana_prompts": [
-    {{"placement": "Use Case 1 (520x327px)", "prompt": "CCTV high-angle perspective, AI bounding boxes neon green and red, {industry_name} environment, [use case 1 specific hazard from solution_parameters], workers in PPE, industrial lighting, 4k, 520x327 px", "alt_text": "AI CCTV detecting [use case 1] in {industry_name} — viAct safety monitoring"}},
-    {{"placement": "Use Case 2 (488x293px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 2 hazard], industrial lighting, 4k, 488x293 px", "alt_text": "AI safety monitoring [use case 2] in {industry_name}"}},
-    {{"placement": "Use Case 3 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 3 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "Computer vision detecting [use case 3] — {industry_name}"}},
-    {{"placement": "Use Case 4 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 4 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "AI CCTV preventing [use case 4] in {industry_name}"}},
-    {{"placement": "Use Case 5 (520x303px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 5 hazard], industrial lighting, 4k, 520x303 px", "alt_text": "Real-time hazard detection [use case 5] — {industry_name}"}},
-    {{"placement": "Use Case 6 (520x317px)", "prompt": "CCTV high-angle, AI bounding boxes, {industry_name} environment, [use case 6 hazard], industrial lighting, 4k, 520x317 px", "alt_text": "AI safety system detecting [use case 6] in {industry_name}"}},
-    {{"placement": "viGent Dashboard (422x377px)", "prompt": "Ultra-realistic dark-mode AI safety operations dashboard on large monitors, real-time incident heatmaps, alert timelines, worker status panels, {industry_name} data widgets, viAct.ai interface, ambient blue lighting, 422x377 px", "alt_text": "viGent EHS AI Agent dashboard — {industry_name} safety operations"}},
-    {{"placement": "Reviewer 1 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, senior safety manager appearance, plain background, 56x56 px", "alt_text": "Senior HSE Manager, {industry_name} facility — viAct customer"}},
-    {{"placement": "Reviewer 2 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, EHS manager appearance, plain background, 56x56 px", "alt_text": "EHS Manager at {industry_name} company — viAct customer"}},
-    {{"placement": "Reviewer 3 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, plant manager appearance, plain background, 56x56 px", "alt_text": "Plant Manager, {industry_name} enterprise — viAct customer"}},
-    {{"placement": "Reviewer 4 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, production supervisor appearance, plain background, 56x56 px", "alt_text": "Production Supervisor, {industry_name} facility — viAct customer"}},
-    {{"placement": "Reviewer 5 Headshot (56x56px)", "prompt": "Professional headshot, neutral expression, quality/operations manager appearance, plain background, 56x56 px", "alt_text": "Operations Manager, {industry_name} site — viAct customer"}}
+    {{"placement": "Use Case 1 (520x327px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay with neon green #00FF41 bounding boxes on safe workers and red #FF3B3B boxes on [use case 1 specific hazard], 2px stroke, monospace confidence labels, photorealistic 4k, 520x327px", "alt_text": "AI CCTV detecting [use case 1 hazard] in {industry_name} — viAct real-time safety monitoring 520x327px"}},
+    {{"placement": "Use Case 2 (488x293px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay neon green #00FF41 and red #FF3B3B bounding boxes on [use case 2 specific hazard], 2px stroke monospace labels, photorealistic 4k, 488x293px", "alt_text": "viAct AI safety monitoring [use case 2] in {industry_name} — computer vision alert 488x293px"}},
+    {{"placement": "Use Case 3 (520x303px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay neon green #00FF41 and red #FF3B3B bounding boxes on [use case 3 specific hazard], 2px stroke, monospace confidence labels, photorealistic 4k, 520x303px", "alt_text": "Computer vision preventing [use case 3] in {industry_name} — viAct AI detection 520x303px"}},
+    {{"placement": "Use Case 4 (520x303px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay neon green #00FF41 and red #FF3B3B bounding boxes on [use case 4 specific hazard], 2px stroke, monospace confidence labels, photorealistic 4k, 520x303px", "alt_text": "AI CCTV alert for [use case 4] in {industry_name} — viAct hazard detection 520x303px"}},
+    {{"placement": "Use Case 5 (520x303px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay neon green #00FF41 and red #FF3B3B bounding boxes on [use case 5 specific hazard], 2px stroke, monospace labels, photorealistic 4k, 520x303px", "alt_text": "Real-time AI detection of [use case 5] hazard in {industry_name} — viAct 520x303px"}},
+    {{"placement": "Use Case 6 (520x317px)", "prompt": "CCTV perspective, high angle, {env_desc}, AI overlay neon green #00FF41 and red #FF3B3B bounding boxes on [use case 6 specific hazard], 2px stroke, monospace confidence labels, photorealistic 4k, 520x317px", "alt_text": "viAct AI safety system detecting [use case 6] in {industry_name} — 520x317px"}},
+    {{"placement": "viGent Dashboard (422x377px)", "prompt": "Ultra-realistic render of a dark-mode dashboard (#0D1117 bg), card-based layout, neon accent highlights, real-time {industry_name} safety heatmaps, incident alert timeline, worker status panels, viAct.ai interface on large monitor, ambient blue-teal glow, no CCTV camera view, 422x377px", "alt_text": "viGent EHS AI Agent dashboard for {industry_name} safety operations — viAct 422x377px"}},
+    {{"placement": "Reviewer 1 Headshot (56x56px)", "prompt": "Professional headshot, South Asian male, senior safety manager, business casual shirt, plain dark background #1a1a1a, natural expression, LinkedIn-style portrait, 56x56px", "alt_text": "Senior HSE Manager at {industry_name} facility — viAct customer review 56x56px"}},
+    {{"placement": "Reviewer 2 Headshot (56x56px)", "prompt": "Professional headshot, East Asian female, EHS manager, business casual, plain dark background #1a1a1a, warm natural expression, LinkedIn-style portrait, 56x56px", "alt_text": "EHS Manager at {industry_name} company — viAct customer testimonial 56x56px"}},
+    {{"placement": "Reviewer 3 Headshot (56x56px)", "prompt": "Professional headshot, Middle Eastern male, plant operations manager, business casual, plain dark background #1a1a1a, confident expression, LinkedIn-style portrait, 56x56px", "alt_text": "Plant Manager at {industry_name} enterprise — viAct customer review 56x56px"}},
+    {{"placement": "Reviewer 4 Headshot (56x56px)", "prompt": "Professional headshot, Caucasian female, production supervisor, business casual, plain dark background #1a1a1a, professional expression, LinkedIn-style portrait, 56x56px", "alt_text": "Production Supervisor at {industry_name} facility — viAct customer 56x56px"}}
   ],
 
   "internal_links": [
@@ -534,14 +603,17 @@ Return a single JSON object. Every field must be fully written out — no placeh
   "decision_logic": "Industry page for {industry_name}. viAct page scraped as tone reference. Competitor pages analyzed via Firecrawl. Matches viAct dynamic page format: Hero + 3 Metrics + 6 Use Cases + viGent + 5 Testimonials + CTA. Canonical: /industry/{industry_slug}."
 }}"""
 
+    if custom_instructions.strip():
+        prompt += f"\n\nUSER CUSTOM INSTRUCTIONS (highest priority — override defaults where needed):\n{custom_instructions.strip()}"
+
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
-            {"role": "system", "content": FULL_SYSTEM},
+            {"role": "system", "content": INDUSTRY_SYSTEM},
             {"role": "user", "content": prompt},
         ],
         temperature=0.65,
-        max_tokens=5120,
+        max_tokens=6000,
         response_format={"type": "json_object"},
     )
     result = json.loads(response.choices[0].message.content)

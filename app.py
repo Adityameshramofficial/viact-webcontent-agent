@@ -1216,15 +1216,30 @@ with tab_industry:
             "</div></div>"
         ), unsafe_allow_html=True)
 
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
         from agent3_content_architect import INDUSTRY_VIACT_URLS, INDUSTRY_COMPETITOR_URLS
+
+        _PRESET_INDUSTRIES = list(INDUSTRY_VIACT_URLS.keys()) + [
+            "Automotive & EV Safety",
+            "Maritime Safety",
+            "Logistics & Warehousing Safety",
+            "Smart Cities & Public Sector",
+            "Pharmaceutical & Chemical Safety",
+            "Custom (type below) →",
+        ]
 
         _ind_col, _ref_col = st.columns([1, 1], gap="medium")
         with _ind_col:
-            ip_industry = st.selectbox(
-                "Industry",
-                list(INDUSTRY_VIACT_URLS.keys()),
-                key="ip_industry_select",
-            )
+            ip_industry_choice = st.selectbox("Industry", _PRESET_INDUSTRIES, key="ip_industry_select")
+            if ip_industry_choice == "Custom (type below) →":
+                ip_industry = st.text_input(
+                    "Custom industry name",
+                    placeholder="e.g. Pharmaceutical Safety, Smart Cities Safety...",
+                    key="ip_custom_industry_text",
+                )
+            else:
+                ip_industry = ip_industry_choice
         with _ref_col:
             ip_yt = st.text_input(
                 "YouTube Video URL (optional — embedded in hero)",
@@ -1234,41 +1249,65 @@ with tab_industry:
 
         ip_refs = st.text_area(
             "Reference Material (optional — paste viAct project stats, case study numbers, MOM data)",
-            height=110,
+            height=90,
             key="ip_refs_text",
         )
+
+        with st.expander("⚙️ Custom Instructions (optional — focus areas, key hazards, regional requirements)"):
+            ip_custom_inst = st.text_area(
+                "",
+                placeholder="e.g. Focus on methane gas detection and ATEX compliance. Include UAE Taqa project context. Emphasise LTI reduction metric.",
+                height=90,
+                key="ip_custom_instructions",
+                label_visibility="collapsed",
+            )
 
         st.write("")
 
         if st.button("🏭  Generate Industry Page", type="primary", key="ip_generate"):
-            _industry_slug = INDUSTRY_VIACT_URLS[ip_industry].rsplit("/", 1)[-1]
-            _viact_url     = INDUSTRY_VIACT_URLS[ip_industry]
-            _comp_urls     = INDUSTRY_COMPETITOR_URLS.get(ip_industry, [])
+            if not ip_industry or not ip_industry.strip():
+                st.warning("Please enter an industry name.")
+                st.stop()
+
+            # Resolve slug and URLs
+            if ip_industry in INDUSTRY_VIACT_URLS:
+                _industry_slug = INDUSTRY_VIACT_URLS[ip_industry].rsplit("/", 1)[-1]
+                _viact_url     = INDUSTRY_VIACT_URLS[ip_industry]
+                _comp_urls     = INDUSTRY_COMPETITOR_URLS.get(ip_industry, [])
+            else:
+                _industry_slug = ip_industry.lower().replace(" ", "-").replace("&", "and").replace("/", "-")
+                _viact_url     = ""
+                _comp_urls     = []
+
             _refs_combined = ip_refs.strip()
             if ip_yt.strip():
                 _refs_combined = f"Hero YouTube Video URL: {ip_yt.strip()}\n\n" + _refs_combined
 
-            import sys as _sys
-            _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
             from agent2_data_extractor import extract_competitor_content
             from agent3_content_architect import generate_industry_page
 
             _prog = st.empty()
 
-            with _prog.container():
-                st.info("Step 1/3 — Scraping viAct industry page (tone reference)...")
-            try:
-                _viact_scraped = extract_competitor_content([_viact_url])
-                _viact_md = _viact_scraped.get(_viact_url, {}).get("markdown", "")
-            except Exception as _e:
+            if _viact_url:
+                with _prog.container():
+                    st.info("Step 1/3 — Scraping viAct industry page (tone reference)...")
+                try:
+                    _viact_scraped = extract_competitor_content([_viact_url])
+                    _viact_md = _viact_scraped.get(_viact_url, {}).get("markdown", "")
+                except Exception:
+                    _viact_md = ""
+                _comp_data_all = {_viact_url: {"success": bool(_viact_md), "markdown": _viact_md, "word_count": len(_viact_md.split())}}
+            else:
                 _viact_md = ""
+                _comp_data_all = {}
 
             with _prog.container():
-                st.info(f"Step 2/3 — Scraping {len(_comp_urls)} competitor industry pages (Firecrawl)...")
+                st.info(f"Step 2/3 — Scraping {len(_comp_urls)} competitor industry pages (Firecrawl)..." if _comp_urls else "Step 2/3 — No competitor URLs for this industry (custom). Generating from viAct data...")
             try:
-                _comp_data = extract_competitor_content(_comp_urls)
+                _comp_data = extract_competitor_content(_comp_urls) if _comp_urls else {}
             except Exception:
                 _comp_data = {}
+            _comp_data_all.update(_comp_data)
 
             with _prog.container():
                 st.info("Step 3/3 — Generating 8-section industry page (Llama 3.3 70B)...")
@@ -1280,12 +1319,17 @@ with tab_industry:
                     competitor_content=_comp_data,
                     references=_refs_combined,
                     viact_pages=[],
+                    custom_instructions=ip_custom_inst.strip() if ip_custom_inst else "",
                 )
-                st.session_state["ip_content"]         = _result
-                st.session_state["ip_competitor_data"] = _comp_data
-                st.session_state["ip_industry_label"]  = ip_industry
-                st.session_state["ip_viact_url"]       = _viact_url
-                st.session_state["ip_step"]            = 1
+                st.session_state["ip_content"]          = _result
+                st.session_state["ip_competitor_data"]  = _comp_data_all
+                st.session_state["ip_industry_label"]   = ip_industry
+                st.session_state["ip_industry_slug"]    = _industry_slug
+                st.session_state["ip_viact_url"]        = _viact_url
+                st.session_state["ip_comp_urls"]        = _comp_urls
+                st.session_state["ip_refs_saved"]       = _refs_combined
+                st.session_state["ip_custom_inst_saved"]= ip_custom_inst.strip() if ip_custom_inst else ""
+                st.session_state["ip_step"]             = 1
                 _prog.empty()
                 st.rerun()
             except Exception as _e:
@@ -1514,3 +1558,51 @@ with tab_industry:
 
         with _ip_tab_raw:
             st.json(_ip_content)
+
+        # ── Refine / Improve loop ─────────────────────────────────────────────
+        st.markdown("<hr style='border-color:#2d303a; margin:24px 0 16px;'/>", unsafe_allow_html=True)
+        with st.expander("✏️ Refine this output — give feedback and regenerate"):
+            st.markdown(
+                "<div style='color:#8b949e; font-size:0.82rem; margin-bottom:10px;'>"
+                "Describe what to improve. The agent will regenerate the full page with your feedback as highest priority. No re-scraping needed."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            ip_feedback = st.text_area(
+                "What to change?",
+                placeholder="e.g. Make testimonials more specific to mining safety. Change metric 2 to focus on LTI reduction. Add methane detection to use case 3.",
+                height=100,
+                key="ip_refine_feedback",
+            )
+            if st.button("🔄 Regenerate with Feedback", key="ip_regenerate_btn"):
+                if not ip_feedback.strip():
+                    st.warning("Please describe what to improve.")
+                else:
+                    _combined_inst = (
+                        st.session_state.get("ip_custom_inst_saved", "")
+                        + "\n\nIMPROVEMENT FEEDBACK (highest priority — apply these changes):\n"
+                        + ip_feedback.strip()
+                    ).strip()
+                    from agent2_data_extractor import extract_competitor_content as _ece
+                    from agent3_content_architect import generate_industry_page as _gip
+                    with st.spinner("Regenerating with feedback..."):
+                        try:
+                            _new_result = _gip(
+                                industry_name=st.session_state.get("ip_industry_label", ""),
+                                industry_slug=st.session_state.get("ip_industry_slug", ""),
+                                viact_page_content=st.session_state.get("ip_competitor_data", {}).get(
+                                    st.session_state.get("ip_viact_url", ""), {}
+                                ).get("markdown", ""),
+                                competitor_content={
+                                    k: v for k, v in st.session_state.get("ip_competitor_data", {}).items()
+                                    if k != st.session_state.get("ip_viact_url", "")
+                                },
+                                references=st.session_state.get("ip_refs_saved", ""),
+                                viact_pages=[],
+                                custom_instructions=_combined_inst,
+                            )
+                            st.session_state["ip_content"] = _new_result
+                            st.session_state["ip_custom_inst_saved"] = _combined_inst
+                            st.rerun()
+                        except Exception as _re:
+                            st.error(f"Regeneration failed: {_re}")
