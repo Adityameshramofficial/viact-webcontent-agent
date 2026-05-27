@@ -242,7 +242,7 @@ st.markdown(_html("""
       </div>
     </div>
     <p style="margin:0; color:#8b949e; font-size:0.82rem; line-height:1.55;">
-      Scans 8 competitors weekly, finds topics viAct doesn't cover yet, and writes a <strong style="color:#c9d1d9;">full SEO page + 3 cluster blog posts</strong>.
+      Scans 8 competitors weekly, finds topics viAct doesn't cover yet, and writes a <strong style="color:#c9d1d9;">full SEO pillar page</strong>. Then generate <strong style="color:#c9d1d9;">3 supporting blog posts</strong> in one click.
       Runs automatically every Monday — or manually any time from this tab.
     </p>
     <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
@@ -1014,8 +1014,90 @@ with tab_radar:
 
         st.markdown("<hr/>", unsafe_allow_html=True)
 
+        # ── Blog Cluster — 3 supporting posts ──────────────────────────────────────
+        st.markdown(_html("""
+<div style="margin-bottom:10px;">
+  <span style="color:#58a6ff; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px;">Step 2 — Blog Cluster (3 supporting posts)</span>
+  <p style="margin:4px 0 0; color:#8b949e; font-size:0.82rem;">Generate 3 short blog posts that support the pillar above — one on regulatory compliance, one on cost/ROI, one on how-to. Each gets pushed to the same date tab in Sheets.</p>
+</div>
+"""), unsafe_allow_html=True)
+
+        _cluster_state = st.session_state.get("r3_cluster_state", "idle")  # idle | running | done | error
+
+        if _cluster_state == "done":
+            _blog_results = st.session_state.get("r3_blog_results", [])
+            st.success(f"✅ {len(_blog_results)} blog posts pushed to Sheets in today's date tab.")
+            for _bi, _br in enumerate(_blog_results, 1):
+                st.markdown(f"**Blog {_bi}:** {_br.get('topic', '')}")
+            if st.button("🔄 Regenerate Cluster", key="r3_regen_cluster"):
+                st.session_state["r3_cluster_state"] = "idle"
+                st.rerun()
+        else:
+            _cl1, _cl2 = st.columns([1, 3])
+            with _cl1:
+                _gen_cluster = st.button("📝  Generate Blog Cluster", type="primary", key="r3_gen_cluster", use_container_width=True)
+            with _cl2:
+                st.markdown(_html("""
+<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">
+&#128196; Generates <strong style="color:#c9d1d9;">3 shorter blog posts</strong> (800 words each) that internally link back to the pillar. All pushed to your Sheet automatically.
+</div>"""), unsafe_allow_html=True)
+
+            if _gen_cluster:
+                from agent3_content_architect import generate_cluster_topics, generate_structured_content
+                from push_to_sheets import push_webpage_vertical as _pwv
+                _prim_kw = content.get("seo_suite", {}).get("primary_keyword", topic_str)
+                _blog_results = []
+                _cluster_err = None
+                with st.spinner("Generating blog cluster topics..."):
+                    try:
+                        _blog_topics = generate_cluster_topics(topic_str, _prim_kw)
+                    except Exception as _e:
+                        _blog_topics = []
+                        _cluster_err = str(_e)
+                if _cluster_err:
+                    st.error(f"Cluster topic generation failed: {_cluster_err}")
+                else:
+                    _prog_cluster = st.empty()
+                    for _j, _bt in enumerate(_blog_topics[:3], 1):
+                        with _prog_cluster.container():
+                            st.info(f"Writing blog {_j}/3: '{_bt}'...")
+                        try:
+                            _bc = generate_structured_content(
+                                topic=_bt,
+                                competitor_data=competitor_data,
+                                viact_pages=[],
+                                references=references,
+                                radar_topic_entry={
+                                    "topic": _bt,
+                                    "competitor_evidence": [],
+                                    "confirmed_at": selected_topic.get("confirmed_at", ""),
+                                    "opportunity_score": selected_topic.get("opportunity_score", "Medium"),
+                                    "competitor_count": selected_topic.get("competitor_count", 0),
+                                    "viact_search_query": f"blog for: {topic_str}",
+                                    "why_trending": f"Supporting blog for pillar: {topic_str}",
+                                    "pillar_topic": topic_str,
+                                },
+                                content_type="blog",
+                            )
+                            _pwv(
+                                content=_bc,
+                                decision_logic=_bc.get("decision_logic", ""),
+                                input_source=f"Blog Cluster — {topic_str[:40]} ({_j}/3)",
+                                competitor_urls=list(competitor_data.keys()),
+                                unverified=unverified,
+                            )
+                            _blog_results.append(_bc)
+                        except Exception as _be:
+                            st.warning(f"Blog {_j} failed: {_be} — skipping")
+                    _prog_cluster.empty()
+                    st.session_state["r3_blog_results"] = _blog_results
+                    st.session_state["r3_cluster_state"] = "done"
+                    st.rerun()
+
+        st.markdown("<hr/>", unsafe_allow_html=True)
+
         # ── Content Preview Tabs ───────────────────────────────────────────────────
-        st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL 10 SECTIONS</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PILLAR PAGE PREVIEW — ALL 10 SECTIONS</p>", unsafe_allow_html=True)
         (
             tab_dl, tab_sources, tab_body, tab_wix, tab_seo,
             tab_faqs, tab_schema, tab_geo,
