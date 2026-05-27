@@ -196,6 +196,19 @@ INDUSTRY_COMPETITOR_URLS = {
         "https://www.intenseye.com/industries/food-and-beverage",
         "https://visionify.ai/food-and-beverage-safety/",
     ],
+    "Logistics & Warehousing Safety": [
+        "https://visionify.ai/warehouse-safety/",
+        "https://www.protex.ai/industries/logistics",
+        "https://www.intenseye.com/industries/logistics-warehousing",
+    ],
+    "Warehouse Safety": [
+        "https://visionify.ai/warehouse-safety/",
+        "https://www.protex.ai/industries/logistics",
+    ],
+    "Ports & Maritime Safety": [
+        "https://visionify.ai/maritime-safety/",
+        "https://www.intenseye.com/industries/ports",
+    ],
 }
 
 
