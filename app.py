@@ -1237,14 +1237,6 @@ with tab_radar:
                 st.markdown(body)
 
         with tab_wix:
-            st.markdown(_html("""
-    <div style="background:rgba(255,106,61,0.05); border:1px solid rgba(255,106,61,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
-    <span style="font-size:1.2rem; flex-shrink:0;">&#127760;</span>
-    <div style="font-size:0.83rem; color:#ff6a3d; line-height:1.5;">
-    <strong>Wix-Ready HTML.</strong> Copy the code below and paste it directly into Wix &rarr; <em>Add Elements &rarr; Embed &rarr; Custom Code</em> (or the Rich Text editor). No formatting will break. Tags used: &lt;h1&gt; &lt;h2&gt; &lt;p&gt; &lt;ul&gt; &lt;li&gt; &lt;strong&gt; &lt;a&gt; only.
-    </div>
-    </div>
-    """), unsafe_allow_html=True)
             html_out = content.get("webpage_html", "")
             if not html_out:
                 try:
