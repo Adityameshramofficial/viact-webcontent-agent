@@ -20,8 +20,44 @@ const SHEET_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const REPORT_TAB   = 'Daily Report';
 const SCAN_DAYS    = 7;   // show content from last N days
 
+// GitHub — needed to trigger Market Radar from this script
+// SETUP: paste your GitHub Personal Access Token below (needs repo + workflow scope)
+// Create at: https://github.com/settings/tokens → Fine-grained → repo: Adityameshramofficial/viact-webcontent-agent → Actions: read+write
+const GITHUB_TOKEN = '';   // ← paste token here, e.g. 'github_pat_xxx...'
+const GITHUB_OWNER = 'Adityameshramofficial';
+const GITHUB_REPO  = 'viact-webcontent-agent';
+const GITHUB_WORKFLOW = 'weekly_viact.yml';
+
+// ─── TRIGGER GITHUB ACTIONS (Market Radar) ─────────────────────────────────────
+function triggerMarketRadar() {
+  if (!GITHUB_TOKEN) {
+    Logger.log('GITHUB_TOKEN not set — skipping Market Radar trigger.');
+    return;
+  }
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${GITHUB_WORKFLOW}/dispatches`;
+  const resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    headers: {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    payload: JSON.stringify({ ref: 'main' }),
+    muteHttpExceptions: true,
+  });
+  const code = resp.getResponseCode();
+  if (code === 204) {
+    Logger.log('Market Radar triggered on GitHub Actions.');
+  } else {
+    Logger.log(`GitHub trigger failed (${code}): ${resp.getContentText()}`);
+  }
+}
+
 // ─── MAIN ──────────────────────────────────────────────────────────────────────
 function sendDailyViActReport() {
+  // 1. Kick off Market Radar pipeline on GitHub Actions (runs ~10 min, sheet updates later)
+  triggerMarketRadar();
+
   const ss        = SpreadsheetApp.openById(SHEET_ID);
   const today     = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
   const dateLabel = Utilities.formatDate(new Date(), TIMEZONE, 'dd MMM yyyy, EEE');
@@ -376,8 +412,28 @@ function setupDailyTrigger() {
   Logger.log('Trigger set — email every day at 6:00 PM IST');
 }
 
-// ─── TEST: send right now ──────────────────────────────────────────────────────
+// ─── TEST: send email right now (no Market Radar trigger) ─────────────────────
 function testSendNow() {
-  sendDailyViActReport();
-  Logger.log('Test report sent.');
+  const ss        = SpreadsheetApp.openById(SHEET_ID);
+  const today     = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  const dateLabel = Utilities.formatDate(new Date(), TIMEZONE, 'dd MMM yyyy, EEE');
+  const webItems  = _scanWebpageContent(ss, today);
+  const indItems  = _scanIndustryTabs(ss, today);
+  const todayPillar = webItems.pillar.filter(p => p.isToday).length;
+  const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
+  const todayInd    = indItems.filter(i => i.isToday).length;
+  const total       = todayPillar + todayBlogs + todayInd;
+  _writeReportToSheet(ss, today, webItems, indItems, total);
+  const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
+  const htmlBody = _buildEmailHtml(webItems, indItems, dateLabel, todayPillar, todayBlogs, todayInd, total);
+  const plain    = _buildPlainText(webItems, indItems, dateLabel);
+  for (const to of RECIPIENTS) {
+    GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
+  }
+  Logger.log('Test report sent (no Market Radar trigger).');
+}
+
+// ─── TEST: trigger Market Radar only ──────────────────────────────────────────
+function testTriggerRadarOnly() {
+  triggerMarketRadar();
 }
