@@ -88,47 +88,53 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
         "AI-assisted incident reporting; toolbox talk digital logging"
     )
 
+    PRIMARY_MODEL  = "llama-3.3-70b-versatile"
+    FALLBACK_MODEL = "llama-3.1-8b-instant"
+
     client = Groq(api_key=get_env("GROQ_API_KEY"))
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are viAct Market Radar. Analyze competitor snippets and industry trends. "
-                    "Identify high-intent construction safety content gaps for viAct.ai.\n\n"
-                    "Rules:\n"
-                    "- Target compliance buyers in Singapore (MOM/BCA) and UAE (OSHAD/Municipality).\n"
-                    "- Focus on: regulatory compliance workflows, permit-to-work systems, "
-                    "safety training platforms, incident reporting, contractor management, "
-                    "toolbox talk logging, RAMS, industry verticals (tunneling, oil & gas, offshore).\n"
-                    "- Do NOT suggest topics viAct already covers: PPE detection, fall protection, "
-                    "crane safety, area control, behavior-based safety, fatigue detection.\n"
-                    "- Each topic: 4-8 words, specific, searchable, compliance-oriented.\n"
-                    "- Return ONLY valid JSON — no markdown fences, no filler text.\n"
-                    f"VIACT ALREADY COVERS: {viact_context}"
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"### DATA\n"
-                    f"Competitors: {snippets_block[:4500]}\n\n"
-                    f"Trends: {trends}\n\n"
-                    "### TASK\n"
-                    "Identify 10-15 topics competitors address that viAct does NOT have a dedicated solution page for.\n"
-                    "For each topic provide: topic name, one-line evidence (which competitor covers it), "
-                    "and one-line strategy (why it's a compliance gap for Singapore MOM or UAE OSHAD buyers).\n\n"
-                    'Return JSON: {"topics": ["topic 1", "topic 2", ...], '
-                    '"evidence": {"topic 1": "competitor + evidence", ...}, '
-                    '"strategy": {"topic 1": "compliance gap strategy", ...}}'
-                ),
-            },
-        ],
-        temperature=0.4,
-        max_tokens=1024,
-        response_format={"type": "json_object"},
-    )
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are viAct Market Radar. Analyze competitor snippets and industry trends. "
+                "Identify high-intent construction safety content gaps for viAct.ai.\n\n"
+                "Rules:\n"
+                "- Target compliance buyers in Singapore (MOM/BCA) and UAE (OSHAD/Municipality).\n"
+                "- Focus on: regulatory compliance workflows, permit-to-work systems, "
+                "safety training platforms, incident reporting, contractor management, "
+                "toolbox talk logging, RAMS, industry verticals (tunneling, oil & gas, offshore).\n"
+                "- Do NOT suggest topics viAct already covers: PPE detection, fall protection, "
+                "crane safety, area control, behavior-based safety, fatigue detection.\n"
+                "- Each topic: 4-8 words, specific, searchable, compliance-oriented.\n"
+                "- Return ONLY valid JSON — no markdown fences, no filler text.\n"
+                f"VIACT ALREADY COVERS: {viact_context}"
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"### DATA\n"
+                f"Competitors: {snippets_block[:4500]}\n\n"
+                f"Trends: {trends}\n\n"
+                "### TASK\n"
+                "Identify 10-15 topics competitors address that viAct does NOT have a dedicated solution page for.\n"
+                "For each topic provide: topic name, one-line evidence (which competitor covers it), "
+                "and one-line strategy (why it's a compliance gap for Singapore MOM or UAE OSHAD buyers).\n\n"
+                'Return JSON: {"topics": ["topic 1", "topic 2", ...], '
+                '"evidence": {"topic 1": "competitor + evidence", ...}, '
+                '"strategy": {"topic 1": "compliance gap strategy", ...}}'
+            ),
+        },
+    ]
+    kwargs = dict(messages=messages, temperature=0.4, max_tokens=1024,
+                  response_format={"type": "json_object"})
+    try:
+        response = client.chat.completions.create(model=PRIMARY_MODEL, **kwargs)
+    except Exception as e:
+        if "429" in str(e) or "rate_limit" in str(e).lower():
+            response = client.chat.completions.create(model=FALLBACK_MODEL, **kwargs)
+        else:
+            raise
     data = json.loads(response.choices[0].message.content)
     return data.get("topics", [])
 
