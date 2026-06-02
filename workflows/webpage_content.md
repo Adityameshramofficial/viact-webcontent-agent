@@ -169,30 +169,16 @@ Streamlit shows all output tabs + push button.
 
 ---
 
-## Running via CLI
-
-```bash
-# Basic run (interactive HITL gates)
-python run_pipeline.py --mode webpage --brief "Fall Prevention in High-Rise Construction"
-
-# With autorun number
-python run_pipeline.py --mode webpage --brief "PPE Compliance Singapore" --autorun 7
-
-# Skip HITL Gate 1 with custom competitors
-python run_pipeline.py --mode webpage --brief "Tunnel Safety Dubai" --competitors "https://url1.com,https://url2.com"
-
-# From a URL (topic extracted from page)
-python run_pipeline.py --mode webpage --url https://viact.ai/case-study
-```
-
 ## Running via Streamlit UI
 
 ```bash
 streamlit run app.py
 ```
 
-Select "🌐 Webpage Content — Manager-Ready (HITL Research)" in the mode selector.
+Select **Agent 01 — Market Radar** card on the landing page, then switch to the "📡 Agent 01 — Market Radar" tab.
 Follow the 5-step progress indicator. Each HITL gate requires a confirm button before the next step runs.
+
+> **Note:** The CLI runner (`run_pipeline.py`) has been removed. The Streamlit UI is the only supported entry point.
 
 ---
 
@@ -259,7 +245,7 @@ Future upgrade: `--ahrefs-json` flag in `research_competitors.py` to accept pre-
 
 ## Strict Exclusions
 
-- No social media posts (LinkedIn, Twitter, Instagram) — use the Social pipeline
+- No social media posts (LinkedIn, Twitter, Instagram)
 - No image generation — only textual prompts for Nano Banana 2
 - No generic AI jargon: "transforming," "revolutionizing," "cutting-edge," "innovative solution," "game-changing"
 - No feature-first content — viAct features only appear after the problem is established

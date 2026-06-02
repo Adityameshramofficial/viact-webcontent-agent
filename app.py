@@ -51,222 +51,270 @@ st.set_page_config(
 # ── viAct Dark Theme ──────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family: 'Jost', sans-serif !important; }
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap');
 
-/* Hide Streamlit Branding */
-#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+/* ── Global reset ── */
+html, body, .stApp { font-family: 'Jost', sans-serif !important; background: #0a0a0a !important; }
+.stMainBlockContainer, .main .block-container { max-width: 980px !important; padding: 0 2rem 6rem 2rem !important; }
+#MainMenu, footer, header { visibility: hidden !important; }
 
-/* Background and Sidebar Colors */
-.stApp { background-color: #080a0f; }
-[data-testid="stSidebar"] { background-color: #0d1117 !important; border-right: 1px solid #1f2430; }
-
-/* Body text */
+/* ── Typography ── */
+h1, h2, h3, h4 { font-family: 'Jost', sans-serif !important; color: #e6edf3 !important; }
 p, li, span, label, div { color: #c9d1d9; }
-h1, h2, h3, h4 { color: #e6edf3 !important; }
 .stMarkdown p { color: #c9d1d9; }
 
-/* Custom Inputs and Text Areas */
-div[data-baseweb="input"] > div,
-div[data-baseweb="textarea"] > div {
-    background-color: rgba(18,21,28,0.8) !important;
-    border: 1px solid #2d303a !important;
-    border-radius: 8px !important;
-}
-textarea, input { color: #e6edf3 !important; background-color: transparent !important; }
+/* ── Sidebar ── */
+[data-testid="stSidebar"] { background-color: #0d0d0d !important; border-right: 1px solid #1a1a1a; }
 
-/* Input Focus Glow */
-div[data-baseweb="input"] > div:focus-within {
-    border-color: #ff6a3d !important;
-    box-shadow: 0 0 12px rgba(255,106,61,0.4) !important;
+/* ── Input labels ── */
+.stTextInput label, .stTextArea label, .stFileUploader label, .stSelectbox label {
+    font-family: 'Jost', sans-serif !important;
+    font-size: 0.68rem !important; font-weight: 700 !important;
+    letter-spacing: 1.8px !important; text-transform: uppercase !important;
+    color: #4a4a4a !important;
 }
 
-/* Primary Button Gradient */
-button[kind="primary"] {
-    background: linear-gradient(135deg,#ff6a3d 0%,#e54d1f 100%) !important;
-    color: white !important; border: none !important;
-    border-radius: 8px !important; font-weight: 600 !important;
-    font-size: 1.05rem !important; transition: all 0.3s ease !important;
-    padding: 0.6rem 1.4rem !important;
+/* ── Text inputs ── */
+.stTextInput input {
+    background: #111 !important; border: 1.5px solid #1e1e1e !important;
+    border-radius: 8px !important; color: #eee !important;
+    font-family: 'Jost', sans-serif !important; font-size: 0.95rem !important;
+    padding: 0.65rem 0.9rem !important;
 }
-button[kind="primary"]:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(255,106,61,0.45) !important;
-}
+.stTextInput input:focus { border-color: #ff6a3d !important; box-shadow: 0 0 0 3px rgba(255,106,61,0.1) !important; outline: none !important; }
+.stTextInput input::placeholder { color: #2e2e2e !important; }
 
-/* Secondary Button */
-button[kind="secondary"] {
-    background: rgba(22,25,33,0.8) !important;
-    color: #ff6a3d !important; border: 1px solid #ff6a3d !important;
-    border-radius: 8px !important; font-weight: 600 !important;
-}
+/* ── Text areas ── */
+div[data-baseweb="textarea"] > div { background: #111 !important; border: 1.5px solid #1e1e1e !important; border-radius: 8px !important; }
+.stTextArea textarea { background: transparent !important; border: none !important; color: #bbb !important; font-family: 'Jost', sans-serif !important; font-size: 0.85rem !important; padding: 0.65rem 0.9rem !important; line-height: 1.65 !important; }
+.stTextArea textarea:focus { outline: none !important; }
+div[data-baseweb="textarea"] > div:focus-within { border-color: #ff6a3d !important; box-shadow: 0 0 0 3px rgba(255,106,61,0.1) !important; }
+.stTextArea textarea::placeholder { color: #2a2a2a !important; }
 
-/* Glassmorphism Card Style */
-.glass-card {
-    background: rgba(22,25,33,0.7); backdrop-filter: blur(15px);
-    border: 1px solid rgba(255,106,61,0.15); border-radius: 12px;
-    padding: 25px; position: relative; overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2); transition: all 0.3s ease;
-    margin-bottom: 16px;
-}
-.glass-card:hover {
-    border-color: rgba(255,106,61,0.35);
-    box-shadow: 0 12px 40px rgba(255,106,61,0.1);
-}
+/* ── Selectbox ── */
+div[data-baseweb="select"] > div { background: #111 !important; border: 1.5px solid #1e1e1e !important; border-radius: 8px !important; color: #eee !important; }
 
-/* Metric Typography */
-.metric-title { color: #8b949e; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
-.metric-value { color: #ff6a3d; font-size: 2.4rem; font-weight: 700; line-height: 1.1; margin-bottom: 6px; }
+/* ── File uploader ── */
+[data-testid="stFileUploaderDropzone"] { background: #111 !important; border: 1.5px dashed #1e1e1e !important; border-radius: 8px !important; padding: 0.75rem 1.1rem !important; box-sizing: border-box !important; }
+[data-testid="stFileUploaderDropzone"] > div { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 1rem !important; flex-wrap: nowrap !important; }
+[data-testid="stFileUploaderDropzone"]:hover { border-color: #ff6a3d !important; }
+[data-testid="stFileUploaderDropzone"] span, [data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzone"] p { color: #333 !important; font-family: 'Jost', sans-serif !important; }
+[data-testid="stFileUploaderDropzone"] button, [data-testid="stFileUploader"] section button { border-radius: 6px !important; border: 1px solid #222 !important; color: #555 !important; background: #1a1a1a !important; font-size: 0.72rem !important; letter-spacing: 0.5px !important; padding: 0.35rem 0.9rem !important; text-transform: none !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+[data-testid="stFileUploaderDropzone"] button:hover, [data-testid="stFileUploader"] section button:hover { border-color: #ff6a3d !important; color: #ff6a3d !important; background: #1a1a1a !important; box-shadow: none !important; }
 
-/* Custom Tabs Styling */
-div[data-baseweb="tab-list"] { gap: 8px; margin-bottom: 20px; background: transparent !important; border: none !important; }
-div[data-baseweb="tab"] {
-    background-color: rgba(22,25,33,0.8) !important; border-radius: 6px !important;
-    padding: 10px 18px !important; border: 1px solid #2d303a !important;
-    color: #8b949e !important; font-weight: 600 !important; font-size: 0.92rem !important;
+/* ── Primary button — flat orange ── */
+button[kind="primary"], button[data-testid="baseButton-primary"] {
+    font-family: 'Jost', sans-serif !important; font-weight: 700 !important;
+    font-size: 0.72rem !important; letter-spacing: 1.5px !important;
+    text-transform: uppercase !important; border-radius: 6px !important;
+    background: #ff6a3d !important; color: #fff !important;
+    border: 2px solid #ff6a3d !important; transition: all 0.18s ease !important;
 }
-div[aria-selected="true"] {
-    background-color: #ff6a3d !important; color: white !important;
-    border-color: #ff6a3d !important; box-shadow: 0 4px 15px rgba(255,106,61,0.4) !important;
+button[kind="primary"]:hover, button[data-testid="baseButton-primary"]:hover {
+    background: #e55a2e !important; border-color: #e55a2e !important;
+    box-shadow: 0 4px 20px rgba(255,106,61,0.28) !important; transform: none !important;
 }
 
-/* Status Badges */
-.badge-confirmed { background: #0d4429; color: #3fb950; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid #238636; display: inline-block; }
-.badge-high { background: rgba(255,106,61,0.15); color: #ff6a3d; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255,106,61,0.4); display: inline-block; }
-.badge-medium { background: rgba(210,153,34,0.15); color: #d6a126; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(210,153,34,0.4); display: inline-block; }
-.badge-low { background: rgba(200,60,60,0.15); color: #f85149; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(200,60,60,0.4); display: inline-block; }
+/* ── Secondary button — ghost pill ── */
+button[kind="secondary"], button[data-testid="baseButton-secondary"] {
+    font-family: 'Jost', sans-serif !important; font-weight: 600 !important;
+    font-size: 0.68rem !important; letter-spacing: 1px !important;
+    text-transform: uppercase !important; border-radius: 20px !important;
+    background: transparent !important; color: #ff6a3d !important;
+    border: 1.5px solid rgba(255,106,61,0.3) !important; transition: all 0.18s ease !important;
+}
+button[kind="secondary"]:hover, button[data-testid="baseButton-secondary"]:hover { background: rgba(255,106,61,0.07) !important; border-color: #ff6a3d !important; }
 
-/* Step indicator */
-.step-active { background: linear-gradient(135deg,#ff6a3d,#e54d1f); color: white; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; }
-.step-done { background: rgba(63,185,80,0.12); color: #3fb950; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #238636; }
-.step-idle { background: rgba(22,25,33,0.6); color: #484f58; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #2d303a; }
+/* ── Download button ── */
+[data-testid="stDownloadButton"] button { border-radius: 5px !important; border-color: #1c1c1c !important; color: #444 !important; font-size: 0.65rem !important; padding: 0.3rem 0.8rem !important; }
+[data-testid="stDownloadButton"] button:hover { border-color: #ff6a3d !important; color: #ff6a3d !important; background: transparent !important; }
 
-/* Alert / Info boxes */
-div[data-testid="stAlert"] { border-radius: 8px !important; border-left-width: 3px !important; }
+/* ── Tabs — prominent style ── */
+.stTabs [data-baseweb="tab-list"] { background: #0e0e0e !important; border: 1px solid #1a1a1a !important; border-radius: 10px !important; gap: 6px !important; padding: 6px !important; margin-bottom: 0 !important; }
+.stTabs [data-baseweb="tab"] { background: transparent !important; color: #3a3a3a !important; font-family: 'Jost', sans-serif !important; font-weight: 700 !important; font-size: 0.82rem !important; letter-spacing: 0.5px !important; padding: 0.7rem 1.6rem !important; border: none !important; border-radius: 7px !important; transition: all 0.15s ease !important; }
+.stTabs [data-baseweb="tab"]:hover { color: #888 !important; background: rgba(255,255,255,0.03) !important; }
+.stTabs [aria-selected="true"] { color: #fff !important; background: #ff6a3d !important; box-shadow: 0 2px 12px rgba(255,106,61,0.35) !important; }
+.stTabs [data-baseweb="tab-panel"] { background: #0a0a0a !important; border: 1px solid #1a1a1a !important; border-top: none !important; border-radius: 0 0 10px 10px !important; padding: 1.5rem !important; }
 
-/* Divider */
-hr { border-color: #2d303a !important; }
+/* ── Expanders ── */
+details[data-testid="stExpander"] { border: 1px solid #1a1a1a !important; border-radius: 8px !important; background: #0e0e0e !important; overflow: hidden !important; }
+details[data-testid="stExpander"] summary { font-family: 'Jost', sans-serif !important; color: #555 !important; font-size: 0.78rem !important; font-weight: 600 !important; letter-spacing: 0.3px !important; padding: 0.7rem 1rem !important; list-style: none !important; }
+details[data-testid="stExpander"] summary:hover { color: #ff6a3d !important; }
+details[data-testid="stExpander"] summary::-webkit-details-marker { display: none; }
+details[data-testid="stExpander"] > div { background: #0a0a0a !important; padding: 1rem !important; }
 
-/* Expander */
-details { background: rgba(22,25,33,0.6) !important; border: 1px solid #2d303a !important; border-radius: 8px !important; }
-summary { color: #c9d1d9 !important; font-weight: 600 !important; }
-
-/* Code blocks */
-code { background: rgba(22,25,33,0.8) !important; color: #ff6a3d !important; border: 1px solid #2d303a !important; border-radius: 4px !important; padding: 2px 6px !important; }
+/* ── Code blocks ── */
+pre, .stCode { background: #080808 !important; border: 1px solid #1a1a1a !important; border-radius: 8px !important; }
+code { background: #0e0e0e !important; color: #ff6a3d !important; border: 1px solid #1a1a1a !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 0.8rem !important; }
 pre code { color: #c9d1d9 !important; }
 
-/* Radio buttons */
+/* ── Alerts ── */
+.stAlert { border-radius: 8px !important; font-family: 'Jost', sans-serif !important; }
+div[data-testid="stAlert"] { border-radius: 8px !important; border-left-width: 3px !important; }
+.stSuccess { border-left-color: #ff6a3d !important; }
+
+/* ── Divider ── */
+hr { border-color: #1a1a1a !important; }
+
+/* ── Radio ── */
 div[data-testid="stRadio"] label { color: #c9d1d9 !important; }
 
-/* Log box */
-.log-box {
-    background: #0d1117; border: 1px solid #2d303a; border-radius: 8px;
-    padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.78rem;
-    color: #58a6ff; line-height: 1.6; max-height: 260px; overflow-y: auto;
-}
+/* ── Spinner ── */
+.stSpinner > div > div { border-top-color: #ff6a3d !important; }
 
-/* Caption / small text */
-small, .caption { color: #8b949e !important; font-size: 0.82rem !important; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ff6a3d; }
 
-/* Pipeline flow boxes */
-.pipeline-box {
-    background: rgba(22,25,33,0.8); border: 1px solid rgba(255,106,61,0.2);
-    border-radius: 10px; padding: 18px 16px; flex: 1; min-width: 0;
-}
-.pipeline-arrow {
-    color: #ff6a3d; font-size: 1.5rem; align-self: center;
-    flex-shrink: 0; padding: 0 6px; opacity: 0.7;
-}
-.pipeline-tag {
-    background: rgba(255,106,61,0.12); color: #ff6a3d;
-    border: 1px solid rgba(255,106,61,0.3); border-radius: 4px;
-    padding: 2px 8px; font-size: 0.72rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 8px;
-}
-.pipeline-output {
-    background: rgba(63,185,80,0.06); border: 1px solid rgba(63,185,80,0.2);
-    border-radius: 4px; padding: 5px 10px; margin-top: 10px;
-    font-size: 0.78rem; color: #3fb950;
-}
+/* ══════════════════════ CUSTOM COMPONENT CLASSES ══════════════════════ */
 
-/* Output chips (what you'll get) */
-.output-chip {
-    background: rgba(22,25,33,0.7); border: 1px solid #2d303a;
-    border-radius: 8px; padding: 12px 14px;
+/* Glass Card */
+.glass-card {
+    background: rgba(13,17,23,0.9); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,106,61,0.12); border-radius: 12px;
+    padding: 25px; position: relative; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3); transition: all 0.2s ease;
+    margin-bottom: 16px;
 }
-.output-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
-.output-chip-title { color: #e6edf3; font-weight: 700; font-size: 0.85rem; margin-bottom: 3px; }
-.output-chip-desc { color: #8b949e; font-size: 0.76rem; line-height: 1.4; }
+.glass-card:hover { border-color: rgba(255,106,61,0.28); box-shadow: 0 8px 32px rgba(255,106,61,0.07); }
 
-/* Step indicator with sub-label */
+/* Metrics */
+.metric-title { color: #4a4a4a; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 6px; }
+.metric-value { color: #ff6a3d; font-size: 2.4rem; font-weight: 800; line-height: 1.1; margin-bottom: 6px; }
+
+/* Status Badges */
+.badge-confirmed { background: #0d4429; color: #3fb950; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid #238636; display: inline-block; }
+.badge-high { background: rgba(255,106,61,0.1); color: #ff6a3d; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(255,106,61,0.3); display: inline-block; }
+.badge-medium { background: rgba(210,153,34,0.1); color: #d6a126; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(210,153,34,0.3); display: inline-block; }
+.badge-low { background: rgba(200,60,60,0.1); color: #f85149; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(200,60,60,0.3); display: inline-block; }
+
+/* Step indicators */
+.step-active { background: #ff6a3d; color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.88rem; }
+.step-done { background: rgba(63,185,80,0.1); color: #3fb950; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #238636; }
+.step-idle { background: #0e0e0e; color: #333; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #1a1a1a; }
 .step-wrap { text-align: center; }
-.step-num-active { background: linear-gradient(135deg,#ff6a3d,#e54d1f); color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
-.step-num-done { background: rgba(63,185,80,0.15); color: #3fb950; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #238636; }
-.step-num-idle { background: rgba(22,25,33,0.5); color: #484f58; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #2d303a; }
+.step-num-active { background: #ff6a3d; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.step-num-done { background: rgba(63,185,80,0.12); color: #3fb950; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #238636; }
+.step-num-idle { background: #0e0e0e; color: #333; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #1a1a1a; }
 .step-title-active { color: #e6edf3; font-weight: 700; font-size: 0.9rem; }
 .step-title-done { color: #3fb950; font-weight: 700; font-size: 0.9rem; }
-.step-title-idle { color: #484f58; font-weight: 600; font-size: 0.9rem; }
-.step-sub { color: #8b949e; font-size: 0.76rem; margin-top: 3px; }
-.step-connector { color: #2d303a; font-size: 1.2rem; align-self: flex-start; padding-top: 14px; }
+.step-title-idle { color: #333; font-weight: 600; font-size: 0.9rem; }
+.step-sub { color: #4a4a4a; font-size: 0.76rem; margin-top: 3px; }
+.step-connector { color: #1a1a1a; font-size: 1.2rem; align-self: flex-start; padding-top: 14px; }
+
+/* Pipeline */
+.pipeline-box { background: #0e0e0e; border: 1px solid rgba(255,106,61,0.15); border-radius: 10px; padding: 18px 16px; flex: 1; min-width: 0; }
+.pipeline-arrow { color: #ff6a3d; font-size: 1.5rem; align-self: center; flex-shrink: 0; padding: 0 6px; opacity: 0.7; }
+.pipeline-tag { background: rgba(255,106,61,0.1); color: #ff6a3d; border: 1px solid rgba(255,106,61,0.25); border-radius: 4px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 8px; }
+.pipeline-output { background: rgba(63,185,80,0.05); border: 1px solid rgba(63,185,80,0.15); border-radius: 4px; padding: 5px 10px; margin-top: 10px; font-size: 0.78rem; color: #3fb950; }
+
+/* Output chips */
+.output-chip { background: #0e0e0e; border: 1px solid #1a1a1a; border-radius: 8px; padding: 12px 14px; }
+.output-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
+.output-chip-title { color: #e6edf3; font-weight: 700; font-size: 0.85rem; margin-bottom: 3px; }
+.output-chip-desc { color: #4a4a4a; font-size: 0.76rem; line-height: 1.4; }
+
+/* Log box */
+.log-box { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.78rem; color: #58a6ff; line-height: 1.6; max-height: 260px; overflow-y: auto; }
+
+/* Caption */
+small, .caption { color: #4a4a4a !important; font-size: 0.82rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown(_html("""
-<div class="glass-card" style="padding:1.8rem 2rem; margin-bottom:1.2rem; border-color:rgba(255,106,61,0.3);">
-<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
-<div>
-<div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-bottom:6px;">viAct &middot; Content Intelligence &middot; 2 Agents</div>
-<h1 style="margin:0; font-size:1.85rem; color:#e6edf3; font-weight:700; line-height:1.2;">Webpage Content Agent</h1>
-<p style="margin:8px 0 0; color:#8b949e; font-size:0.92rem; max-width:560px; line-height:1.5;">Two AI agents in one tool — <strong style="color:#e6edf3;">find content gaps</strong> your competitors rank for, or <strong style="color:#e6edf3;">generate full industry landing pages</strong> ready for Wix CMS. Pick a tab below.</p>
-</div>
-<div style="display:flex; gap:8px; flex-wrap:wrap;">
-<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#128225; Tavily Search</span>
-<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#128293; Firecrawl Scrape</span>
-<span style="background:rgba(255,106,61,0.1); color:#ff6a3d; border:1px solid rgba(255,106,61,0.3); border-radius:6px; padding:5px 10px; font-size:0.75rem; font-weight:700;">&#129302; Llama 3.3 70B</span>
-</div>
-</div>
+<div style="padding:2rem 0 1rem 0;">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+    <div style="width:4px; height:32px; background:#ff6a3d; border-radius:2px; flex-shrink:0;"></div>
+    <div>
+      <div style="font-size:0.6rem; font-weight:700; letter-spacing:3.5px; text-transform:uppercase; color:#ff6a3d; margin-bottom:4px;">viAct &middot; AI Content Platform</div>
+      <h1 style="margin:0; font-size:1.7rem; color:#fff; font-weight:800; line-height:1.15; letter-spacing:-0.3px;">Content Intelligence Suite</h1>
+    </div>
+  </div>
+  <p style="margin:10px 0 0 16px; color:#3a3a3a; font-size:0.88rem; line-height:1.5; padding-left:16px; border-left:1px solid #1a1a1a;">
+    Two AI agents that turn competitor research into ready-to-publish viAct.ai content. Pick what you need below.
+  </p>
 </div>
 """), unsafe_allow_html=True)
 
-# ── Agent quick-guide (helps teammates understand what each tab does) ─────────
+# ── Agent Picker ──────────────────────────────────────────────────────────────
 st.markdown(_html("""
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:1.2rem;">
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
 
-  <div class="glass-card" style="padding:1.2rem 1.4rem; border-color:rgba(255,106,61,0.25);">
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-      <span style="font-size:1.4rem;">📡</span>
+  <!-- Agent 1 -->
+  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #ff6a3d; border-radius:10px; padding:20px 22px; position:relative; overflow:hidden;">
+    <div style="position:absolute; top:16px; right:16px; font-size:0.55rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 01</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <div style="width:40px; height:40px; background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">📡</div>
       <div>
-        <div style="color:#e6edf3; font-weight:700; font-size:0.95rem;">Market Radar</div>
-        <div style="color:#ff6a3d; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Blog &amp; Pillar Pages</div>
+        <div style="color:#fff; font-weight:800; font-size:1rem; letter-spacing:-0.2px;">Market Radar</div>
+        <div style="color:#ff6a3d; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px;">Blog &amp; Pillar Pages</div>
       </div>
     </div>
-    <p style="margin:0; color:#8b949e; font-size:0.82rem; line-height:1.55;">
-      Scans 8 competitors weekly, finds topics viAct doesn't cover yet, and writes a <strong style="color:#c9d1d9;">full SEO pillar page</strong>. Then generate <strong style="color:#c9d1d9;">3 supporting blog posts</strong> in one click.
-      Runs automatically every Monday — or manually any time from this tab.
+    <p style="margin:0 0 14px 0; color:#555; font-size:0.82rem; line-height:1.6;">
+      <strong style="color:#c9d1d9;">Kya karna hai?</strong> Competitors ko scan karo, viAct ke content gaps dhundo, aur ek full SEO page auto-generate karo — sabkuch ek click mein.
     </p>
-    <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Tavily gap check</span>
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Firecrawl scrape</span>
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Auto Monday run</span>
+    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#ff6a3d; font-weight:700;">1</span>
+        <span>Competitors ka content scan hoga (Tavily)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#ff6a3d; font-weight:700;">2</span>
+        <span>Jo topic viAct pe nahi hai woh milega</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#ff6a3d; font-weight:700;">3</span>
+        <span>Full SEO pillar page + 3 blogs generate hoge</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">Tavily Search</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">Firecrawl</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">Auto Daily</span>
+    </div>
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid #1a1a1a; font-size:0.72rem; color:#2a2a2a;">
+      &#x25B2; First tab &nbsp;·&nbsp; Output: Google Sheet "Webpage Content"
     </div>
   </div>
 
-  <div class="glass-card" style="padding:1.2rem 1.4rem; border-color:rgba(63,185,80,0.25);">
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-      <span style="font-size:1.4rem;">🏭</span>
+  <!-- Agent 2 -->
+  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #3fb950; border-radius:10px; padding:20px 22px; position:relative; overflow:hidden;">
+    <div style="position:absolute; top:16px; right:16px; font-size:0.55rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 02</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <div style="width:40px; height:40px; background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.2); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">🏭</div>
       <div>
-        <div style="color:#e6edf3; font-weight:700; font-size:0.95rem;">Industry Pages</div>
-        <div style="color:#3fb950; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Dynamic Landing Pages</div>
+        <div style="color:#fff; font-weight:800; font-size:1rem; letter-spacing:-0.2px;">Industry Pages</div>
+        <div style="color:#3fb950; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:2px;">Dynamic Landing Pages</div>
       </div>
     </div>
-    <p style="margin:0; color:#8b949e; font-size:0.82rem; line-height:1.55;">
-      Generates a <strong style="color:#c9d1d9;">complete 8-section industry landing page</strong> — hero, metrics, 6 use cases, testimonials, CTA, 11 image prompts — ready to paste into Wix CMS.
-      Just pick an industry and click Generate.
+    <p style="margin:0 0 14px 0; color:#555; font-size:0.82rem; line-height:1.6;">
+      <strong style="color:#c9d1d9;">Kya karna hai?</strong> Industry choose karo (Logistics, Construction, Mining…), apna approved doc upload karo — aur poora Wix CMS-ready landing page ban jaata hai.
     </p>
-    <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
-      <span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">Construction · Oil &amp; Gas · Mining</span>
-      <span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.2); border-radius:4px; padding:2px 8px; font-size:0.7rem;">+ any custom industry</span>
+    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#3fb950; font-weight:700;">1</span>
+        <span>Industry select karo + .docx reference upload karo</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#3fb950; font-weight:700;">2</span>
+        <span>AI competitor pages scrape karke compare karega</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.78rem; color:#444;">
+        <span style="color:#3fb950; font-weight:700;">3</span>
+        <span>8-section page: Hero, Metrics, Use Cases, CTA, Images</span>
+      </div>
+    </div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">Construction</span>
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">Logistics</span>
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.65rem; font-weight:600; padding:3px 9px;">+ Any Industry</span>
+    </div>
+    <div style="margin-top:14px; padding-top:14px; border-top:1px solid #1a1a1a; font-size:0.72rem; color:#2a2a2a;">
+      &#x25B2; Second tab &nbsp;·&nbsp; Output: "viAct Industry Pages - claude" Sheet
     </div>
   </div>
 
@@ -277,8 +325,8 @@ st.markdown(_html("""
 # TABS — Market Radar  |  Industry Pages
 # =============================================================================
 tab_radar, tab_industry = st.tabs([
-    "📡 Market Radar — Find Content Gaps",
-    "🏭 Industry Pages — Full Landing Pages",
+    "📡  Agent 01 — Market Radar",
+    "🏭  Agent 02 — Industry Pages",
 ])
 
 with tab_radar:
@@ -1373,9 +1421,29 @@ with tab_industry:
                 key="ip_yt_url",
             )
 
+        # ── .docx reference uploader ──────────────────────────────────────────
+        _uploaded_doc = st.file_uploader(
+            "📄 Upload approved content .docx (auto-fills reference field below)",
+            type=["docx"],
+            key="ip_doc_upload",
+            help="Upload finalized copy — the AI uses it as ground-truth reference for metrics, use cases, and testimonials.",
+        )
+        if _uploaded_doc is not None:
+            if st.session_state.get("ip_last_doc_name") != _uploaded_doc.name:
+                try:
+                    import io
+                    import docx as _docx_lib
+                    _doc_obj = _docx_lib.Document(io.BytesIO(_uploaded_doc.read()))
+                    _doc_text = "\n".join(p.text for p in _doc_obj.paragraphs if p.text.strip())
+                    st.session_state["ip_refs_text"] = _doc_text[:6000]
+                    st.session_state["ip_last_doc_name"] = _uploaded_doc.name
+                    st.success(f"✓ Loaded **{_uploaded_doc.name}** ({len(_doc_text):,} chars) → reference field auto-filled")
+                except Exception as _de:
+                    st.error(f"Could not parse doc: {_de}")
+
         ip_refs = st.text_area(
-            "Reference Material (optional — paste viAct project stats, case study numbers, MOM data)",
-            height=90,
+            "Reference Material — paste stats, or upload .docx above (auto-populated)",
+            height=120,
             key="ip_refs_text",
         )
 
@@ -1500,7 +1568,7 @@ with tab_industry:
             if st.button("📊  Save to Google Sheets", type="primary", key="ip_push", use_container_width=True):
                 try:
                     from push_to_sheets import push_industry_page_vertical
-                    _ip_sheet_id = os.getenv("SHEET_ID", "")
+                    _ip_sheet_id = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
                     push_industry_page_vertical(
                         content=_ip_content,
                         industry_name=_ip_label,

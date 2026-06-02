@@ -25,9 +25,6 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
 CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
 TOKEN_PATH = os.path.join(BASE_DIR, "token.json")
 
-COLUMNS = ["Date", "Platform", "Post Copy", "Hashtags", "Image URL", "Input Source", "Status"]
-
-
 def _service_account_creds():
     """Build service account credentials from GCP_SERVICE_ACCOUNT env var (JSON string or dict)."""
     from google.oauth2 import service_account
@@ -75,58 +72,8 @@ def get_sheets_service():
     return build("sheets", "v4", credentials=oauth_creds)
 
 
-def ensure_header(service, sheet_id: str):
-    result = service.spreadsheets().values().get(
-        spreadsheetId=sheet_id, range="Sheet1!A1:G1"
-    ).execute()
-    existing = result.get("values", [])
-    if not existing or existing[0] != COLUMNS:
-        service.spreadsheets().values().update(
-            spreadsheetId=sheet_id,
-            range="Sheet1!A1",
-            valueInputOption="RAW",
-            body={"values": [COLUMNS]},
-        ).execute()
-
-
-def content_to_rows(content: dict, input_source: str, image_url: str) -> list:
-    today = date.today().isoformat()
-    rows = []
-
-    for platform in ["linkedin", "twitter", "instagram"]:
-        p = content.get(platform, {})
-        copy = p.get("copy", "")
-        hashtags = " ".join(f"#{h.lstrip('#')}" for h in p.get("hashtags", []))
-        rows.append([today, platform.capitalize(), copy, hashtags, image_url, input_source, "Draft"])
-
-    blog = content.get("blog", {})
-    blog_copy = f"{blog.get('title', '')}\n\n{blog.get('copy', '')}"
-    rows.append([today, "Blog", blog_copy, "", image_url, input_source, "Draft"])
-
-    return rows
-
-
-def push(content: dict, input_source: str = "", image_url: str = "") -> int:
-    sheet_id = get_env("SHEET_ID")
-    service = get_sheets_service()
-    ensure_header(service, sheet_id)
-
-    rows = content_to_rows(content, input_source, image_url)
-
-    service.spreadsheets().values().append(
-        spreadsheetId=sheet_id,
-        range="Sheet1!A1",
-        valueInputOption="RAW",
-        insertDataOption="INSERT_ROWS",
-        body={"values": rows},
-    ).execute()
-
-    return len(rows)
-
-
 # ---------------------------------------------------------------------------
 # Webpage Content pipeline — separate tab, separate schema
-# All additions below are additive — existing push() is unchanged.
 # ---------------------------------------------------------------------------
 
 WEBPAGE_TAB = "Webpage Content"
@@ -593,7 +540,10 @@ def push_webpage_vertical(
 
 
 # ── Industry Pages — VERTICAL format (field: value rows, green section headers) ─
-def push_industry_page_vertical(content: dict, industry_name: str, sheet_id: str) -> int:
+def push_industry_page_vertical(content: dict, industry_name: str, sheet_id: str = "") -> int:
+    """sheet_id defaults to INDUSTRY_SHEET_ID env var, falls back to SHEET_ID."""
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
     """
     Write industry page content vertically: field name in col A, value in col B.
     Section headers get green background (#b7e1cc) and bold text.
@@ -911,16 +861,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Push content rows to Google Sheets")
     parser.add_argument("--source", default="", help="Input source label (url/topic/file)")
-    parser.add_argument("--image-url", default="", help="Image URL to attach to rows")
-    parser.add_argument("--mode", choices=["social", "webpage"], default="social")
     args = parser.parse_args()
 
     try:
         content = json.load(sys.stdin)
-        if args.mode == "webpage":
-            count = push_webpage(content, input_source=args.source)
-        else:
-            count = push(content, input_source=args.source, image_url=args.image_url)
+        count = push_webpage(content, input_source=args.source)
         print(json.dumps({"rows_written": count}))
     except Exception as e:
         print(json.dumps({"error": str(e)}), file=sys.stderr)
