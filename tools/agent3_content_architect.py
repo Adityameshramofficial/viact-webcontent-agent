@@ -30,7 +30,7 @@ from generate_webpage_content import SYSTEM_INSTRUCTION
 from agent2_data_extractor import ACCESS_DENIED
 
 PRIMARY_MODEL  = "llama-3.3-70b-versatile"
-FALLBACK_MODEL = "gemma2-9b-it"   # 15K TPM — handles large prompts that 8b-instant (6K TPM) rejects
+FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"  # higher TPM, JSON mode supported
 
 
 def _groq_chat(client, messages: list, max_tokens: int = 5000, temperature: float = 0.65,
@@ -756,8 +756,18 @@ Return a single JSON object. Every field must be fully written out — no placeh
         )
         result = _run_generation(correction)
 
+    # ── Hard post-processing: enforce limits the LLM may still miss ──────────
+    # Always cap image prompts to exactly 11
+    if isinstance(result.get("nano_banana_prompts"), list):
+        result["nano_banana_prompts"] = result["nano_banana_prompts"][:11]
+    # Always truncate meta_description to 160 chars at a word boundary
+    seo = result.get("seo_suite", {})
+    if isinstance(seo.get("meta_description"), str) and len(seo["meta_description"]) > 160:
+        truncated = seo["meta_description"][:160].rsplit(" ", 1)[0].rstrip(",. ")
+        seo["meta_description"] = truncated
+
     result["content_type"] = "industry_page"
-    result["quality_gate_errors"] = gate_errors  # expose for UI warning
+    result["quality_gate_errors"] = _validate_industry_page(result)  # re-check after post-processing
     result["webpage_html"] = build_webpage_html(result)
     return result
 

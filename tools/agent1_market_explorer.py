@@ -89,7 +89,7 @@ def _extract_topics_via_llm(snippets_block: str, viact_pages: list[str]) -> list
     )
 
     PRIMARY_MODEL  = "llama-3.3-70b-versatile"
-    FALLBACK_MODEL = "gemma2-9b-it"   # 15K TPM — handles large prompts
+    FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"  # higher TPM, JSON mode supported
 
     client = Groq(api_key=get_env("GROQ_API_KEY"))
     messages = [

@@ -236,7 +236,7 @@ def generate_webpage(
     )
 
     PRIMARY_MODEL  = "llama-3.3-70b-versatile"
-    FALLBACK_MODEL = "gemma2-9b-it"   # 15K TPM — handles large prompts
+    FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"  # higher TPM, JSON mode supported
 
     def _call(temperature: float, max_tokens: int) -> dict:
         kwargs = dict(
