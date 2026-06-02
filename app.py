@@ -1146,14 +1146,13 @@ with tab_radar:
         # ── Content Preview Tabs ───────────────────────────────────────────────────
         st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PILLAR PAGE PREVIEW — ALL 10 SECTIONS</p>", unsafe_allow_html=True)
         (
-            tab_dl, tab_sources, tab_body, tab_wix, tab_seo,
+            tab_dl, tab_sources, tab_body, tab_seo,
             tab_faqs, tab_schema, tab_geo,
             tab_visual, tab_links, tab_raw
         ) = st.tabs([
             "📋 Decision Logic",
             "🔍 Proof & Sources",
             "📄 Page Body",
-            "🌐 Wix HTML",
             "🔎 SEO Tags",
             "❓ FAQs",
             "🏷️ Schema Markup",
@@ -1235,17 +1234,6 @@ with tab_radar:
             st.text_area("Webpage Body (Markdown — paste into CMS)", body, height=500, key="r3_body_text")
             with st.expander("👁️ Preview — see how the page renders"):
                 st.markdown(body)
-
-        with tab_wix:
-            html_out = content.get("webpage_html", "")
-            if not html_out:
-                try:
-                    from agent3_content_architect import build_webpage_html
-                    html_out = build_webpage_html(content)
-                except Exception:
-                    html_out = "<p>HTML not available — regenerate content.</p>"
-            st.text_area("Clean HTML (paste into Wix Embed Code)", html_out, height=500, key="r3_wix_html")
-            st.caption("Tip: In Wix editor → Add Elements → Embed Code → Embed HTML → paste above")
 
         with tab_seo:
             st.markdown(_html("""
@@ -1378,7 +1366,7 @@ with tab_industry:
             "Select your industry. The system will:<br>"
             "&nbsp;1. Scrape viAct existing industry page (tone reference via Firecrawl)<br>"
             "&nbsp;2. Scrape 2-3 competitor industry pages (Firecrawl)<br>"
-            "&nbsp;3. Generate a complete 8-section landing page: SEO, FAQs, 11 image prompts, Wix HTML (Llama 3.3 70B)"
+            "&nbsp;3. Generate a complete 8-section landing page: SEO, FAQs, 11 image prompts (Llama 3.3 70B)"
             "</div></div>"
         ), unsafe_allow_html=True)
 
@@ -1610,14 +1598,13 @@ with tab_industry:
         st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL SECTIONS</p>", unsafe_allow_html=True)
 
         (
-            _ip_tab_dl, _ip_tab_sources, _ip_tab_body, _ip_tab_wix, _ip_tab_cms,
+            _ip_tab_dl, _ip_tab_sources, _ip_tab_body, _ip_tab_cms,
             _ip_tab_seo, _ip_tab_faqs, _ip_tab_schema, _ip_tab_geo,
             _ip_tab_visual, _ip_tab_links, _ip_tab_raw,
         ) = st.tabs([
             "📋 Decision Logic",
             "🔍 Proof & Sources",
             "📄 Page Body",
-            "🌐 Wix HTML",
             "🗂️ Wix CMS Fields",
             "🔎 SEO Tags",
             "❓ FAQs",
@@ -1652,17 +1639,6 @@ with tab_industry:
             st.text_area("Webpage Body (Markdown — copy-paste into Wix CMS)", _ip_body, height=500, key="ip_body_text")
             with st.expander("👁️ Preview — see how the page renders"):
                 st.markdown(_ip_body)
-
-        with _ip_tab_wix:
-            _ip_html_out = _ip_content.get("webpage_html", "")
-            if not _ip_html_out:
-                try:
-                    from agent3_content_architect import build_webpage_html
-                    _ip_html_out = build_webpage_html(_ip_content)
-                except Exception:
-                    _ip_html_out = "<p>HTML not available — regenerate content.</p>"
-            st.text_area("Clean HTML (paste into Wix Embed Code)", _ip_html_out, height=500, key="ip_wix_html")
-            st.caption("Tip: In Wix editor → Add Elements → Embed Code → Embed HTML → paste above")
 
         with _ip_tab_cms:
             _ip_cms = _ip_content.get("industry_cms_fields", {})
