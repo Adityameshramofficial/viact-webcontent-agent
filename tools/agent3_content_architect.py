@@ -414,6 +414,51 @@ def _extract_viact_client_data(viact_markdown: str, industry_name: str, client) 
         return ""
 
 
+def _validate_industry_page(content: dict) -> list[str]:
+    """
+    Post-generation quality gate check for industry pages.
+    Returns a list of violation strings. Empty list = all gates passed.
+    """
+    errors: list[str] = []
+    cms = content.get("industry_cms_fields", {})
+
+    metrics = cms.get("metrics", [])
+    if len(metrics) != 3:
+        errors.append(f"metrics: expected exactly 3, got {len(metrics)}")
+
+    use_cases = cms.get("use_cases", [])
+    if len(use_cases) != 6:
+        errors.append(f"use_cases: expected exactly 6, got {len(use_cases)}")
+
+    testimonials = cms.get("testimonials", [])
+    if len(testimonials) != 5:
+        errors.append(f"testimonials: expected exactly 5, got {len(testimonials)}")
+
+    nano = content.get("nano_banana_prompts", [])
+    if len(nano) != 11:
+        errors.append(f"nano_banana_prompts: expected exactly 11, got {len(nano)}")
+    else:
+        # Every prompt must contain a pixel dimension string (e.g. "520x327px" or "56x56")
+        missing_px = [i + 1 for i, p in enumerate(nano) if isinstance(p, dict) and "x" not in p.get("prompt", "").lower()]
+        if missing_px:
+            errors.append(f"image prompts missing pixel dimensions: items {missing_px}")
+        # viGent prompt (index 6) must NOT start with CCTV
+        if len(nano) > 6:
+            vigent_prompt = nano[6].get("prompt", "") if isinstance(nano[6], dict) else str(nano[6])
+            if vigent_prompt.lower().startswith("cctv"):
+                errors.append("viGent prompt (index 6) must NOT start with 'CCTV' — must be a dark-mode dashboard")
+
+    meta_title = content.get("seo_suite", {}).get("meta_title", "")
+    if len(meta_title) > 60:
+        errors.append(f"meta_title: {len(meta_title)} chars, must be ≤60")
+
+    meta_desc = content.get("seo_suite", {}).get("meta_description", "")
+    if not (150 <= len(meta_desc) <= 165):
+        errors.append(f"meta_description: {len(meta_desc)} chars, must be 150-160")
+
+    return errors
+
+
 def generate_industry_page(
     industry_name: str,
     industry_slug: str,
@@ -660,18 +705,34 @@ Return a single JSON object. Every field must be fully written out — no placeh
     if custom_instructions.strip():
         prompt += f"\n\nUSER CUSTOM INSTRUCTIONS (highest priority — override defaults where needed):\n{custom_instructions.strip()}"
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": INDUSTRY_SYSTEM},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.65,
-        max_tokens=5000,
-        response_format={"type": "json_object"},
-    )
-    result = json.loads(response.choices[0].message.content)
+    def _run_generation(extra_instruction: str = "") -> dict:
+        _prompt = prompt + extra_instruction if extra_instruction else prompt
+        _resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": INDUSTRY_SYSTEM},
+                {"role": "user", "content": _prompt},
+            ],
+            temperature=0.65,
+            max_tokens=5000,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(_resp.choices[0].message.content)
+
+    result = _run_generation()
+
+    # ── Quality gate validation — retry once if gates are violated ───────────
+    gate_errors = _validate_industry_page(result)
+    if gate_errors:
+        correction = (
+            "\n\nCORRECTION REQUIRED — the previous output violated these quality gates:\n"
+            + "\n".join(f"• {e}" for e in gate_errors)
+            + "\nFix ONLY these violations. Return the complete corrected JSON."
+        )
+        result = _run_generation(correction)
+
     result["content_type"] = "industry_page"
+    result["quality_gate_errors"] = gate_errors  # expose for UI warning
     result["webpage_html"] = build_webpage_html(result)
     return result
 

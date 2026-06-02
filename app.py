@@ -1450,6 +1450,25 @@ with tab_industry:
 
         st.write("")
 
+        # ── HITL Review: show what will be used before generation ────────────
+        _preview_industry = ip_industry if ip_industry else "—"
+        _preview_comp = INDUSTRY_COMPETITOR_URLS.get(ip_industry, []) if ip_industry and ip_industry != "Custom (type below) →" else []
+        _preview_refs = (ip_refs or "").strip()
+        _preview_custom = (ip_custom_inst or "").strip() if "ip_custom_instructions" in st.session_state else ""
+        with st.expander("🔍 Review Inputs Before Generating", expanded=False):
+            st.markdown(_html(
+                '<div style="font-size:0.82rem; color:#8b949e; line-height:1.8;">'
+                f'<strong style="color:#c9d1d9;">Industry:</strong> {_t(_preview_industry)}<br>'
+                f'<strong style="color:#c9d1d9;">Competitor pages to scrape:</strong> '
+                + (_t(", ".join(_preview_comp)) if _preview_comp else '<span style="color:#f85149;">None (custom industry)</span>')
+                + '<br>'
+                f'<strong style="color:#c9d1d9;">Reference material:</strong> '
+                + (f'<span style="color:#3fb950;">✓ {len(_preview_refs)} chars loaded</span>' if _preview_refs else '<span style="color:#e3b341;">⚠ None — using viAct verified stats only</span>')
+                + '<br>'
+                + (f'<strong style="color:#c9d1d9;">Custom instructions:</strong> {_t(_preview_custom[:120])}{"..." if len(_preview_custom) > 120 else ""}<br>' if _preview_custom else '')
+                + '</div>'
+            ), unsafe_allow_html=True)
+
         if st.button("🏭  Generate Industry Page", type="primary", key="ip_generate"):
             if not ip_industry or not ip_industry.strip():
                 st.warning("Please enter an industry name.")
@@ -1506,13 +1525,14 @@ with tab_industry:
             with _prog.container():
                 st.info("Step 3/3 — Generating 8-section industry page (Llama 3.3 70B)...")
             try:
+                _radar_viact_pages = st.session_state.get("r3_radar", {}).get("viact_known_pages", [])
                 _result = generate_industry_page(
                     industry_name=ip_industry,
                     industry_slug=_industry_slug,
                     viact_page_content=_viact_md,
                     competitor_content=_comp_data,
                     references=_refs_combined,
-                    viact_pages=[],
+                    viact_pages=_radar_viact_pages,
                     custom_instructions=ip_custom_inst.strip() if ip_custom_inst else "",
                 )
                 st.session_state["ip_content"]          = _result
@@ -1538,6 +1558,15 @@ with tab_industry:
         _ip_comp_data  = st.session_state.get("ip_competitor_data", {})
         _ip_label      = st.session_state.get("ip_industry_label", "")
         _ip_viact_url  = st.session_state.get("ip_viact_url", "")
+
+        # ── Quality gate warning ─────────────────────────────────────────────
+        _gate_errors = _ip_content.get("quality_gate_errors", [])
+        if _gate_errors:
+            st.warning(
+                "⚠️ **Quality gate retry was triggered** — the following issues were detected in the first generation "
+                "and a correction was requested:\n" + "\n".join(f"- {e}" for e in _gate_errors)
+                + "\n\nReview the output below to confirm the corrections were applied."
+            )
 
         st.markdown(_html(
             '<div class="glass-card" style="border-color:rgba(63,185,80,0.3); background:rgba(22,25,33,0.8);">'
