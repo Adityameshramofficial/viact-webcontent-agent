@@ -236,7 +236,7 @@ def generate_webpage(
     )
 
     PRIMARY_MODEL  = "llama-3.3-70b-versatile"
-    FALLBACK_MODEL = "llama-3.1-8b-instant"
+    FALLBACK_MODEL = "gemma2-9b-it"   # 15K TPM — handles large prompts
 
     def _call(temperature: float, max_tokens: int) -> dict:
         kwargs = dict(
@@ -251,7 +251,8 @@ def generate_webpage(
         try:
             resp = client.chat.completions.create(model=PRIMARY_MODEL, **kwargs)
         except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
+            err = str(e)
+            if "429" in err or "413" in err or "rate_limit" in err.lower() or "too large" in err.lower():
                 resp = client.chat.completions.create(model=FALLBACK_MODEL, **kwargs)
             else:
                 raise

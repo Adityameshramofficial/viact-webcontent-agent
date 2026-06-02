@@ -30,14 +30,14 @@ from generate_webpage_content import SYSTEM_INSTRUCTION
 from agent2_data_extractor import ACCESS_DENIED
 
 PRIMARY_MODEL  = "llama-3.3-70b-versatile"
-FALLBACK_MODEL = "llama-3.1-8b-instant"
+FALLBACK_MODEL = "gemma2-9b-it"   # 15K TPM — handles large prompts that 8b-instant (6K TPM) rejects
 
 
 def _groq_chat(client, messages: list, max_tokens: int = 5000, temperature: float = 0.65,
                response_format: dict | None = None) -> str:
     """
-    Call Groq with PRIMARY_MODEL. On 429 rate-limit, automatically retry with
-    FALLBACK_MODEL (separate daily quota). Returns the raw content string.
+    Call Groq with PRIMARY_MODEL. On 429 (daily quota) or 413 (request too large),
+    automatically retry with FALLBACK_MODEL. Returns the raw content string.
     """
     kwargs = dict(
         messages=messages,
@@ -51,7 +51,8 @@ def _groq_chat(client, messages: list, max_tokens: int = 5000, temperature: floa
         resp = client.chat.completions.create(model=PRIMARY_MODEL, **kwargs)
         return resp.choices[0].message.content
     except Exception as e:
-        if "429" in str(e) or "rate_limit" in str(e).lower():
+        err = str(e)
+        if "429" in err or "413" in err or "rate_limit" in err.lower() or "too large" in err.lower():
             resp = client.chat.completions.create(model=FALLBACK_MODEL, **kwargs)
             return resp.choices[0].message.content
         raise
