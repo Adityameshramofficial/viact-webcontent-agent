@@ -29,6 +29,33 @@ from utils import get_env
 from generate_webpage_content import SYSTEM_INSTRUCTION
 from agent2_data_extractor import ACCESS_DENIED
 
+PRIMARY_MODEL  = "llama-3.3-70b-versatile"
+FALLBACK_MODEL = "llama-3.1-8b-instant"
+
+
+def _groq_chat(client, messages: list, max_tokens: int = 5000, temperature: float = 0.65,
+               response_format: dict | None = None) -> str:
+    """
+    Call Groq with PRIMARY_MODEL. On 429 rate-limit, automatically retry with
+    FALLBACK_MODEL (separate daily quota). Returns the raw content string.
+    """
+    kwargs = dict(
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
+    if response_format:
+        kwargs["response_format"] = response_format
+
+    try:
+        resp = client.chat.completions.create(model=PRIMARY_MODEL, **kwargs)
+        return resp.choices[0].message.content
+    except Exception as e:
+        if "429" in str(e) or "rate_limit" in str(e).lower():
+            resp = client.chat.completions.create(model=FALLBACK_MODEL, **kwargs)
+            return resp.choices[0].message.content
+        raise
+
 ZERO_HALLUCINATION_BLOCK = """
 ZERO-HALLUCINATION CONTRACT (non-negotiable):
 - Use ONLY the Markdown text provided in COMPETITOR_CONTENT below (scraped by Firecrawl).
@@ -334,8 +361,8 @@ Return a single JSON object:
   "decision_logic": "Supporting blog post for topic cluster. Opportunity: {opp_score}. Confirmed: {confirmed_at}. Educational companion to pillar page on '{topic}'."
 }}"""
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    result = json.loads(_groq_chat(
+        client,
         messages=[
             {"role": "system", "content": FULL_SYSTEM},
             {"role": "user", "content": blog_prompt},
@@ -343,8 +370,7 @@ Return a single JSON object:
         temperature=0.65,
         max_tokens=3072,
         response_format={"type": "json_object"},
-    )
-    result = json.loads(response.choices[0].message.content)
+    ))
     result["webpage_html"] = build_webpage_html(result)
     return result
 
@@ -357,8 +383,8 @@ def generate_cluster_topics(pillar_topic: str, primary_keyword: str) -> list[str
     from groq import Groq
 
     client = Groq(api_key=get_env("GROQ_API_KEY"))
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    raw = _groq_chat(
+        client,
         messages=[
             {
                 "role": "user",
@@ -377,7 +403,7 @@ def generate_cluster_topics(pillar_topic: str, primary_keyword: str) -> list[str
         temperature=0.4,
         response_format={"type": "json_object"},
     )
-    return json.loads(response.choices[0].message.content).get("topics", [])[:3]
+    return json.loads(raw).get("topics", [])[:3]
 
 
 # Fallback case-study page for custom industries that have no viact.ai industry page
@@ -393,8 +419,8 @@ def _extract_viact_client_data(viact_markdown: str, industry_name: str, client) 
     if not viact_markdown or viact_markdown in ("[ACCESS DENIED]", ""):
         return ""
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        return _groq_chat(
+            client,
             messages=[{"role": "user", "content": (
                 f"From this viact.ai {industry_name} page content, extract ONLY:\n"
                 "1. Client or company names mentioned (any company viAct worked with)\n"
@@ -409,7 +435,6 @@ def _extract_viact_client_data(viact_markdown: str, industry_name: str, client) 
             temperature=0.1,
             response_format={"type": "json_object"},
         )
-        return response.choices[0].message.content
     except Exception:
         return ""
 
@@ -707,8 +732,8 @@ Return a single JSON object. Every field must be fully written out — no placeh
 
     def _run_generation(extra_instruction: str = "") -> dict:
         _prompt = prompt + extra_instruction if extra_instruction else prompt
-        _resp = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        return json.loads(_groq_chat(
+            client,
             messages=[
                 {"role": "system", "content": INDUSTRY_SYSTEM},
                 {"role": "user", "content": _prompt},
@@ -716,8 +741,7 @@ Return a single JSON object. Every field must be fully written out — no placeh
             temperature=0.65,
             max_tokens=5000,
             response_format={"type": "json_object"},
-        )
-        return json.loads(_resp.choices[0].message.content)
+        ))
 
     result = _run_generation()
 
@@ -905,8 +929,8 @@ Return a single JSON object with all fields below. Quality over word count — k
   "decision_logic": "Agent 1 confirmed via Tavily on {confirmed_at}: '{viact_query}' returned 0 results. Competitors covering this: {comp_count} ({', '.join(e.get('competitor','') for e in gap_evidence[:3]) if gap_evidence else 'see Tavily evidence'}). Agent 2 scraped {len(competitor_data)} pages via Firecrawl — {len(accessible_urls)} accessible, {len(denied_urls)} ACCESS DENIED. Agent 3 built this page from verified content. Opportunity: {opp_score} in APAC."
 }}"""
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    result = json.loads(_groq_chat(
+        client,
         messages=[
             {"role": "system", "content": FULL_SYSTEM},
             {"role": "user", "content": prompt},
@@ -914,9 +938,7 @@ Return a single JSON object with all fields below. Quality over word count — k
         temperature=0.65,
         max_tokens=4096,
         response_format={"type": "json_object"},
-    )
-
-    result = json.loads(response.choices[0].message.content)
+    ))
     result["webpage_html"] = build_webpage_html(result)
     return result
 

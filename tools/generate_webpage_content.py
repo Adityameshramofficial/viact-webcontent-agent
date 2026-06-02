@@ -235,9 +235,11 @@ def generate_webpage(
         viact_pages=viact_pages_str,
     )
 
+    PRIMARY_MODEL  = "llama-3.3-70b-versatile"
+    FALLBACK_MODEL = "llama-3.1-8b-instant"
+
     def _call(temperature: float, max_tokens: int) -> dict:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        kwargs = dict(
             messages=[
                 {"role": "system", "content": SYSTEM_INSTRUCTION},
                 {"role": "user", "content": prompt},
@@ -246,7 +248,14 @@ def generate_webpage(
             max_tokens=max_tokens,
             response_format={"type": "json_object"},
         )
-        return json.loads(response.choices[0].message.content)
+        try:
+            resp = client.chat.completions.create(model=PRIMARY_MODEL, **kwargs)
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                resp = client.chat.completions.create(model=FALLBACK_MODEL, **kwargs)
+            else:
+                raise
+        return json.loads(resp.choices[0].message.content)
 
     result = _call(temperature=0.65, max_tokens=8192)
 
