@@ -12,8 +12,9 @@
  */
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────────
-const SHEET_ID     = '1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec';
-const RECIPIENTS   = ['adityameshramofficial@gmail.com'];  // add more: ['marketing@viact.ai']
+const SHEET_ID          = '1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec';
+const INDUSTRY_SHEET_ID = '14Y16ikpkAfnVFXm38Ot6CG4PIPTbrQ89jUPCiCjXjf4';
+const RECIPIENTS        = ['marketing@viact.ai'];
 const TIMEZONE     = 'Asia/Kolkata';
 const BRAND_COLOR  = '#ff6a3d';
 const SHEET_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
@@ -135,12 +136,15 @@ function _scanWebpageContent(ss, today) {
 }
 
 // ─── SCAN industry tabs — last SCAN_DAYS days ─────────────────────────────────
-function _scanIndustryTabs(ss, today) {
-  const SKIP   = new Set(['Webpage Content', 'Reference_Library', 'Dedup_Log', 'Sheet1', REPORT_TAB]);
+function _scanIndustryTabs(_ss, today) {
+  const SKIP   = new Set(['Sheet1', REPORT_TAB]);
   const items  = [];
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
 
-  ss.getSheets().forEach(sh => {
+  // Industry pages live in a separate spreadsheet
+  const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+
+  indSs.getSheets().forEach(sh => {
     const name = sh.getName();
     if (SKIP.has(name) || /^\d{4}-\d{2}-\d{2}$/.test(name)) return;
 
