@@ -17,9 +17,10 @@ const INDUSTRY_SHEET_ID = '14Y16ikpkAfnVFXm38Ot6CG4PIPTbrQ89jUPCiCjXjf4';
 const RECIPIENTS        = ['marketing@viact.ai'];
 const TIMEZONE     = 'Asia/Kolkata';
 const BRAND_COLOR  = '#ff6a3d';
-const SHEET_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
-const REPORT_TAB   = 'Daily Report';
-const SCAN_DAYS    = 7;   // show content from last N days
+const SHEET_URL          = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+const INDUSTRY_SHEET_URL = `https://docs.google.com/spreadsheets/d/${INDUSTRY_SHEET_ID}/edit`;
+const REPORT_TAB         = 'Daily Report';
+const SCAN_DAYS          = 7;   // show content from last N days
 
 // GitHub — needed to trigger Market Radar from this script
 // SETUP: paste your GitHub Personal Access Token below (needs repo + workflow scope)
@@ -282,12 +283,14 @@ function _buildEmailHtml(web, ind, dateLabel, todayPillar, todayBlogs, todayInd,
       ${indHtml}
     </div>` : ''}
 
-    <!-- CTA BUTTON -->
+    <!-- CTA BUTTONS -->
     <div style="text-align:center;margin-top:8px;padding-top:16px;border-top:1px solid #f0f0f0;">
-      <a href="${SHEET_URL}" style="display:inline-block;background:#ff6a3d;color:#fff;text-decoration:none;padding:13px 32px;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:0.3px;">
-        Open Google Sheet &rarr;
+      <a href="${SHEET_URL}" style="display:inline-block;background:#ff6a3d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:0.3px;margin:4px 6px;">
+        Webpage Content Sheet &rarr;
       </a>
-      <p style="margin:12px 0 0;font-size:11px;color:#aaa;">All content saved in the <strong>Webpage Content</strong> tab &middot; vertical format</p>
+      <a href="${INDUSTRY_SHEET_URL}" style="display:inline-block;background:#3fb950;color:#fff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:0.3px;margin:4px 6px;">
+        Industry Pages Sheet &rarr;
+      </a>
     </div>
   </td></tr>
 
