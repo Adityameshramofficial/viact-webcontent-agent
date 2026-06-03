@@ -324,9 +324,10 @@ st.markdown(_html("""
 # =============================================================================
 # TABS — Market Radar  |  Industry Pages
 # =============================================================================
-tab_radar, tab_industry = st.tabs([
+tab_radar, tab_industry, tab_casestudy = st.tabs([
     "📡  Agent 01 — Market Radar",
     "🏭  Agent 02 — Industry Pages",
+    "📋  Agent 03 — Case Studies",
 ])
 
 with tab_radar:
@@ -1805,3 +1806,231 @@ with tab_industry:
                         except Exception as _re:
                             st.error(f"Regeneration failed: {_re}")
 
+
+
+# =============================================================================
+# TAB — CASE STUDIES (Agent 06)
+# Session state prefix: cs_
+# =============================================================================
+with tab_casestudy:
+    if "cs_step" not in st.session_state:
+        st.session_state["cs_step"] = 0
+
+    cs_step = st.session_state["cs_step"]
+
+    if cs_step > 0:
+        st.write("")
+        if st.button("↩ Start Over", key="cs_reset"):
+            for _k in [_k for _k in st.session_state if _k.startswith("cs_")]:
+                del st.session_state[_k]
+            st.rerun()
+
+    st.write("")
+
+    # =========================================================================
+    # CASE STUDY STEP 0 — Inputs
+    # =========================================================================
+    if cs_step == 0:
+        st.markdown(
+            "<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>GENERATE A FULL viAct CASE STUDY PAGE</p>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(_html(
+            '<div class="glass-card" style="margin-bottom:18px;">'
+            '<div style="color:#8b949e; font-size:0.82rem; line-height:1.7;">'
+            "Fill in company details. The system will:<br>"
+            "&nbsp;1. Research the company via Tavily<br>"
+            "&nbsp;2. Scrape viAct case-studies reference page (tone + structure)<br>"
+            "&nbsp;3. Generate Hero → Challenge → Solution → Impact → Testimonials (Llama 3.3 70B)"
+            "</div></div>"
+        ), unsafe_allow_html=True)
+
+        import sys as _sys
+        _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+        from agent6_case_study_builder import VIACT_PRODUCTS
+
+        _cs_col1, _cs_col2 = st.columns(2, gap="medium")
+        with _cs_col1:
+            cs_company  = st.text_input("Company Name *", placeholder="e.g. Samsung C&T, ADNOC, Gamuda", key="cs_company")
+            cs_location = st.text_input("Location *", placeholder="e.g. Singapore, Dubai UAE, Kuala Lumpur", key="cs_location")
+        with _cs_col2:
+            _INDUSTRIES = [
+                "Construction", "Oil & Gas", "Chemical", "Energy",
+                "Infrastructure", "Mining", "Food & Beverage",
+                "Pharmaceuticals", "Port & Logistics", "Manufacturing",
+                "Marine", "Other",
+            ]
+            cs_industry = st.selectbox("Industry *", _INDUSTRIES, key="cs_industry_select")
+            cs_products = st.multiselect(
+                "viAct Products Used *",
+                VIACT_PRODUCTS,
+                default=["PPE Detection"],
+                key="cs_products",
+            )
+
+        cs_refs = st.text_area(
+            "Reference Material — paste real metrics, quotes, project details (optional but recommended)",
+            height=110,
+            placeholder="e.g. Reduced incidents by 75%, 5,000 worker-hours saved, Quote from EHS Director",
+            key="cs_refs",
+        )
+
+        with st.expander("⚙️ Custom Instructions (optional)"):
+            cs_custom = st.text_area(
+                "",
+                placeholder="e.g. Focus on e-PTW implementation. Mention MOM compliance. Include night-shift context.",
+                height=80,
+                key="cs_custom",
+                label_visibility="collapsed",
+            )
+
+        cs_tavily = st.checkbox("🔍 Research company via Tavily", value=True, key="cs_tavily")
+
+        st.write("")
+
+        with st.expander("🔍 Review Before Generating", expanded=False):
+            st.markdown(_html(
+                '<div style="font-size:0.82rem; color:#8b949e; line-height:1.8;">'
+                f'<strong style="color:#c9d1d9;">Company:</strong> {_t(cs_company or "—")}<br>'
+                f'<strong style="color:#c9d1d9;">Industry:</strong> {_t(cs_industry)}<br>'
+                f'<strong style="color:#c9d1d9;">Location:</strong> {_t(cs_location or "—")}<br>'
+                f'<strong style="color:#c9d1d9;">Products:</strong> {_t(", ".join(cs_products) or "—")}<br>'
+                + (f'<strong style="color:#c9d1d9;">References:</strong> <span style="color:#3fb950;">✓ {len((cs_refs or "").strip())} chars</span><br>' if (cs_refs or "").strip() else '<strong style="color:#c9d1d9;">References:</strong> <span style="color:#e3b341;">⚠ None — AI will infer from research</span><br>')
+                + '</div>'
+            ), unsafe_allow_html=True)
+
+        if st.button("📋  Generate Case Study", type="primary", key="cs_generate"):
+            if not cs_company.strip():
+                st.warning("Please enter a company name.")
+                st.stop()
+            if not cs_location.strip():
+                st.warning("Please enter a location.")
+                st.stop()
+            if not cs_products:
+                st.warning("Please select at least one viAct product.")
+                st.stop()
+
+            from agent6_case_study_builder import generate_case_study
+
+            _cs_prog = st.empty()
+            _cs_steps = []
+
+            def _cs_cb(msg):
+                _cs_steps.append(msg)
+                with _cs_prog.container():
+                    st.info(_cs_steps[-1])
+
+            try:
+                _cs_result = generate_case_study(
+                    company=cs_company.strip(),
+                    industry=cs_industry,
+                    location=cs_location.strip(),
+                    products_used=cs_products,
+                    references=cs_refs.strip() if cs_refs else "",
+                    custom_instructions=cs_custom.strip() if cs_custom else "",
+                    run_tavily=cs_tavily,
+                    progress_callback=_cs_cb,
+                )
+                st.session_state["cs_result"]  = _cs_result
+                st.session_state["cs_company"] = cs_company.strip()
+                st.session_state["cs_step"]    = 1
+                _cs_prog.empty()
+                st.rerun()
+            except Exception as _ce:
+                _cs_prog.empty()
+                st.error(f"Generation failed: {_ce}")
+
+    # =========================================================================
+    # CASE STUDY STEP 1 — Results + Push to Sheets
+    # =========================================================================
+    elif cs_step == 1:
+        _cs_result  = st.session_state["cs_result"]
+        _cs_cms     = _cs_result.get("cms_fields", {})
+        _cs_meta    = _cs_result.get("generation_meta", {})
+        _cs_errors  = _cs_result.get("quality_gate_errors", [])
+        _cs_company = st.session_state.get("cs_company", "")
+
+        if _cs_errors:
+            st.warning(
+                "⚠️ **Quality gate issues detected:**\n" +
+                "\n".join(f"- {e}" for e in _cs_errors) +
+                "\n\nReview output — placeholders in [brackets] need real data."
+            )
+
+        st.markdown(_html(
+            '<div class="glass-card" style="border-color:rgba(88,166,255,0.3); background:rgba(22,25,33,0.8);">'
+            '<div style="display:flex; align-items:center; gap:12px;">'
+            '<div style="background:rgba(88,166,255,0.15); border:1px solid #388bfd; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">📋</div>'
+            '<div>'
+            '<div style="color:#58a6ff; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:3px;">Case Study Ready</div>'
+            f'<h3 style="margin:0; color:#e6edf3; font-size:1.1rem;">{_t(_cs_cms.get("hero_h1", _cs_company))}</h3>'
+            '</div></div></div>'
+        ), unsafe_allow_html=True)
+
+        _cs_push_col, _cs_info_col = st.columns([1, 3])
+        with _cs_push_col:
+            if st.button("📊  Save to Google Sheets", type="primary", key="cs_push", use_container_width=True):
+                try:
+                    from push_to_sheets import push_case_study
+                    _cs_sid = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+                    push_case_study(_cs_result, sheet_id=_cs_sid)
+                    st.success("✓ Saved!")
+                except Exception as _pe:
+                    st.error(f"Sheets push failed: {_pe}")
+
+        st.write("")
+
+        _cs_t1, _cs_t2, _cs_t3 = st.tabs(["📝 CMS Fields", "🔍 SEO", "🔧 Raw JSON"])
+
+        with _cs_t1:
+            st.markdown("#### Hero")
+            st.text_area("Hero H1", value=_cs_cms.get("hero_h1", ""), height=60, key="cs_out_h1")
+            st.text_area("Hero Image Brief", value=_cs_cms.get("hero_image_brief", ""), height=80, key="cs_out_img")
+
+            st.markdown("#### Company Info")
+            _ci1, _ci2 = st.columns(2)
+            with _ci1:
+                st.text_input("Company Name",  value=_cs_cms.get("company_name", ""),  key="cs_out_cname")
+                st.text_input("Industry",      value=_cs_cms.get("industry", ""),      key="cs_out_ind")
+                st.text_input("Location",      value=_cs_cms.get("location", ""),      key="cs_out_loc")
+            with _ci2:
+                st.text_input("Company Size",  value=_cs_cms.get("company_size", ""),  key="cs_out_csize")
+                st.text_input("Company Type",  value=_cs_cms.get("company_type", ""),  key="cs_out_ctype")
+                _prods = _cs_cms.get("products_used", [])
+                st.text_input("Products Used", value=", ".join(_prods) if isinstance(_prods, list) else str(_prods), key="cs_out_prods")
+
+            st.markdown("#### Key Metrics")
+            for _i in (1, 2, 3):
+                _mc, _ml = st.columns([1, 3])
+                with _mc:
+                    st.text_input(f"Metric {_i} Value", value=_cs_cms.get(f"metric_{_i}_value", ""), key=f"cs_out_mv{_i}")
+                with _ml:
+                    st.text_input(f"Metric {_i} Label", value=_cs_cms.get(f"metric_{_i}_label", ""), key=f"cs_out_ml{_i}")
+
+            st.markdown("#### Story")
+            st.text_area("The Challenge", value=_cs_cms.get("challenge_body", ""), height=200, key="cs_out_chal")
+            st.text_area("The Solution",  value=_cs_cms.get("solution_body", ""),  height=200, key="cs_out_sol")
+            st.text_area("The Impact",    value=_cs_cms.get("impact_body", ""),    height=150, key="cs_out_imp")
+
+            st.markdown("#### Testimonials")
+            for _i in (1, 2):
+                st.text_area(f"Quote {_i}", value=_cs_cms.get(f"testimonial_{_i}_quote", ""), height=80, key=f"cs_out_tq{_i}")
+                st.text_input(f"Role {_i}",  value=_cs_cms.get(f"testimonial_{_i}_role", ""),  key=f"cs_out_tr{_i}")
+
+            st.markdown("#### CTA")
+            st.text_input("CTA Headline", value=_cs_cms.get("cta_headline", ""), key="cs_out_cta")
+
+        with _cs_t2:
+            _mt = _cs_cms.get("meta_title", "")
+            _md = _cs_cms.get("meta_description", "")
+            _sl = _cs_cms.get("slug", "")
+            st.text_input(f"Meta Title ({len(_mt)}/60 chars)", value=_mt, key="cs_out_mt")
+            if len(_mt) > 60:
+                st.error(f"Meta title is {len(_mt)} chars — must be ≤60")
+            st.text_area(f"Meta Description ({len(_md)}/160 chars)", value=_md, height=80, key="cs_out_md")
+            if not (140 <= len(_md) <= 165):
+                st.warning(f"Meta description is {len(_md)} chars — aim for 140-160")
+            st.text_input("URL Slug", value=_sl, key="cs_out_slug")
+
+        with _cs_t3:
+            st.json(_cs_result)

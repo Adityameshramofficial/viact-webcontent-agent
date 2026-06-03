@@ -891,6 +891,163 @@ def push_dynamic_page(result: dict, sheet_id: str = "") -> int:
     return 1
 
 
+# ── Case Study Builder — vertical field:value rows, one tab per company ──────
+
+def push_case_study(result: dict, sheet_id: str = "") -> int:
+    """
+    Push case study content to a tab named after the company in INDUSTRY_SHEET_ID.
+    Layout: field name in col A, value in col B (same pattern as industry pages).
+    Creates tab if missing; clears and rewrites on each run (latest version always fresh).
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service  = get_sheets_service()
+    cms      = result.get("cms_fields", {})
+    meta     = result.get("generation_meta", {})
+    errors   = result.get("quality_gate_errors", [])
+    company  = cms.get("company_name", meta.get("company", "Case Study")).strip()
+    tab_name = f"CS — {company}"[:100]   # tab name prefix so it's easy to spot
+
+    # Create tab or clear existing
+    sheet_meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing   = [s["properties"]["title"] for s in sheet_meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    else:
+        service.spreadsheets().values().clear(
+            spreadsheetId=sheet_id, range=f"'{tab_name}'!A:B",
+        ).execute()
+
+    rows: list[list] = []
+    section_rows: list[int] = []
+
+    def sec(title):
+        section_rows.append(len(rows))
+        rows.append([title, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # ── Meta ─────────────────────────────────────────────────────────────────
+    sec("META")
+    f("Generated",    meta.get("timestamp", "")[:19].replace("T", " ") + " UTC")
+    f("Status",       "Draft")
+    f("Model",        meta.get("model_used", ""))
+    f("Retry Count",  str(meta.get("retry_count", 0)))
+    blank()
+
+    # ── Company Info ─────────────────────────────────────────────────────────
+    sec("COMPANY INFO")
+    f("Company Name",  cms.get("company_name", ""))
+    f("Industry",      cms.get("industry", ""))
+    f("Location",      cms.get("location", ""))
+    f("Company Size",  cms.get("company_size", ""))
+    f("Company Type",  cms.get("company_type", ""))
+    f("Products Used", ", ".join(cms.get("products_used", [])) if isinstance(cms.get("products_used"), list) else str(cms.get("products_used", "")))
+    blank()
+
+    # ── Hero ─────────────────────────────────────────────────────────────────
+    sec("HERO")
+    f("Hero H1",          cms.get("hero_h1", ""))
+    f("Hero Image Brief", cms.get("hero_image_brief", ""))
+    blank()
+
+    # ── Key Metrics ──────────────────────────────────────────────────────────
+    sec("KEY METRICS")
+    for i in (1, 2, 3):
+        f(f"Metric {i} Value", cms.get(f"metric_{i}_value", ""))
+        f(f"Metric {i} Label", cms.get(f"metric_{i}_label", ""))
+    blank()
+
+    # ── Challenge ────────────────────────────────────────────────────────────
+    sec("THE CHALLENGE")
+    f("Challenge Body", cms.get("challenge_body", ""))
+    blank()
+
+    # ── Solution ─────────────────────────────────────────────────────────────
+    sec("THE SOLUTION")
+    f("Solution Body",  cms.get("solution_body", ""))
+    blank()
+
+    # ── Impact ───────────────────────────────────────────────────────────────
+    sec("THE IMPACT")
+    f("Impact Body",    cms.get("impact_body", ""))
+    blank()
+
+    # ── Testimonials ─────────────────────────────────────────────────────────
+    sec("TESTIMONIALS")
+    for i in (1, 2):
+        f(f"Testimonial {i} Quote", cms.get(f"testimonial_{i}_quote", ""))
+        f(f"Testimonial {i} Role",  cms.get(f"testimonial_{i}_role", ""))
+    blank()
+
+    # ── CTA & SEO ────────────────────────────────────────────────────────────
+    sec("CTA & SEO")
+    f("CTA Headline",      cms.get("cta_headline", ""))
+    f("Meta Title",        cms.get("meta_title", ""))
+    f("Meta Description",  cms.get("meta_description", ""))
+    f("URL Slug",          cms.get("slug", ""))
+    blank()
+
+    # ── Quality Gate ─────────────────────────────────────────────────────────
+    if errors:
+        sec("⚠️ QUALITY GATE WARNINGS")
+        for e in errors:
+            f("Warning", e)
+        blank()
+
+    # Write rows
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    # Format: green section headers + column widths
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+    fmt_requests = []
+    for row_idx in section_rows:
+        fmt_requests.append({
+            "repeatCell": {
+                "range": {"sheetId": sheet_gid, "startRowIndex": row_idx,
+                           "endRowIndex": row_idx + 1, "startColumnIndex": 0, "endColumnIndex": 2},
+                "cell": {"userEnteredFormat": {
+                    "backgroundColor": {"red": 0.718, "green": 0.882, "blue": 0.804},
+                    "textFormat": {"bold": True, "fontSize": 10},
+                }},
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+    fmt_requests += [
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+            "properties": {"pixelSize": 220}, "fields": "pixelSize",
+        }},
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+            "properties": {"pixelSize": 700}, "fields": "pixelSize",
+        }},
+    ]
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id, body={"requests": fmt_requests},
+    ).execute()
+    return 1
+
+
 # ── Opportunity Scanner — horizontal rows in "Opportunities" tab ──────────────
 
 def push_opportunities(opportunities: list[dict], sheet_id: str = "") -> int:
