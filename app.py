@@ -1868,8 +1868,27 @@ with tab_casestudy:
                 key="cs_products",
             )
 
+        _cs_doc = st.file_uploader(
+            "📄 Upload case study .docx (auto-fills reference field below)",
+            type=["docx"],
+            key="cs_doc_upload",
+            help="Upload your Word doc — metrics, quotes, project details auto-extracted.",
+        )
+        if _cs_doc is not None:
+            if st.session_state.get("cs_last_doc_name") != _cs_doc.name:
+                try:
+                    import io
+                    import docx as _docx_lib
+                    _cs_doc_obj = _docx_lib.Document(io.BytesIO(_cs_doc.read()))
+                    _cs_doc_text = "\n".join(p.text for p in _cs_doc_obj.paragraphs if p.text.strip())
+                    st.session_state["cs_refs"] = _cs_doc_text[:6000]
+                    st.session_state["cs_last_doc_name"] = _cs_doc.name
+                    st.success(f"✓ Loaded **{_cs_doc.name}** ({len(_cs_doc_text):,} chars) → reference field auto-filled")
+                except Exception as _de:
+                    st.error(f"Could not parse doc: {_de}")
+
         cs_refs = st.text_area(
-            "Reference Material — paste real metrics, quotes, project details (optional but recommended)",
+            "Reference Material — paste real metrics, quotes, or upload .docx above (auto-populated)",
             height=110,
             placeholder="e.g. Reduced incidents by 75%, 5,000 worker-hours saved, Quote from EHS Director",
             key="cs_refs",
