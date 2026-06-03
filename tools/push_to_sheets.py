@@ -722,6 +722,261 @@ def push_industry_page_vertical(content: dict, industry_name: str, sheet_id: str
     return 1
 
 
+# ── Universal Builder — dynamic push, one tab per page type ──────────────────
+
+def push_dynamic_page(result: dict, sheet_id: str = "") -> int:
+    """
+    Push Universal Builder output to a tab named after result["page_type"].
+    - Creates tab if missing.
+    - Appends a new block of rows per run (INSERT_ROWS) — all topics accumulate.
+    - Separator row between pages.
+    - Metadata header rows (Topic, Generated, Status) get blue-grey background.
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service  = get_sheets_service()
+    tab_name = result.get("page_type", "Dynamic Pages").strip()
+    topic    = result.get("page_topic", "")
+    ts       = result.get("generation_meta", {}).get("timestamp", "")[:19].replace("T", " ")
+    cms      = result.get("cms_fields", {})
+    errors   = result.get("quality_gate_errors", [])
+
+    # Create tab if missing
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+
+    rows = []
+    header_rows = []  # row indices (0-based within this batch) that get colored
+
+    def sec(label):
+        header_rows.append(len(rows))
+        rows.append([label, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # Separator between pages (skip on very first append — handled by empty tab)
+    rows.append(["━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", ""])
+
+    # ── Page metadata ─────────────────────────────────────────────────────────
+    sec(f"📄 {topic}")
+    f("Topic",     topic)
+    f("Generated", ts + " UTC")
+    f("Status",    "Draft")
+    blank()
+
+    # ── CMS fields ───────────────────────────────────────────────────────────
+    sec("CMS Fields")
+    _skip = {"data_sources_used", "access_denied_urls"}
+    for key, val in cms.items():
+        if key in _skip:
+            continue
+        if isinstance(val, list):
+            if val and isinstance(val[0], dict):
+                for i, item in enumerate(val, 1):
+                    for sub_k, sub_v in item.items():
+                        f(f"{key}[{i}].{sub_k}", sub_v)
+            else:
+                f(key, " | ".join(str(v) for v in val))
+        else:
+            f(key, val)
+    blank()
+
+    # ── SEO ───────────────────────────────────────────────────────────────────
+    if cms.get("meta_title") or cms.get("meta_description"):
+        sec("SEO")
+        if cms.get("meta_title"):
+            f("Meta Title",       cms["meta_title"])
+        if cms.get("meta_description"):
+            f("Meta Description", cms["meta_description"])
+        blank()
+
+    # ── Sources ───────────────────────────────────────────────────────────────
+    sources = cms.get("data_sources_used", [])
+    if sources:
+        sec("Sources Used")
+        for s in sources:
+            f("Source", s)
+        blank()
+
+    # ── Quality gate errors (if any) ─────────────────────────────────────────
+    if errors:
+        sec("⚠️ Quality Gate Warnings")
+        for e in errors:
+            f("Warning", e)
+        blank()
+
+    # Append rows
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": rows},
+    ).execute()
+
+    # Get current row count to calculate absolute row indices for formatting
+    sheet_data = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A:A",
+    ).execute()
+    total_rows = len(sheet_data.get("values", []))
+    batch_start = total_rows - len(rows)  # first row of this batch (0-based)
+
+    # Get numeric sheetId for formatting
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+
+    fmt_requests = []
+    # Blue-grey (#cfe2f3) + bold for section header rows
+    for local_idx in header_rows:
+        abs_idx = batch_start + local_idx
+        fmt_requests.append({
+            "repeatCell": {
+                "range": {
+                    "sheetId": sheet_gid,
+                    "startRowIndex": abs_idx,
+                    "endRowIndex": abs_idx + 1,
+                    "startColumnIndex": 0,
+                    "endColumnIndex": 2,
+                },
+                "cell": {
+                    "userEnteredFormat": {
+                        "backgroundColor": {"red": 0.812, "green": 0.886, "blue": 0.953},
+                        "textFormat": {"bold": True, "fontSize": 10},
+                    }
+                },
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+
+    # Column widths (only set once — repeated calls are idempotent)
+    fmt_requests += [
+        {
+            "updateDimensionProperties": {
+                "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+                "properties": {"pixelSize": 260},
+                "fields": "pixelSize",
+            }
+        },
+        {
+            "updateDimensionProperties": {
+                "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+                "properties": {"pixelSize": 650},
+                "fields": "pixelSize",
+            }
+        },
+    ]
+
+    if fmt_requests:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": fmt_requests},
+        ).execute()
+
+    return 1
+
+
+# ── Opportunity Scanner — horizontal rows in "Opportunities" tab ──────────────
+
+def push_opportunities(opportunities: list[dict], sheet_id: str = "") -> int:
+    """
+    Append ranked opportunities to "Opportunities" tab in INDUSTRY_SHEET_ID.
+    Creates the tab + header row on first call.
+    Each opportunity = 1 row: Date | Page Type | Topic | Score | Gap Type | Why Build | Evidence | Status
+    Returns count of rows appended.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    if not opportunities:
+        return 0
+
+    service  = get_sheets_service()
+    tab_name = "Opportunities"
+    header   = ["Date", "Page Type", "Topic", "Score", "Gap Type", "Why Build",
+                "Competitor Evidence", "Status"]
+
+    # Create tab if missing; write header row on first create
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=f"'{tab_name}'!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [header]},
+        ).execute()
+
+        # Bold + blue-grey header
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        tab_gid = next(
+            s["properties"]["sheetId"]
+            for s in meta2["sheets"]
+            if s["properties"]["title"] == tab_name
+        )
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": tab_gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(header)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.812, "green": 0.886, "blue": 0.953},
+                        "textFormat": {"bold": True, "fontSize": 10},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    # Build rows from opportunities
+    rows = []
+    for opp in opportunities:
+        evidence_str = "; ".join(
+            f"{e['name']}: {e['url']}" for e in opp.get("competitor_evidence", [])
+        )
+        rows.append([
+            opp.get("scan_date", ""),
+            opp.get("page_type", ""),
+            opp.get("topic", ""),
+            str(opp.get("score", 0)),
+            opp.get("gap_type", "MISSING"),
+            opp.get("why_build", ""),
+            evidence_str,
+            "New",
+        ])
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": rows},
+    ).execute()
+
+    return len(rows)
+
+
 # ── Reference Library tab — persistent user-provided reference material ──────
 REFERENCE_TAB = "Reference_Library"
 REF_COLUMNS = ["Type", "Topic Filter", "Reference Text", "Added At"]

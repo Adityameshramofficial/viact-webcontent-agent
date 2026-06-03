@@ -1513,7 +1513,7 @@ with tab_industry:
             with _prog.container():
                 st.info("Step 3/3 — Generating 8-section industry page (Llama 3.3 70B)...")
             try:
-                _radar_viact_pages = st.session_state.get("r3_radar", {}).get("viact_known_pages", [])
+                _radar_viact_pages = st.session_state.get("r3_results", {}).get("viact_known_pages", [])
                 _result = generate_industry_page(
                     industry_name=ip_industry,
                     industry_slug=_industry_slug,
@@ -1804,3 +1804,4 @@ with tab_industry:
                             st.rerun()
                         except Exception as _re:
                             st.error(f"Regeneration failed: {_re}")
+

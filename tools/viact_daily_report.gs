@@ -66,17 +66,19 @@ function sendDailyViActReport() {
 
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
+  const oppItems  = _scanOpportunities(today);
 
   // Stats: count only TODAY's entries
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
+  const todayOpps   = oppItems.length;
   const total       = todayPillar + todayBlogs + todayInd;
 
   _writeReportToSheet(ss, today, webItems, indItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, dateLabel, todayPillar, todayBlogs, todayInd, total);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total);
   const plain    = _buildPlainText(webItems, indItems, dateLabel);
 
   for (const to of RECIPIENTS) {
@@ -190,14 +192,43 @@ function _writeReportToSheet(ss, today, web, ind, total) {
   ]);
 }
 
+// ─── SCAN "Opportunities" tab — today's new gaps ───────────────────────────────
+function _scanOpportunities(today) {
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    const sh = indSs.getSheetByName('Opportunities');
+    if (!sh) return [];
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return [];
+    // Columns: A=Date, B=PageType, C=Topic, D=Score, E=GapType, F=WhyBuild, G=Evidence, H=Status
+    const data = sh.getRange(2, 1, lastRow - 1, 8).getValues();
+    return data
+      .filter(r => String(r[0]).trim() === today && String(r[7]).trim() === 'New')
+      .map(r => ({
+        date:      String(r[0]).trim(),
+        pageType:  String(r[1]).trim(),
+        topic:     String(r[2]).trim(),
+        score:     String(r[3]).trim(),
+        gapType:   String(r[4]).trim(),
+        why:       String(r[5]).trim(),
+        evidence:  String(r[6]).trim(),
+        status:    String(r[7]).trim(),
+      }));
+  } catch(e) {
+    Logger.log('_scanOpportunities error: ' + e.message);
+    return [];
+  }
+}
+
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, dateLabel, todayPillar, todayBlogs, todayInd, total) {
+function _buildEmailHtml(web, ind, opp, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total) {
   const recentPillar = web.pillar.length;
   const recentBlogs  = web.blogs.length;
 
   const pillarHtml = web.pillar.map(_pillarCard).join('');
   const blogHtml   = web.blogs.map(_blogCard).join('');
   const indHtml    = ind.map(_industryCard).join('');
+  const oppHtml    = opp.map(_opportunityCard).join('');
 
   const noTodayBanner = total === 0 ? `
     <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:20px;text-align:center;">
@@ -242,9 +273,13 @@ function _buildEmailHtml(web, ind, dateLabel, todayPillar, todayBlogs, todayInd,
             <div style="font-size:28px;font-weight:800;color:#3fb950;line-height:1;">${todayInd}</div>
             <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Industry Pages</div>
           </td>
-          <td align="center" style="padding:16px 8px;">
+          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
             <div style="font-size:28px;font-weight:800;color:#a371f7;line-height:1;">${total}</div>
             <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Total Today</div>
+          </td>
+          <td align="center" style="padding:16px 8px;">
+            <div style="font-size:28px;font-weight:800;color:#9c27b0;line-height:1;">${todayOpps}</div>
+            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Opportunities</div>
           </td>
         </tr>
       </table>
@@ -282,6 +317,14 @@ function _buildEmailHtml(web, ind, dateLabel, todayPillar, todayBlogs, todayInd,
       </h2>
       ${indHtml}
     </div>` : ''}
+
+    <!-- TODAY'S OPPORTUNITIES -->
+    <div style="margin-bottom:24px;">
+      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#9c27b0;border-bottom:2px solid #e1bee7;padding-bottom:6px;">
+        [O] Today's Opportunities &mdash; ${todayOpps} New Gap${todayOpps !== 1 ? 's' : ''} Found
+      </h2>
+      ${opp.length > 0 ? oppHtml : `<div style="background:#fdf3ff;border:1px solid #e1bee7;border-radius:8px;padding:12px 16px;text-align:center;font-size:12px;color:#9c27b0;">No new content gaps detected today. All competitor topics are covered or already queued.</div>`}
+    </div>
 
     <!-- CTA BUTTONS -->
     <div style="text-align:center;margin-top:8px;padding-top:16px;border-top:1px solid #f0f0f0;">
@@ -368,6 +411,36 @@ function _industryCard(item) {
   </div>`;
 }
 
+function _opportunityCard(opp) {
+  const gapColors = {
+    'REGULATORY_GAP': { bg: '#f9f0ff', border: '#d4a9f7', accent: '#7b1fa2' },
+    'MISSING':        { bg: '#f3e5f5', border: '#e1bee7', accent: '#9c27b0' },
+    'PARTIAL':        { bg: '#fce4ec', border: '#f8bbd9', accent: '#c2185b' },
+  };
+  const c = gapColors[opp.gapType] || gapColors['MISSING'];
+
+  const evidencePills = opp.evidence
+    ? opp.evidence.split(';').slice(0, 4).map(e => {
+        const compName = e.trim().split(':')[0].trim();
+        return compName
+          ? `<span style="display:inline-block;background:#f3e5f5;color:#7b1fa2;border:1px solid #ce93d8;border-radius:4px;padding:1px 7px;font-size:10px;margin:2px 2px 0 0;">${_esc(compName)}</span>`
+          : '';
+      }).join('')
+    : '';
+
+  const gapBadge = `<span style="display:inline-block;background:${c.bg};color:${c.accent};border:1px solid ${c.border};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:6px;">${_esc(opp.gapType)}</span>`;
+  const scoreBadge = `<span style="display:inline-block;background:#fff;color:#9c27b0;border:1px solid #ce93d8;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:6px;">Score: ${_esc(opp.score)}/20</span>`;
+  const pageBadge = `<span style="display:inline-block;background:#f3e5f5;color:#6a1b9a;border-radius:4px;padding:1px 7px;font-size:10px;margin-right:4px;">${_esc(opp.pageType)}</span>`;
+
+  return `
+  <div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:14px;margin-bottom:10px;">
+    <div style="margin-bottom:6px;">${pageBadge}${gapBadge}${scoreBadge}</div>
+    <div style="font-weight:700;color:#1a1a1a;font-size:15px;margin-bottom:6px;">${_esc(opp.topic)}</div>
+    ${opp.why ? `<div style="font-size:12px;color:#555;margin-bottom:6px;font-style:italic;">${_esc(opp.why)}</div>` : ''}
+    ${evidencePills ? `<div style="font-size:11px;color:#888;margin-bottom:4px;">Competitors: ${evidencePills}</div>` : ''}
+  </div>`;
+}
+
 // ─── PLAIN TEXT FALLBACK ───────────────────────────────────────────────────────
 function _buildPlainText(web, ind, dateLabel) {
   const lines = [`viAct AI Daily Content Report — ${dateLabel}`, '='.repeat(50), ''];
@@ -426,13 +499,15 @@ function testSendNow() {
   const dateLabel = Utilities.formatDate(new Date(), TIMEZONE, 'dd MMM yyyy, EEE');
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
+  const oppItems  = _scanOpportunities(today);
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
+  const todayOpps   = oppItems.length;
   const total       = todayPillar + todayBlogs + todayInd;
   _writeReportToSheet(ss, today, webItems, indItems, total);
   const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, dateLabel, todayPillar, todayBlogs, todayInd, total);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total);
   const plain    = _buildPlainText(webItems, indItems, dateLabel);
   for (const to of RECIPIENTS) {
     GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
