@@ -67,19 +67,21 @@ function sendDailyViActReport() {
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
   const oppItems  = _scanOpportunities(today);
+  const csItems   = _scanCaseStudies(today);
 
   // Stats: count only TODAY's entries
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
   const todayOpps   = oppItems.length;
-  const total       = todayPillar + todayBlogs + todayInd;
+  const todayCS     = csItems.filter(c => c.isToday).length;
+  const total       = todayPillar + todayBlogs + todayInd + todayCS;
 
-  _writeReportToSheet(ss, today, webItems, indItems, total);
+  _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total);
-  const plain    = _buildPlainText(webItems, indItems, dateLabel);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total);
+  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel);
 
   for (const to of RECIPIENTS) {
     GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
@@ -140,7 +142,7 @@ function _scanWebpageContent(ss, today) {
 
 // ─── SCAN industry tabs — last SCAN_DAYS days ─────────────────────────────────
 function _scanIndustryTabs(_ss, today) {
-  const SKIP   = new Set(['Sheet1', REPORT_TAB]);
+  const SKIP   = new Set(['Sheet1', REPORT_TAB, 'Opportunities']);
   const items  = [];
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
 
@@ -149,7 +151,8 @@ function _scanIndustryTabs(_ss, today) {
 
   indSs.getSheets().forEach(sh => {
     const name = sh.getName();
-    if (SKIP.has(name) || /^\d{4}-\d{2}-\d{2}$/.test(name)) return;
+    // Skip meta tabs, date tabs, and Case Study tabs (handled separately)
+    if (SKIP.has(name) || /^\d{4}-\d{2}-\d{2}$/.test(name) || name.startsWith('CS — ')) return;
 
     const rows = sh.getRange(1, 1, Math.min(sh.getLastRow(), 25), 2).getValues();
     let dateVal = '', metaTitle = '', metaDesc = '', keyword = '', heroSub = '';
@@ -171,24 +174,68 @@ function _scanIndustryTabs(_ss, today) {
   return items;
 }
 
+// ─── SCAN "CS — *" tabs — Case Studies ────────────────────────────────────────
+function _scanCaseStudies(today) {
+  const items  = [];
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
+
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    indSs.getSheets().forEach(sh => {
+      const name = sh.getName();
+      if (!name.startsWith('CS — ')) return;
+
+      const rows = sh.getRange(1, 1, Math.min(sh.getLastRow(), 50), 2).getValues();
+      let generatedAt = '', company = '', industry = '', location = '',
+          products = '', heroH1 = '', metaTitle = '', metaDesc = '', slug = '';
+
+      for (const r of rows) {
+        const a = String(r[0]).trim(), b = String(r[1]).trim();
+        if (a === 'Generated')      generatedAt = b.slice(0, 10);  // YYYY-MM-DD
+        if (a === 'Company Name')   company     = b;
+        if (a === 'Industry')       industry    = b;
+        if (a === 'Location')       location    = b;
+        if (a === 'Products Used')  products    = b;
+        if (a === 'Hero H1')        heroH1      = b;
+        if (a === 'Meta Title')     metaTitle   = b;
+        if (a === 'Meta Description') metaDesc  = b;
+        if (a === 'URL Slug')       slug        = b;
+      }
+
+      const displayName = company || name.replace('CS — ', '');
+      const dateVal     = generatedAt;
+      const d           = dateVal ? new Date(dateVal) : null;
+      if (!d || isNaN(d) || d >= cutoff) {
+        items.push({ name, displayName, date: dateVal || '—', isToday: dateVal === today,
+                     industry, location, products, heroH1, metaTitle, metaDesc, slug });
+      }
+    });
+  } catch(e) {
+    Logger.log('_scanCaseStudies error: ' + e.message);
+  }
+  return items;
+}
+
 // ─── WRITE TO "Daily Report" TAB ───────────────────────────────────────────────
-function _writeReportToSheet(ss, today, web, ind, total) {
+function _writeReportToSheet(ss, today, web, ind, cs, total) {
   let sh = ss.getSheetByName(REPORT_TAB);
   if (!sh) {
     sh = ss.insertSheet(REPORT_TAB);
     sh.appendRow(['Date', 'Total Pages', 'Pillar Pages', 'Blog Posts',
-                  'Industry Pages (today)', 'Topics Generated', 'Industry Tabs']);
-    sh.getRange(1, 1, 1, 7).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
+                  'Industry Pages (today)', 'Case Studies (today)', 'Topics Generated', 'Industry Tabs', 'Case Study Tabs']);
+    sh.getRange(1, 1, 1, 9).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
   }
   const topicsStr = [...web.pillar, ...web.blogs].filter(p => p.isToday).map(p => p.topic).join(' | ') || '—';
   const indTabs   = ind.map(i => i.name).join(' | ') || '—';
+  const csTabs    = cs.filter(c => c.isToday).map(c => c.displayName).join(' | ') || '—';
 
   sh.appendRow([
     today, total,
     web.pillar.filter(p => p.isToday).length,
     web.blogs.filter(b => b.isToday).length,
     ind.filter(i => i.isToday).length,
-    topicsStr, indTabs,
+    cs.filter(c => c.isToday).length,
+    topicsStr, indTabs, csTabs,
   ]);
 }
 
@@ -221,7 +268,7 @@ function _scanOpportunities(today) {
 }
 
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, opp, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total) {
+function _buildEmailHtml(web, ind, opp, cs, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total) {
   const recentPillar = web.pillar.length;
   const recentBlogs  = web.blogs.length;
 
@@ -229,6 +276,7 @@ function _buildEmailHtml(web, ind, opp, dateLabel, todayPillar, todayBlogs, toda
   const blogHtml   = web.blogs.map(_blogCard).join('');
   const indHtml    = ind.map(_industryCard).join('');
   const oppHtml    = opp.map(_opportunityCard).join('');
+  const csHtml     = cs.map(_caseStudyCard).join('');
 
   const noTodayBanner = total === 0 ? `
     <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:20px;text-align:center;">
@@ -274,6 +322,10 @@ function _buildEmailHtml(web, ind, opp, dateLabel, todayPillar, todayBlogs, toda
             <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Industry Pages</div>
           </td>
           <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
+            <div style="font-size:28px;font-weight:800;color:#0097a7;line-height:1;">${todayCS}</div>
+            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Case Studies</div>
+          </td>
+          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
             <div style="font-size:28px;font-weight:800;color:#a371f7;line-height:1;">${total}</div>
             <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Total Today</div>
           </td>
@@ -316,6 +368,15 @@ function _buildEmailHtml(web, ind, opp, dateLabel, todayPillar, todayBlogs, toda
         [I] Industry Pages in Sheet &mdash; ${ind.length} Total
       </h2>
       ${indHtml}
+    </div>` : ''}
+
+    <!-- CASE STUDIES -->
+    ${cs.length > 0 ? `
+    <div style="margin-bottom:24px;">
+      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#0097a7;border-bottom:2px solid #b2ebf2;padding-bottom:6px;">
+        [CS] Case Studies &mdash; ${cs.length} in last ${SCAN_DAYS} days
+      </h2>
+      ${csHtml}
     </div>` : ''}
 
     <!-- TODAY'S OPPORTUNITIES -->
@@ -441,8 +502,25 @@ function _opportunityCard(opp) {
   </div>`;
 }
 
+function _caseStudyCard(cs) {
+  const badge = cs.isToday
+    ? `<span style="background:#e0f7fa;color:#006064;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:8px;">NEW TODAY</span>`
+    : (cs.date && cs.date !== '—' ? `<span style="font-size:10px;color:#aaa;margin-left:8px;">${_esc(cs.date)}</span>` : '');
+
+  return `
+  <div style="background:#e0f7fa;border:1px solid #b2ebf2;border-radius:10px;padding:16px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#aaa;margin-bottom:4px;">CASE STUDY</div>
+    <div style="font-weight:700;color:#1a1a1a;font-size:15px;margin-bottom:6px;">${_esc(cs.displayName)}${badge}</div>
+    ${cs.industry  ? `<div style="font-size:11px;color:#888;margin-bottom:2px;"><strong>Industry:</strong> ${_esc(cs.industry)}${cs.location ? ' &nbsp;&middot;&nbsp; ' + _esc(cs.location) : ''}</div>` : ''}
+    ${cs.products  ? `<div style="font-size:11px;color:#888;margin-bottom:2px;"><strong>Products:</strong> ${_esc(cs.products)}</div>` : ''}
+    ${cs.heroH1    ? `<div style="font-size:12px;color:#006064;margin-top:6px;font-style:italic;">"${_esc(cs.heroH1)}"</div>` : ''}
+    ${cs.metaTitle ? `<div style="font-size:11px;color:#555;margin-top:6px;"><strong>Meta:</strong> ${_esc(cs.metaTitle)}</div>` : ''}
+    ${cs.slug      ? `<div style="font-size:11px;color:#888;margin-top:3px;"><strong>Slug:</strong> ${_esc(cs.slug)}</div>` : ''}
+  </div>`;
+}
+
 // ─── PLAIN TEXT FALLBACK ───────────────────────────────────────────────────────
-function _buildPlainText(web, ind, dateLabel) {
+function _buildPlainText(web, ind, cs, dateLabel) {
   const lines = [`viAct AI Daily Content Report — ${dateLabel}`, '='.repeat(50), ''];
 
   if (web.pillar.length) {
@@ -466,6 +544,16 @@ function _buildPlainText(web, ind, dateLabel) {
     lines.push(`INDUSTRY PAGES (${ind.length} in sheet)`);
     ind.forEach(i => lines.push(`  * ${i.name}${i.isToday ? ' [NEW TODAY]' : ` (${i.date})`}`));
     lines.push('');
+  }
+
+  if (cs.length) {
+    lines.push(`CASE STUDIES (${cs.length} recent)`);
+    cs.forEach(c => {
+      lines.push(`  Company : ${c.displayName}${c.isToday ? ' [NEW TODAY]' : ` (${c.date})`}`);
+      if (c.industry) lines.push(`  Industry: ${c.industry}${c.location ? ', ' + c.location : ''}`);
+      if (c.products) lines.push(`  Products: ${c.products}`);
+      lines.push('');
+    });
   }
 
   lines.push(`Open Sheet: ${SHEET_URL}`);
@@ -500,15 +588,17 @@ function testSendNow() {
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
   const oppItems  = _scanOpportunities(today);
+  const csItems   = _scanCaseStudies(today);
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
   const todayOpps   = oppItems.length;
-  const total       = todayPillar + todayBlogs + todayInd;
-  _writeReportToSheet(ss, today, webItems, indItems, total);
+  const todayCS     = csItems.filter(c => c.isToday).length;
+  const total       = todayPillar + todayBlogs + todayInd + todayCS;
+  _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
   const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, total);
-  const plain    = _buildPlainText(webItems, indItems, dateLabel);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total);
+  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel);
   for (const to of RECIPIENTS) {
     GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
   }
