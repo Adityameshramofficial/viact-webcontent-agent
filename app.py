@@ -1950,9 +1950,9 @@ with tab_casestudy:
                     run_tavily=cs_tavily,
                     progress_callback=_cs_cb,
                 )
-                st.session_state["cs_result"]  = _cs_result
-                st.session_state["cs_company"] = cs_company.strip()
-                st.session_state["cs_step"]    = 1
+                st.session_state["cs_result"]       = _cs_result
+                st.session_state["cs_company_saved"] = cs_company.strip()
+                st.session_state["cs_step"]          = 1
                 _cs_prog.empty()
                 st.rerun()
             except Exception as _ce:
@@ -1967,7 +1967,7 @@ with tab_casestudy:
         _cs_cms     = _cs_result.get("cms_fields", {})
         _cs_meta    = _cs_result.get("generation_meta", {})
         _cs_errors  = _cs_result.get("quality_gate_errors", [])
-        _cs_company = st.session_state.get("cs_company", "")
+        _cs_company = st.session_state.get("cs_company_saved", "")
 
         if _cs_errors:
             st.warning(
@@ -1999,11 +1999,13 @@ with tab_casestudy:
 
         st.write("")
 
-        _cs_t1, _cs_t2, _cs_t3 = st.tabs(["📝 CMS Fields", "🔍 SEO", "🔧 Raw JSON"])
+        _cs_t1, _cs_t2, _cs_t3, _cs_t4 = st.tabs(["📝 CMS Fields", "🔍 SEO", "🖼 Alt Texts", "🔧 Raw JSON"])
 
         with _cs_t1:
             st.markdown("#### Hero")
-            st.text_area("Hero H1", value=_cs_cms.get("hero_h1", ""), height=60, key="cs_out_h1")
+            st.text_area("h1", value=_cs_cms.get("hero_h1", ""), height=60, key="cs_out_h1")
+            st.text_area("h2", value=_cs_cms.get("h2", ""), height=60, key="cs_out_h2")
+            st.text_area("h3 Intro", value=_cs_cms.get("h3", ""), height=80, key="cs_out_h3")
             st.text_area("Hero Image Brief", value=_cs_cms.get("hero_image_brief", ""), height=80, key="cs_out_img")
 
             st.markdown("#### Company Info")
@@ -2012,29 +2014,50 @@ with tab_casestudy:
                 st.text_input("Company Name",  value=_cs_cms.get("company_name", ""),  key="cs_out_cname")
                 st.text_input("Industry",      value=_cs_cms.get("industry", ""),      key="cs_out_ind")
                 st.text_input("Location",      value=_cs_cms.get("location", ""),      key="cs_out_loc")
+                st.text_input("Use Case",      value=_cs_cms.get("use_case", ""),      key="cs_out_uc")
             with _ci2:
                 st.text_input("Company Size",  value=_cs_cms.get("company_size", ""),  key="cs_out_csize")
                 st.text_input("Company Type",  value=_cs_cms.get("company_type", ""),  key="cs_out_ctype")
                 _prods = _cs_cms.get("products_used", [])
                 st.text_input("Products Used", value=", ".join(_prods) if isinstance(_prods, list) else str(_prods), key="cs_out_prods")
+            st.text_area("Company Overview", value=_cs_cms.get("company_overview", ""), height=100, key="cs_out_cov")
+            st.text_area("Story Snapshot",   value=_cs_cms.get("story_snapshot", ""),  height=80,  key="cs_out_snap")
 
             st.markdown("#### Key Metrics")
             for _i in (1, 2, 3):
-                _mc, _ml = st.columns([1, 3])
+                _mc, _ml, _md_col = st.columns([1, 2, 3])
                 with _mc:
                     st.text_input(f"Metric {_i} Value", value=_cs_cms.get(f"metric_{_i}_value", ""), key=f"cs_out_mv{_i}")
                 with _ml:
                     st.text_input(f"Metric {_i} Label", value=_cs_cms.get(f"metric_{_i}_label", ""), key=f"cs_out_ml{_i}")
+                with _md_col:
+                    st.text_input(f"Metric {_i} Description", value=_cs_cms.get(f"metric_{_i}_description", ""), key=f"cs_out_mdesc{_i}")
 
-            st.markdown("#### Story")
-            st.text_area("The Challenge", value=_cs_cms.get("challenge_body", ""), height=200, key="cs_out_chal")
-            st.text_area("The Solution",  value=_cs_cms.get("solution_body", ""),  height=200, key="cs_out_sol")
-            st.text_area("The Impact",    value=_cs_cms.get("impact_body", ""),    height=150, key="cs_out_imp")
+            st.markdown("#### The Challenge")
+            st.text_input("Challenge Title", value=_cs_cms.get("challenge_title", ""), key="cs_out_chal_t")
+            st.text_area("Challenge Body",   value=_cs_cms.get("challenge_body", ""),  height=180, key="cs_out_chal")
+
+            st.markdown("#### The Solution")
+            st.text_input("Solution Title", value=_cs_cms.get("solution_title", ""), key="cs_out_sol_t")
+            st.text_area("Solution Body",   value=_cs_cms.get("solution_body", ""),  height=150, key="cs_out_sol")
+            st.text_input("Subsection 1 Title", value=_cs_cms.get("solution_sub1_title", ""), key="cs_out_sub1t")
+            st.text_area("Subsection 1 Body",   value=_cs_cms.get("solution_sub1_body", ""),  height=120, key="cs_out_sub1b")
+            st.text_input("Subsection 2 Title", value=_cs_cms.get("solution_sub2_title", ""), key="cs_out_sub2t")
+            st.text_area("Subsection 2 Body",   value=_cs_cms.get("solution_sub2_body", ""),  height=120, key="cs_out_sub2b")
+
+            st.markdown("#### The Impact")
+            st.text_input("Impact Title", value=_cs_cms.get("impact_title", ""), key="cs_out_imp_t")
+            st.text_area("Impact Body",   value=_cs_cms.get("impact_body", ""),  height=150, key="cs_out_imp")
 
             st.markdown("#### Testimonials")
             for _i in (1, 2):
-                st.text_area(f"Quote {_i}", value=_cs_cms.get(f"testimonial_{_i}_quote", ""), height=80, key=f"cs_out_tq{_i}")
-                st.text_input(f"Role {_i}",  value=_cs_cms.get(f"testimonial_{_i}_role", ""),  key=f"cs_out_tr{_i}")
+                _tq_col, _tr_col, _tc_col = st.columns([3, 2, 2])
+                with _tq_col:
+                    st.text_area(f"Quote {_i}",   value=_cs_cms.get(f"testimonial_{_i}_quote", ""),   height=80, key=f"cs_out_tq{_i}")
+                with _tr_col:
+                    st.text_input(f"Role {_i}",    value=_cs_cms.get(f"testimonial_{_i}_role", ""),    key=f"cs_out_tr{_i}")
+                with _tc_col:
+                    st.text_input(f"Company {_i}", value=_cs_cms.get(f"testimonial_{_i}_company", ""), key=f"cs_out_tc{_i}")
 
             st.markdown("#### CTA")
             st.text_input("CTA Headline", value=_cs_cms.get("cta_headline", ""), key="cs_out_cta")
@@ -2043,6 +2066,9 @@ with tab_casestudy:
             _mt = _cs_cms.get("meta_title", "")
             _md = _cs_cms.get("meta_description", "")
             _sl = _cs_cms.get("slug", "")
+            _url = _cs_cms.get("url", "")
+            _kw  = _cs_cms.get("keywords", "")
+            _tags = _cs_cms.get("tags", [])
             st.text_input(f"Meta Title ({len(_mt)}/60 chars)", value=_mt, key="cs_out_mt")
             if len(_mt) > 60:
                 st.error(f"Meta title is {len(_mt)} chars — must be ≤60")
@@ -2050,6 +2076,21 @@ with tab_casestudy:
             if not (140 <= len(_md) <= 165):
                 st.warning(f"Meta description is {len(_md)} chars — aim for 140-160")
             st.text_input("URL Slug", value=_sl, key="cs_out_slug")
+            st.text_input("URL (Full)", value=_url, key="cs_out_url")
+            st.text_input("Tags / Filter Tag", value=", ".join(_tags) if isinstance(_tags, list) else str(_tags), key="cs_out_tags")
+            st.text_area("Keywords", value=_kw, height=70, key="cs_out_kw")
 
         with _cs_t3:
+            st.text_input("Hero Alt Text",       value=_cs_cms.get("hero_alt_text", ""),       key="cs_out_alt_hero")
+            st.text_input("Metric 1 Alt Text",   value=_cs_cms.get("metric_1_alt_text", ""),   key="cs_out_alt_m1")
+            st.text_input("Metric 2 Alt Text",   value=_cs_cms.get("metric_2_alt_text", ""),   key="cs_out_alt_m2")
+            st.text_input("Metric 3 Alt Text",   value=_cs_cms.get("metric_3_alt_text", ""),   key="cs_out_alt_m3")
+            st.text_input("Solution 1 Alt Text", value=_cs_cms.get("solution_1_alt_text", ""), key="cs_out_alt_s1")
+            st.text_input("Solution 2 Alt Text", value=_cs_cms.get("solution_2_alt_text", ""), key="cs_out_alt_s2")
+            st.text_input("Section Alt Text",    value=_cs_cms.get("section_alt_text", ""),    key="cs_out_alt_sec")
+            st.text_input("Industry Alt Text",   value=_cs_cms.get("industry_alt_text", ""),   key="cs_out_alt_ind")
+            st.text_input("Location Alt Text",   value=_cs_cms.get("location_alt_text", ""),   key="cs_out_alt_loc")
+            st.text_input("Use Case Alt Text",   value=_cs_cms.get("use_case_alt_text", ""),   key="cs_out_alt_uc")
+
+        with _cs_t4:
             st.json(_cs_result)

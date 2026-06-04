@@ -946,55 +946,86 @@ def push_case_study(result: dict, sheet_id: str = "") -> int:
 
     # ── Company Info ─────────────────────────────────────────────────────────
     sec("COMPANY INFO")
-    f("Company Name",  cms.get("company_name", ""))
-    f("Industry",      cms.get("industry", ""))
-    f("Location",      cms.get("location", ""))
-    f("Company Size",  cms.get("company_size", ""))
-    f("Company Type",  cms.get("company_type", ""))
-    f("Products Used", ", ".join(cms.get("products_used", [])) if isinstance(cms.get("products_used"), list) else str(cms.get("products_used", "")))
+    f("Company Name",     cms.get("company_name", ""))
+    f("Industry",         cms.get("industry", ""))
+    f("Location",         cms.get("location", ""))
+    f("Company Size",     cms.get("company_size", ""))
+    f("Company Type",     cms.get("company_type", ""))
+    f("Products Used",    ", ".join(cms.get("products_used", [])) if isinstance(cms.get("products_used"), list) else str(cms.get("products_used", "")))
+    f("Company Overview", cms.get("company_overview", ""))
+    f("Story Snapshot",   cms.get("story_snapshot", ""))
+    f("Use Case",         cms.get("use_case", ""))
     blank()
 
     # ── Hero ─────────────────────────────────────────────────────────────────
     sec("HERO")
-    f("Hero H1",          cms.get("hero_h1", ""))
+    f("h1",               cms.get("hero_h1", ""))
+    f("h2",               cms.get("h2", ""))
+    f("h3 Intro",         cms.get("h3", ""))
     f("Hero Image Brief", cms.get("hero_image_brief", ""))
+    f("Hero Alt Text",    cms.get("hero_alt_text", ""))
     blank()
 
     # ── Key Metrics ──────────────────────────────────────────────────────────
     sec("KEY METRICS")
     for i in (1, 2, 3):
-        f(f"Metric {i} Value", cms.get(f"metric_{i}_value", ""))
-        f(f"Metric {i} Label", cms.get(f"metric_{i}_label", ""))
+        f(f"Metric {i} Value",       cms.get(f"metric_{i}_value", ""))
+        f(f"Metric {i} Label",       cms.get(f"metric_{i}_label", ""))
+        f(f"Metric {i} Description", cms.get(f"metric_{i}_description", ""))
+        f(f"Metric {i} Alt Text",    cms.get(f"metric_{i}_alt_text", ""))
     blank()
 
     # ── Challenge ────────────────────────────────────────────────────────────
     sec("THE CHALLENGE")
-    f("Challenge Body", cms.get("challenge_body", ""))
+    f("Challenge Title", cms.get("challenge_title", ""))
+    f("Challenge Body",  cms.get("challenge_body", ""))
     blank()
 
     # ── Solution ─────────────────────────────────────────────────────────────
     sec("THE SOLUTION")
-    f("Solution Body",  cms.get("solution_body", ""))
+    f("Solution Title",     cms.get("solution_title", ""))
+    f("Solution Body",      cms.get("solution_body", ""))
+    f("Sub1 Title",         cms.get("solution_sub1_title", ""))
+    f("Sub1 Body",          cms.get("solution_sub1_body", ""))
+    f("Sub1 Alt Text",      cms.get("solution_1_alt_text", ""))
+    f("Sub2 Title",         cms.get("solution_sub2_title", ""))
+    f("Sub2 Body",          cms.get("solution_sub2_body", ""))
+    f("Sub2 Alt Text",      cms.get("solution_2_alt_text", ""))
     blank()
 
     # ── Impact ───────────────────────────────────────────────────────────────
     sec("THE IMPACT")
-    f("Impact Body",    cms.get("impact_body", ""))
+    f("Impact Title", cms.get("impact_title", ""))
+    f("Impact Body",  cms.get("impact_body", ""))
     blank()
 
     # ── Testimonials ─────────────────────────────────────────────────────────
     sec("TESTIMONIALS")
     for i in (1, 2):
-        f(f"Testimonial {i} Quote", cms.get(f"testimonial_{i}_quote", ""))
-        f(f"Testimonial {i} Role",  cms.get(f"testimonial_{i}_role", ""))
+        f(f"Testimonial {i} Quote",   cms.get(f"testimonial_{i}_quote", ""))
+        f(f"Testimonial {i} Role",    cms.get(f"testimonial_{i}_role", ""))
+        f(f"Testimonial {i} Company", cms.get(f"testimonial_{i}_company", ""))
     blank()
 
     # ── CTA & SEO ────────────────────────────────────────────────────────────
     sec("CTA & SEO")
-    f("CTA Headline",      cms.get("cta_headline", ""))
-    f("Meta Title",        cms.get("meta_title", ""))
-    f("Meta Description",  cms.get("meta_description", ""))
-    f("URL Slug",          cms.get("slug", ""))
+    f("CTA Headline",          cms.get("cta_headline", ""))
+    f("Meta Title",            cms.get("meta_title", ""))
+    f("Meta Description",      cms.get("meta_description", ""))
+    f("URL Slug",              cms.get("slug", ""))
+    f("URL (Full)",            cms.get("url", ""))
+    f("Tags",                  ", ".join(cms.get("tags", [])) if isinstance(cms.get("tags"), list) else str(cms.get("tags", "")))
+    f("Filter Tag",            cms.get("filter_tag", ""))
+    f("Keywords",              cms.get("keywords", ""))
+    f("List Page Description", cms.get("list_page_description", ""))
+    blank()
+
+    # ── Alt Texts ────────────────────────────────────────────────────────────
+    sec("ALT TEXTS")
+    f("Section Alt Text",  cms.get("section_alt_text", ""))
+    f("Industry Alt Text", cms.get("industry_alt_text", ""))
+    f("Location Alt Text", cms.get("location_alt_text", ""))
+    f("Use Case Alt Text", cms.get("use_case_alt_text", ""))
     blank()
 
     # ── Quality Gate ─────────────────────────────────────────────────────────
