@@ -1736,11 +1736,32 @@ with tab_industry:
 
         with _ip_tab_visual:
             _ip_prompts = _ip_content.get("nano_banana_prompts", [])
-            st.markdown("<div style='color:#8b949e; font-size:0.82rem; margin-bottom:12px;'>11 image prompts with exact pixel dimensions (6 use cases + viGent dashboard + 4 reviewer headshots). Use with Nano Banana 2.</div>", unsafe_allow_html=True)
+            st.markdown("<div style='color:#8b949e; font-size:0.82rem; margin-bottom:12px;'>11 image prompts with exact pixel dimensions (6 use cases + viGent dashboard + 4 reviewer headshots). Click 🎨 Generate to create each image free via Pollinations.ai.</div>", unsafe_allow_html=True)
+            import sys as _sys_ip
+            _sys_ip.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+            from generate_images import generate_image as _gen_img_ip, extract_dims as _edims
             for _i, _v in enumerate(_ip_prompts, 1):
                 with st.expander(f"Image {_i} — {_v.get('placement', '')}"):
-                    st.text_area(f"Prompt {_i}", _v.get("prompt", ""), height=140, key=f"ip_vis_{_i}")
+                    _ip_prompt_txt = _v.get("prompt", "")
+                    st.text_area(f"Prompt {_i}", _ip_prompt_txt, height=140, key=f"ip_vis_{_i}")
                     st.markdown(f"<div style='color:#8b949e; font-size:0.82rem; margin-top:6px;'><strong style='color:#e6edf3;'>Alt text:</strong> {_t(_v.get('alt_text', ''))}</div>", unsafe_allow_html=True)
+                    if st.button("🎨 Generate", key=f"ip_gen_img_{_i}", help="Generate via Pollinations.ai (free)"):
+                        with st.spinner(f"Generating image {_i}... ~15 sec"):
+                            _iw, _ih = _edims(_ip_prompt_txt, 1200, 630)
+                            _ibytes = _gen_img_ip(_ip_prompt_txt, width=_iw, height=_ih)
+                            if _ibytes:
+                                st.session_state[f"ip_image_{_i}_bytes"] = _ibytes
+                            else:
+                                st.error(f"Image {_i} generation failed — try again.")
+                    if st.session_state.get(f"ip_image_{_i}_bytes"):
+                        st.image(st.session_state[f"ip_image_{_i}_bytes"], use_container_width=True)
+                        st.download_button(
+                            f"⬇ Download Image {_i}",
+                            data=st.session_state[f"ip_image_{_i}_bytes"],
+                            file_name=f"image_{_i}_{_v.get('placement','').replace(' ','_').lower()}.jpg",
+                            mime="image/jpeg",
+                            key=f"ip_dl_img_{_i}",
+                        )
 
         with _ip_tab_links:
             st.markdown("<div style='color:#e6edf3; font-weight:600; margin-bottom:10px;'>Internal Links — verified viAct.ai URLs only:</div>", unsafe_allow_html=True)
@@ -2094,3 +2115,36 @@ with tab_casestudy:
 
         with _cs_t4:
             st.json(_cs_result)
+
+        # ── Hero Image Generation (Pollinations.ai — free) ────────────────────
+        st.markdown("<hr style='border-color:#2d303a; margin:24px 0 16px;'/>", unsafe_allow_html=True)
+        _cs_img_prompt = _cs_cms.get("hero_image_brief", "")
+        if _cs_img_prompt:
+            st.markdown(_html(
+                '<div style="color:#e6edf3; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:10px;">🎨 Hero Image — Free Generation (Pollinations.ai)</div>'
+                f'<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:6px; padding:8px 12px; font-size:0.8rem; color:#8b949e; margin-bottom:12px;">'
+                f'{_t(_cs_img_prompt[:120])}{"..." if len(_cs_img_prompt) > 120 else ""}'
+                f'</div>'
+            ), unsafe_allow_html=True)
+
+            if st.button("🎨 Generate Hero Image", key="cs_gen_hero_img", use_container_width=False):
+                with st.spinner("Generating via Pollinations.ai (free)... ~15 sec"):
+                    import sys as _sys
+                    _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+                    from generate_images import generate_image as _gen_img
+                    _img_bytes = _gen_img(_cs_img_prompt, width=1200, height=630)
+                    if _img_bytes:
+                        st.session_state["cs_hero_image_bytes"] = _img_bytes
+                    else:
+                        st.error("Image generation failed — check your internet connection and try again.")
+
+            if st.session_state.get("cs_hero_image_bytes"):
+                st.image(st.session_state["cs_hero_image_bytes"], caption="Hero Image — 1200×630", use_container_width=True)
+                _cs_fname = f"hero_{_cs_cms.get('slug', 'case_study')}.jpg"
+                st.download_button(
+                    "⬇ Download Hero Image",
+                    data=st.session_state["cs_hero_image_bytes"],
+                    file_name=_cs_fname,
+                    mime="image/jpeg",
+                    key="cs_dl_hero_img",
+                )
