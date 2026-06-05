@@ -264,7 +264,7 @@ def generate_case_study(
     retry_count = 0
     quality_gate_errors: list[str] = []
 
-    raw = _groq_call(messages)
+    raw = _groq_call(messages, max_tokens=6000)
     try:
         content = json.loads(raw)
     except json.JSONDecodeError:
@@ -273,11 +273,13 @@ def generate_case_study(
     errors = _validate(content)
     if errors:
         emit(f"Quality gate: {errors} — retrying once...")
+        # Trim raw to avoid context overflow on retry
+        raw_trimmed = raw[:4000] + "\n...[truncated]" if len(raw) > 4000 else raw
         retry_messages = messages + [
-            {"role": "assistant", "content": raw},
-            {"role": "user", "content": f"Fix these issues and regenerate the full JSON:\n" + "\n".join(f"- {e}" for e in errors)},
+            {"role": "assistant", "content": raw_trimmed},
+            {"role": "user", "content": "Fix these issues and regenerate the COMPLETE JSON from scratch:\n" + "\n".join(f"- {e}" for e in errors)},
         ]
-        raw2 = _groq_call(retry_messages)
+        raw2 = _groq_call(retry_messages, max_tokens=6000)
         try:
             content = json.loads(raw2)
         except json.JSONDecodeError:
