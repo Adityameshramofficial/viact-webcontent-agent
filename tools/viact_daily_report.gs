@@ -93,6 +93,7 @@ function sendDailyViActReport() {
 
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
+  const vaItems   = _scanVATabs(today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
   const intelItem = _scanCompetitorIntel(today);
@@ -102,15 +103,16 @@ function sendDailyViActReport() {
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
+  const todayVA     = vaItems.filter(v => v.isToday).length;
   const todayOpps   = oppItems.length;
   const todayCS     = csItems.filter(c => c.isToday).length;
-  const total       = todayPillar + todayBlogs + todayInd + todayCS;
+  const total       = todayPillar + todayBlogs + todayInd + todayVA + todayCS;
 
-  _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
+  _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics);
-  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel, radarStatus, triggerTime);
+  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics);
+  const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, dateLabel, radarStatus, triggerTime);
 
   const mailOptions = { htmlBody, name: 'viAct Content Agent' };
   if (CC.length) mailOptions.cc = CC.join(',');
@@ -174,7 +176,7 @@ function _scanWebpageContent(ss, today) {
 
 // ─── SCAN industry tabs — last SCAN_DAYS days ─────────────────────────────────
 function _scanIndustryTabs(_ss, today) {
-  const SKIP   = new Set(['Sheet1', REPORT_TAB, 'Opportunities']);
+  const SKIP   = new Set(['Sheet1', REPORT_TAB, 'Opportunities', 'Competitor Intel', 'Daily Topics']);
   const items  = [];
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
 
@@ -183,8 +185,8 @@ function _scanIndustryTabs(_ss, today) {
 
   indSs.getSheets().forEach(sh => {
     const name = sh.getName();
-    // Skip meta tabs, date tabs, and Case Study tabs (handled separately)
-    if (SKIP.has(name) || /^\d{4}-\d{2}-\d{2}$/.test(name) || name.startsWith('CS — ')) return;
+    // Skip meta tabs, date tabs, Case Study tabs, VA tabs (all handled separately)
+    if (SKIP.has(name) || /^\d{4}-\d{2}-\d{2}$/.test(name) || name.startsWith('CS — ') || name.startsWith('VA — ')) return;
 
     const rows = sh.getRange(1, 1, Math.min(sh.getLastRow(), 25), 2).getValues();
     let dateVal = '', metaTitle = '', metaDesc = '', keyword = '', heroSub = '';
@@ -248,17 +250,53 @@ function _scanCaseStudies(today) {
   return items;
 }
 
+// ─── SCAN "VA — *" tabs — Video Analytics pages ───────────────────────────────
+function _scanVATabs(today) {
+  const items  = [];
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
+
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    indSs.getSheets().forEach(sh => {
+      const name = sh.getName();
+      if (!name.startsWith('VA — ')) return;
+
+      const rows = sh.getRange(1, 1, Math.min(sh.getLastRow(), 30), 2).getValues();
+      let dateVal = '', metaTitle = '', metaDesc = '', keyword = '', h1 = '';
+
+      for (const r of rows) {
+        const a = String(r[0]).trim(), b = String(r[1]).trim();
+        if (a === 'Date')             dateVal   = b;
+        if (a === 'Meta Title')       metaTitle = b;
+        if (a === 'Meta Description') metaDesc  = b;
+        if (a === 'Keywords')         keyword   = b.split(',')[0].trim();
+        if (a === 'h1')               h1        = b;
+      }
+
+      const detectionName = name.replace('VA — ', '');
+      const d = dateVal ? new Date(dateVal) : null;
+      if (!d || isNaN(d) || d >= cutoff) {
+        items.push({ name, detectionName, date: dateVal || '—', isToday: dateVal === today, metaTitle, metaDesc, keyword, h1 });
+      }
+    });
+  } catch(e) {
+    Logger.log('_scanVATabs error: ' + e.message);
+  }
+  return items;
+}
+
 // ─── WRITE TO "Daily Report" TAB ───────────────────────────────────────────────
-function _writeReportToSheet(ss, today, web, ind, cs, total) {
+function _writeReportToSheet(ss, today, web, ind, va, cs, total) {
   let sh = ss.getSheetByName(REPORT_TAB);
   if (!sh) {
     sh = ss.insertSheet(REPORT_TAB);
     sh.appendRow(['Date', 'Total Pages', 'Pillar Pages', 'Blog Posts',
-                  'Industry Pages (today)', 'Case Studies (today)', 'Topics Generated', 'Industry Tabs', 'Case Study Tabs']);
-    sh.getRange(1, 1, 1, 9).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
+                  'Industry Pages (today)', 'VA Pages (today)', 'Case Studies (today)', 'Topics Generated', 'Industry Tabs', 'VA Tabs', 'Case Study Tabs']);
+    sh.getRange(1, 1, 1, 11).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
   }
   const topicsStr = [...web.pillar, ...web.blogs].filter(p => p.isToday).map(p => p.topic).join(' | ') || '—';
-  const indTabs   = ind.map(i => i.name).join(' | ') || '—';
+  const indTabs   = ind.filter(i => i.isToday).map(i => i.name).join(' | ') || '—';
+  const vaTabs    = va.filter(v => v.isToday).map(v => v.name).join(' | ') || '—';
   const csTabs    = cs.filter(c => c.isToday).map(c => c.displayName).join(' | ') || '—';
 
   sh.appendRow([
@@ -266,8 +304,9 @@ function _writeReportToSheet(ss, today, web, ind, cs, total) {
     web.pillar.filter(p => p.isToday).length,
     web.blogs.filter(b => b.isToday).length,
     ind.filter(i => i.isToday).length,
+    va.filter(v => v.isToday).length,
     cs.filter(c => c.isToday).length,
-    topicsStr, indTabs, csTabs,
+    topicsStr, indTabs, vaTabs, csTabs,
   ]);
 }
 
@@ -526,7 +565,7 @@ function _buildUpdateBanner(dateLabel) {
 }
 
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics) {
+function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics) {
   radarStatus = radarStatus || 'skipped';
   triggerTime = triggerTime || '';
   commits     = commits     || [];
@@ -537,6 +576,7 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
   const pillarHtml = web.pillar.map(_pillarCard).join('');
   const blogHtml   = web.blogs.map(_blogCard).join('');
   const indHtml    = ind.map(_industryCard).join('');
+  const vaHtml     = va.map(_vaCard).join('');
   const oppHtml    = opp.map(_opportunityCard).join('');
   const csHtml     = cs.map(_caseStudyCard).join('');
 
@@ -545,6 +585,7 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
   if (todayPillar > 0 || todayBlogs > 0) activeAgents.push({ name: 'Agent 01 — Market Radar', color: '#ff6a3d', count: `${todayPillar} pillar + ${todayBlogs} blog` });
   if (todayInd > 0)                       activeAgents.push({ name: 'Agent 05 — Industry Pages', color: '#3fb950', count: `${todayInd} page${todayInd !== 1 ? 's' : ''}` });
   if (todayCS > 0)                        activeAgents.push({ name: 'Agent 06 — Case Studies', color: '#0097a7', count: `${todayCS} case stud${todayCS !== 1 ? 'ies' : 'y'}` });
+  if (todayVA > 0)                        activeAgents.push({ name: 'Agent 07 — Video Analytics', color: '#7c3aed', count: `${todayVA} page${todayVA !== 1 ? 's' : ''}` });
   if (intel && intel.isToday)             activeAgents.push({ name: 'Competitor Intel Monitor', color: '#f57c00', count: `${intel.newsCount || 0} news · ${intel.trendsCount || 0} trends` });
   if (todayOpps > 0)                      activeAgents.push({ name: 'Opportunity Scanner', color: '#9c27b0', count: `${todayOpps} gap${todayOpps !== 1 ? 's' : ''} found` });
 
@@ -588,6 +629,10 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
           <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
             <div style="font-size:24px;font-weight:800;color:#0097a7;line-height:1;">${todayCS}</div>
             <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Case Studies</div>
+          </td>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#7c3aed;line-height:1;">${todayVA}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Video Analytics</div>
           </td>
           <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
             <div style="font-size:24px;font-weight:800;color:#9c27b0;line-height:1;">${todayOpps}</div>
@@ -711,6 +756,15 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
             </div>
           </td>
         </tr>
+        <tr>
+          <td width="50%" style="padding:4px 4px 4px 0;vertical-align:top;">
+            <div style="background:#f5f0ff;border:1px solid #d4b8f7;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#7c3aed;margin-bottom:4px;">🎬 Agent 07 — Video Analytics</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Generates all Wix CMS fields for viAct's 27 detection-type item pages — hero copy, challenges, 4-step process, 5 use cases, case study snapshot, SEO, and 6 alt texts.</div>
+            </div>
+          </td>
+          <td width="50%" style="padding:4px 0 4px 4px;vertical-align:top;"></td>
+        </tr>
       </table>
     </div>
 
@@ -763,6 +817,15 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
         ${csHtml}
       </div>` : ''}
 
+      <!-- Agent 07 Output: Video Analytics -->
+      ${va.length > 0 ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:10px;padding:6px 10px;background:#f5f0ff;border-radius:6px;border-left:3px solid #7c3aed;">
+          🎬 Agent 07 — Video Analytics Output &mdash; ${va.length} Page${va.length !== 1 ? 's' : ''} in Sheet
+        </div>
+        ${vaHtml}
+      </div>` : ''}
+
       <!-- Competitor Intel Output -->
       ${_marketIntelSection(intel)}
 
@@ -774,7 +837,7 @@ function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, today
         ${opp.length > 0 ? oppHtml : `<div style="background:#fdf3ff;border:1px solid #e1bee7;border-radius:8px;padding:12px 16px;text-align:center;font-size:12px;color:#9c27b0;">No new gaps identified today. All competitor topics are either covered or in the queue.</div>`}
       </div>
 
-      ${(recentPillar + recentBlogs + ind.length + cs.length) === 0 && opp.length === 0 ? `
+      ${(recentPillar + recentBlogs + ind.length + va.length + cs.length) === 0 && opp.length === 0 ? `
       <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px;text-align:center;font-size:12px;color:#795548;">
         No output generated today. Agents will run again tomorrow.
       </div>` : ''}
@@ -936,8 +999,24 @@ function _caseStudyCard(cs) {
   </div>`;
 }
 
+function _vaCard(item) {
+  const badge = item.isToday
+    ? `<span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:8px;">NEW TODAY</span>`
+    : (item.date && item.date !== '—' ? `<span style="font-size:10px;color:#aaa;margin-left:8px;">${_esc(item.date)}</span>` : '');
+
+  return `
+  <div style="background:#f5f0ff;border:1px solid #d4b8f7;border-radius:10px;padding:14px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#aaa;margin-bottom:4px;">VIDEO ANALYTICS</div>
+    <div style="font-weight:700;color:#1a1a1a;font-size:15px;margin-bottom:6px;">${_esc(item.detectionName)}${badge}</div>
+    ${item.h1       ? `<div style="font-size:12px;color:#5b21b6;margin-bottom:4px;font-style:italic;">"${_esc(item.h1)}"</div>` : ''}
+    ${item.keyword  ? `<div style="font-size:11px;color:#888;margin-bottom:2px;">Keyword: ${_esc(item.keyword)}</div>` : ''}
+    ${item.metaTitle? `<div style="font-size:11px;color:#555;margin-bottom:2px;"><strong>Meta:</strong> ${_esc(item.metaTitle)}</div>` : ''}
+    ${item.metaDesc ? `<div style="font-size:11px;color:#888;margin-top:4px;font-style:italic;">"${_esc(item.metaDesc)}"</div>` : ''}
+  </div>`;
+}
+
 // ─── PLAIN TEXT FALLBACK ───────────────────────────────────────────────────────
-function _buildPlainText(web, ind, cs, dateLabel, radarStatus, triggerTime) {
+function _buildPlainText(web, ind, va, cs, dateLabel, radarStatus, triggerTime) {
   const lines = [`viAct AI Daily Content Report — ${dateLabel}`, '='.repeat(50), ''];
 
   lines.push('PIPELINE STATUS');
@@ -966,6 +1045,12 @@ function _buildPlainText(web, ind, cs, dateLabel, radarStatus, triggerTime) {
   if (ind.length) {
     lines.push(`INDUSTRY PAGES (${ind.length} in sheet)`);
     ind.forEach(i => lines.push(`  * ${i.name}${i.isToday ? ' [NEW TODAY]' : ` (${i.date})`}`));
+    lines.push('');
+  }
+
+  if (va.length) {
+    lines.push(`VIDEO ANALYTICS PAGES (${va.length} in sheet)`);
+    va.forEach(v => lines.push(`  * ${v.detectionName}${v.isToday ? ' [NEW TODAY]' : ` (${v.date})`}`));
     lines.push('');
   }
 
@@ -1011,6 +1096,7 @@ function testSendNow() {
   const commits   = _fetchRecentCommits();
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
+  const vaItems   = _scanVATabs(today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
   const intelItem = _scanCompetitorIntel(today);
@@ -1018,14 +1104,15 @@ function testSendNow() {
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
+  const todayVA     = vaItems.filter(v => v.isToday).length;
   const todayOpps   = oppItems.length;
   const todayCS     = csItems.filter(c => c.isToday).length;
-  const total       = todayPillar + todayBlogs + todayInd + todayCS;
-  _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
+  const total       = todayPillar + todayBlogs + todayInd + todayVA + todayCS;
+  _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, total);
   const triggerTime = Utilities.formatDate(new Date(), TIMEZONE, 'hh:mm a');
   const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, 'skipped', triggerTime, commits, topics);
-  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel, 'skipped', triggerTime);
+  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, 'skipped', triggerTime, commits, topics);
+  const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, dateLabel, 'skipped', triggerTime);
   const mailOptions = { htmlBody, name: 'viAct Content Agent' };
   if (CC.length) mailOptions.cc = CC.join(',');
   for (const to of RECIPIENTS) {
