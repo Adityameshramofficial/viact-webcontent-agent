@@ -1126,6 +1126,20 @@ with tab_radar:
 
                     st.session_state["r3_content"] = content
                     st.session_state["r3_step"] = 2
+                    # Auto-save pillar page to Sheets immediately after generation
+                    try:
+                        from push_to_sheets import push_webpage_vertical as _pwv_auto
+                        _r3_unverified = [u for u, r in competitor_data.items() if not r.get("success")]
+                        _pwv_auto(
+                            content=content,
+                            decision_logic=content.get("decision_logic", ""),
+                            input_source=f"3-Agent Radar — {st.session_state.get('r3_results', {}).get('scan_timestamp', '')}",
+                            competitor_urls=list(competitor_data.keys()),
+                            unverified=_r3_unverified,
+                        )
+                        st.toast(f"✓ Auto-saved to Sheets: {selected_topic['topic'][:50]}")
+                    except Exception as _r3_ae:
+                        st.toast(f"⚠ Auto-save failed: {_r3_ae}")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Agent 3 failed: {e}")
