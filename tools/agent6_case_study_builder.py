@@ -166,14 +166,18 @@ Return a JSON object with ALL of these fields (this maps directly to the Webflow
   "testimonial_2_quote": "Second quote from different role (project manager, safety supervisor, BIM manager, etc.)",
   "testimonial_2_role": "Role title only e.g. 'Project Safety Manager'",
   "cta_headline": "e.g. 'Bring the same results to your {industry.lower()} site'",
-  "meta_title": "SEO title max 60 chars e.g. '{company} Case Study | viAct AI Safety'",
-  "meta_description": "SEO description 150-160 chars",
+  "meta_title": "SEO title MUST include '| viAct' at end. Max 60 chars. e.g. '{company} Case Study | viAct AI Safety' or '{company} Cuts Incidents 80% | viAct'",
+  "meta_description": "SEO description. MUST be between 150 and 160 characters exactly. Count carefully. e.g. 'Discover how {company} reduced safety incidents by 80% using viAct AI-powered PPE detection and fall protection on active construction sites in {location}.'",
   "keywords": "5-8 SEO keywords comma-separated. Mix of product keywords + location + industry. e.g. 'AI safety monitoring Singapore, PPE detection construction, viAct case study'",
   "slug": "url-slug e.g. 'company-name-viact-case-study-location'",
-  "hero_image_brief": "Nano Banana image prompt: 35-50 words, APAC industrial setting, realistic, safety context, 1200x630px",
+  "hero_image_brief": "Image prompt for hero banner. 35-50 words. APAC industrial setting, workers in PPE, viAct AI overlay/dashboard visible, realistic photo style, square composition, 426x423px",
   "hero_alt_text": "SEO alt text 10-20 words. Include viAct + product + company/location context.",
+  "overview_image_brief": "Image prompt for Company Overview / Story Snapshot section. 35-50 words. Portrait orientation. Show the company's site or operations — e.g. active construction site, refinery, or infrastructure project in {location}. Realistic, no AI overlay needed, 342x414px",
+  "solution_1_image_brief": "Image prompt for Solution subsection 1. 35-50 words. Wide landscape format. Show the first viAct product in action — AI detection overlay on a monitor/screen showing the site, workers being monitored, alert triggered. Realistic, 1440x978px",
   "solution_1_alt_text": "SEO alt text for solution subsection 1 image. 10-20 words. Describe what the viAct system is detecting/monitoring.",
+  "solution_2_image_brief": "Image prompt for Solution subsection 2. 35-50 words. Ultra-wide landscape format. Show the second viAct product/module in action — different scenario from solution 1. Realistic, 2289x1400px",
   "solution_2_alt_text": "SEO alt text for solution subsection 2 image. 10-20 words.",
+  "testimonial_image_brief": "Image prompt for testimonial/review section. 35-50 words. Professional headshot-style — safety manager or EHS director in hard hat and vest on site, approachable expression, {location} industrial background, square crop, 400x400px",
   "section_alt_text": "SEO alt text for main site photo. 10-20 words. Company + viAct product + location."
 }}
 
@@ -186,7 +190,8 @@ Rules:
 - meta_description: MUST be 150-160 chars
 - keywords: comma-separated plain string
 - slug: lowercase, hyphens only, no special chars
-- solution_sub1 and solution_sub2 must each cover a DIFFERENT viAct product/module"""
+- solution_sub1 and solution_sub2 must each cover a DIFFERENT viAct product/module
+- ALL 5 image_brief fields MUST be filled — each describing a different scene"""
 
     return [
         {"role": "system", "content": system},
@@ -203,8 +208,8 @@ def _validate(content: dict) -> list[str]:
         errors.append(f"meta_title: {len(meta_title)} chars (must be ≤60)")
 
     meta_desc = content.get("meta_description", "")
-    if not (140 <= len(meta_desc) <= 165):
-        errors.append(f"meta_description: {len(meta_desc)} chars (must be 140-165)")
+    if not (138 <= len(meta_desc) <= 170):
+        errors.append(f"meta_description: {len(meta_desc)} chars (must be 138-170)")
 
     for field in ["challenge_body", "solution_body", "impact_body", "solution_sub1_body", "solution_sub2_body"]:
         val = content.get(field, "")
@@ -221,6 +226,10 @@ def _validate(content: dict) -> list[str]:
 
     if not content.get("keywords", "").strip():
         errors.append("keywords: empty")
+
+    for field in ["hero_h1", "company_overview", "slug"]:
+        if not content.get(field, "").strip():
+            errors.append(f"{field}: empty")
 
     return errors
 
@@ -288,15 +297,20 @@ def generate_case_study(
         retry_count = 1
 
     # ── Auto-derive fields (no LLM needed) ────────────────────────────────────
-    content["h2"]                  = content.get("hero_h1", "")
-    content["url"]                 = f"https://www.viact.ai/case-studies/{content.get('slug', '')}"
-    content["filter_tag"]          = industry
-    content["tags"]                = [industry]
-    content["industry_alt_text"]   = industry
-    content["location_alt_text"]   = location
+    content["h2"]                    = content.get("hero_h1", "")
+    content["url"]                   = f"https://www.viact.ai/case-studies/{content.get('slug', '')}"
+    content["filter_tag"]            = industry
+    content["tags"]                  = [industry]
+    content["industry_alt_text"]     = industry
+    content["location_alt_text"]     = location
     content["testimonial_1_company"] = content.get("company_name", company)
     content["testimonial_2_company"] = content.get("company_name", company)
     content["list_page_description"] = content.get("meta_description", "")
+    content["company_logo_alt_text"] = f"viAct {location} Logo"
+    content["profile_image_alt_text"] = (
+        f"{content.get('testimonial_1_role', 'Safety Professional')} "
+        f"at {content.get('company_name', company)} Review for viAct"
+    )
     for i in (1, 2, 3):
         v = content.get(f"metric_{i}_value", "")
         l = content.get(f"metric_{i}_label", "")

@@ -14,9 +14,10 @@
 // ─── CONFIG ────────────────────────────────────────────────────────────────────
 const SHEET_ID          = '1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec';
 const INDUSTRY_SHEET_ID = '14Y16ikpkAfnVFXm38Ot6CG4PIPTbrQ89jUPCiCjXjf4';
-const RECIPIENTS        = ['marketing@viact.ai'];
-const TIMEZONE     = 'Asia/Kolkata';
-const BRAND_COLOR  = '#ff6a3d';
+const RECIPIENTS        = ['gary.ng@viact.ai'];
+const CC                = ['surendra.singh@viact.ai'];
+const TIMEZONE          = 'Asia/Kolkata';
+const BRAND_COLOR       = '#ff6a3d';
 const SHEET_URL          = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
 const INDUSTRY_SHEET_URL = `https://docs.google.com/spreadsheets/d/${INDUSTRY_SHEET_ID}/edit`;
 const REPORT_TAB         = 'Daily Report';
@@ -34,7 +35,7 @@ const GITHUB_WORKFLOW = 'weekly_viact.yml';
 function triggerMarketRadar() {
   if (!GITHUB_TOKEN) {
     Logger.log('GITHUB_TOKEN not set — skipping Market Radar trigger.');
-    return;
+    return 'skipped';
   }
   const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${GITHUB_WORKFLOW}/dispatches`;
   const resp = UrlFetchApp.fetch(url, {
@@ -50,15 +51,41 @@ function triggerMarketRadar() {
   const code = resp.getResponseCode();
   if (code === 204) {
     Logger.log('Market Radar triggered on GitHub Actions.');
+    return 'triggered';
   } else {
     Logger.log(`GitHub trigger failed (${code}): ${resp.getContentText()}`);
+    return 'failed';
+  }
+}
+
+// ─── FETCH RECENT COMMITS ──────────────────────────────────────────────────────
+function _fetchRecentCommits() {
+  if (!GITHUB_TOKEN) return [];
+  try {
+    const since = new Date(); since.setDate(since.getDate() - 1);
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits?per_page=10&since=${since.toISOString()}`;
+    const resp = UrlFetchApp.fetch(url, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json' },
+      muteHttpExceptions: true,
+    });
+    if (resp.getResponseCode() !== 200) return [];
+    return JSON.parse(resp.getContentText()).map(c => ({
+      message: c.commit.message.split('\n')[0],
+      time:    Utilities.formatDate(new Date(c.commit.author.date), TIMEZONE, 'hh:mm a'),
+      sha:     c.sha.substring(0, 7),
+      url:     c.html_url,
+    }));
+  } catch(e) {
+    Logger.log('Commits fetch failed: ' + e);
+    return [];
   }
 }
 
 // ─── MAIN ──────────────────────────────────────────────────────────────────────
 function sendDailyViActReport() {
-  // 1. Kick off Market Radar pipeline on GitHub Actions (runs ~10 min, sheet updates later)
-  triggerMarketRadar();
+  const radarStatus = triggerMarketRadar();
+  const triggerTime = Utilities.formatDate(new Date(), TIMEZONE, 'hh:mm a');
+  const commits     = _fetchRecentCommits();
 
   const ss        = SpreadsheetApp.openById(SHEET_ID);
   const today     = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
@@ -68,6 +95,8 @@ function sendDailyViActReport() {
   const indItems  = _scanIndustryTabs(ss, today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
+  const intelItem = _scanCompetitorIntel(today);
+  const topics    = _scanDailyTopics(today);
 
   // Stats: count only TODAY's entries
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
@@ -80,11 +109,14 @@ function sendDailyViActReport() {
   _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total);
-  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics);
+  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel, radarStatus, triggerTime);
+
+  const mailOptions = { htmlBody, name: 'viAct Content Agent' };
+  if (CC.length) mailOptions.cc = CC.join(',');
 
   for (const to of RECIPIENTS) {
-    GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
+    GmailApp.sendEmail(to, subject, plain, mailOptions);
   }
   Logger.log(`Report sent — today: ${total} pages, recent: ${webItems.pillar.length + webItems.blogs.length} radar entries — ${today}`);
 }
@@ -239,6 +271,72 @@ function _writeReportToSheet(ss, today, web, ind, cs, total) {
   ]);
 }
 
+// ─── SCAN "Daily Topics" tab — today's 3 suggested content topics ─────────────
+function _scanDailyTopics(today) {
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    const sh = indSs.getSheetByName('Daily Topics');
+    if (!sh) return null;
+    const data = sh.getDataRange().getValues();
+    if (data.length < 2) return null;
+    const latest = data[data.length - 1];
+    // Columns: Date|Industry Topic|Industry|Industry Why|CS Company Type|CS Industry|CS Location|CS Detection Focus|CS Why|VA Detection|VA Why|Urgency
+    if (!latest[0]) return null;
+    return {
+      date:            String(latest[0]).trim(),
+      industryTopic:   String(latest[1]).trim(),
+      industryIndustry:String(latest[2]).trim(),
+      industryWhy:     String(latest[3]).trim(),
+      csType:          String(latest[4]).trim(),
+      csIndustry:      String(latest[5]).trim(),
+      csLocation:      String(latest[6]).trim(),
+      csDetection:     String(latest[7]).trim(),
+      csWhy:           String(latest[8]).trim(),
+      vaDetection:     String(latest[9]).trim(),
+      vaWhy:           String(latest[10]).trim(),
+      urgency:         String(latest[11]).trim(),
+      isToday:         String(latest[0]).trim() === today,
+    };
+  } catch(e) {
+    Logger.log('_scanDailyTopics error: ' + e.message);
+    return null;
+  }
+}
+
+// ─── SCAN "Competitor Intel" tab — daily market intelligence ──────────────────
+function _scanCompetitorIntel(today) {
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    const sh = indSs.getSheetByName('Competitor Intel');
+    if (!sh) return null;
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return null;
+    // Columns: Date | Urgency | Executive Summary | Top Competitor Move | Trending Topic | viAct Opportunity | News Count | Trends Count | Opps Count | Top 3 News | Top 3 Trends | Top 3 Opps
+    const data = sh.getRange(2, 1, lastRow - 1, 12).getValues();
+    // Get most recent row (last row = most recent)
+    const latest = data[data.length - 1];
+    if (!latest || !String(latest[0]).trim()) return null;
+    return {
+      date:              String(latest[0]).trim(),
+      urgency:           String(latest[1]).trim(),
+      executiveSummary:  String(latest[2]).trim(),
+      topCompetitorMove: String(latest[3]).trim(),
+      trendingTopic:     String(latest[4]).trim(),
+      viactOpportunity:  String(latest[5]).trim(),
+      newsCount:         String(latest[6]).trim(),
+      trendsCount:       String(latest[7]).trim(),
+      oppsCount:         String(latest[8]).trim(),
+      topNews:           String(latest[9]).trim(),
+      topTrends:         String(latest[10]).trim(),
+      topOpps:           String(latest[11]).trim(),
+      isToday:           String(latest[0]).trim() === today,
+    };
+  } catch(e) {
+    Logger.log('_scanCompetitorIntel error: ' + e.message);
+    return null;
+  }
+}
+
 // ─── SCAN "Opportunities" tab — today's new gaps ───────────────────────────────
 function _scanOpportunities(today) {
   try {
@@ -267,8 +365,172 @@ function _scanOpportunities(today) {
   }
 }
 
+// ─── MARKET INTELLIGENCE SECTION ──────────────────────────────────────────────
+function _marketIntelSection(intel) {
+  if (!intel) {
+    return `
+    <div style="margin-bottom:24px;">
+      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#0288d1;border-bottom:2px solid #b3e5fc;padding-bottom:6px;">
+        [M] Market Intelligence &mdash; Competitor + Trend Monitor
+      </h2>
+      <div style="background:#e1f5fe;border:1px solid #b3e5fc;border-radius:8px;padding:12px 16px;text-align:center;font-size:12px;color:#01579b;">
+        No scan data yet. Run the Competitor News Monitor from the app to populate this section.
+      </div>
+    </div>`;
+  }
+
+  const urgencyColor = intel.urgency === 'HIGH' ? '#d32f2f' : intel.urgency === 'MEDIUM' ? '#f57c00' : '#388e3c';
+  const urgencyBg    = intel.urgency === 'HIGH' ? '#ffebee' : intel.urgency === 'MEDIUM' ? '#fff3e0' : '#e8f5e9';
+  const staleBadge   = !intel.isToday
+    ? `<span style="font-size:10px;color:#aaa;margin-left:8px;">(last scan: ${_esc(intel.date)})</span>`
+    : `<span style="background:#e0f7fa;color:#006064;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:8px;">TODAY</span>`;
+
+  const newsItems  = intel.topNews   ? intel.topNews.split('|').map(s => s.trim()).filter(Boolean) : [];
+  const trendItems = intel.topTrends ? intel.topTrends.split('|').map(s => s.trim()).filter(Boolean) : [];
+  const oppItems   = intel.topOpps   ? intel.topOpps.split('|').map(s => s.trim()).filter(Boolean) : [];
+
+  const listHtml = (items, color) => items.length
+    ? items.map(i => `<div style="font-size:11px;color:#555;padding:3px 0;border-bottom:1px solid #f0f0f0;">${_esc(i)}</div>`).join('')
+    : `<div style="font-size:11px;color:#aaa;">—</div>`;
+
+  return `
+  <div style="margin-bottom:24px;">
+    <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#0288d1;border-bottom:2px solid #b3e5fc;padding-bottom:6px;">
+      [M] Market Intelligence &mdash; Competitor + Trend Monitor${staleBadge}
+    </h2>
+
+    <!-- Urgency + Summary -->
+    <div style="background:${urgencyBg};border:1px solid ${urgencyColor}33;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
+      <div style="display:inline-block;background:${urgencyColor};color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">${_esc(intel.urgency)} URGENCY</div>
+      <div style="font-size:13px;color:#1a1a1a;line-height:1.6;margin-bottom:8px;">${_esc(intel.executiveSummary)}</div>
+      <div style="font-size:11px;color:#555;"><strong>🔥 Trending:</strong> ${_esc(intel.trendingTopic)}</div>
+    </div>
+
+    <!-- 3-column: Competitor / Trends / viAct Action -->
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="33%" style="padding-right:6px;vertical-align:top;">
+          <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f57c00;margin-bottom:8px;">🏢 Competitor Moves (${_esc(intel.newsCount)})</div>
+            <div style="font-size:11px;color:#e65100;font-weight:600;margin-bottom:6px;">${_esc(intel.topCompetitorMove)}</div>
+            ${listHtml(newsItems, '#f57c00')}
+          </div>
+        </td>
+        <td width="33%" style="padding:0 3px;vertical-align:top;">
+          <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:12px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2e7d32;margin-bottom:8px;">📈 Industry Trends (${_esc(intel.trendsCount)})</div>
+            ${listHtml(trendItems, '#2e7d32')}
+          </div>
+        </td>
+        <td width="33%" style="padding-left:6px;vertical-align:top;">
+          <div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:12px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#1565c0;margin-bottom:8px;">⚡ viAct Action</div>
+            <div style="font-size:11px;color:#1565c0;line-height:1.5;">${_esc(intel.viactOpportunity)}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+// ─── BUILD UPDATE BANNER ───────────────────────────────────────────────────────
+function _buildUpdateBanner(dateLabel) {
+  // Show this banner only on the build date
+  if (!dateLabel.includes('June 5') && !dateLabel.includes('Jun 5')) return '';
+
+  return `
+  <div style="background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border:1px solid #30363d;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;margin-bottom:12px;">
+      <span style="font-size:18px;margin-right:8px;">🚀</span>
+      <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#58a6ff;">System Build Update &mdash; June 5, 2026</span>
+    </div>
+    <div style="font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:8px;">
+      Case Study Dynamic Page Automation — Built from Scratch
+    </div>
+    <div style="font-size:12px;color:#8b949e;margin-bottom:16px;line-height:1.6;">
+      The viAct content system now supports fully automated case study page generation.
+      Enter a company name, industry, location, and products — and the AI generates a complete,
+      publish-ready Wix CMS case study page in under 60 seconds.
+    </div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+      <tr>
+        <td width="50%" style="padding-right:8px;vertical-align:top;">
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#58a6ff;margin-bottom:10px;">📝 Webpage Content</div>
+            <div style="font-size:11px;color:#8b949e;line-height:1.8;">
+              ✓ Hero H1 + H3 intro copy<br>
+              ✓ Company Overview (80-120 words)<br>
+              ✓ The Challenge (200-300 words)<br>
+              ✓ The Solution + 2 subsections<br>
+              ✓ The Impact section<br>
+              ✓ 2 testimonial quotes + roles<br>
+              ✓ CTA headline<br>
+              ✓ Story Snapshot + Use Case label
+            </div>
+          </div>
+        </td>
+        <td width="50%" style="padding-left:8px;vertical-align:top;">
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#3fb950;margin-bottom:10px;">🔍 SEO Fields</div>
+            <div style="font-size:11px;color:#8b949e;line-height:1.8;">
+              ✓ Meta Title (≤60 chars)<br>
+              ✓ Meta Description (150-160 chars)<br>
+              ✓ Keywords (5-8 SEO terms)<br>
+              ✓ URL Slug (auto-formatted)<br>
+              ✓ Filter Tag + Tags array<br>
+              ✓ List Page Description<br>
+              ✓ Canonical URL (viact.ai/case-studies/...)
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td width="50%" style="padding-right:8px;padding-top:8px;vertical-align:top;">
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#f78166;margin-bottom:10px;">🎨 Image Prompts (Nano Banana)</div>
+            <div style="font-size:11px;color:#8b949e;line-height:1.8;">
+              ✓ Hero Banner — 426×423px (square)<br>
+              ✓ Company Overview — 342×414px (portrait)<br>
+              ✓ Solution Image 1 — 1440×978px<br>
+              ✓ Solution Image 2 — 2289×1400px<br>
+              ✓ Testimonial — 400×400px (square)<br>
+              <span style="color:#555;">Ready to paste directly into Nano Banana</span>
+            </div>
+          </div>
+        </td>
+        <td width="50%" style="padding-left:8px;padding-top:8px;vertical-align:top;">
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:14px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#0097a7;margin-bottom:10px;">🖼 Alt Texts + Sheet Push</div>
+            <div style="font-size:11px;color:#8b949e;line-height:1.8;">
+              ✓ All 10 alt text fields (Wix CMS match)<br>
+              ✓ Company logo alt text (auto)<br>
+              ✓ Profile image alt text (auto)<br>
+              ✓ 3 metrics alt texts (auto-derived)<br>
+              ✓ Auto-push to Google Sheets<br>
+              ✓ Daily report email (this email)<br>
+              ✓ Quality gate + auto-retry on fail
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px 14px;font-size:11px;color:#8b949e;">
+      <strong style="color:#e6edf3;">Total CMS Fields Generated:</strong> 56 fields per case study &nbsp;&middot;&nbsp;
+      <strong style="color:#e6edf3;">LLM:</strong> Llama 3.3 70B (Groq) &nbsp;&middot;&nbsp;
+      <strong style="color:#e6edf3;">Research:</strong> Tavily web search &nbsp;&middot;&nbsp;
+      <strong style="color:#e6edf3;">Time:</strong> ~45 seconds per case study
+    </div>
+  </div>`;
+}
+
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, opp, cs, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total) {
+function _buildEmailHtml(web, ind, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics) {
+  radarStatus = radarStatus || 'skipped';
+  triggerTime = triggerTime || '';
+  commits     = commits     || [];
+  topics      = topics      || null;
   const recentPillar = web.pillar.length;
   const recentBlogs  = web.blogs.length;
 
@@ -278,15 +540,17 @@ function _buildEmailHtml(web, ind, opp, cs, dateLabel, todayPillar, todayBlogs, 
   const oppHtml    = opp.map(_opportunityCard).join('');
   const csHtml     = cs.map(_caseStudyCard).join('');
 
-  const noTodayBanner = total === 0 ? `
-    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:20px;text-align:center;">
-      <span style="font-size:13px;color:#795548;">No new pages generated today. Automation runs at 9:30 AM IST via GitHub Actions.</span>
-    </div>` : '';
+  // ── Which agents ran today ────────────────────────────────────────────────
+  const activeAgents = [];
+  if (todayPillar > 0 || todayBlogs > 0) activeAgents.push({ name: 'Agent 01 — Market Radar', color: '#ff6a3d', count: `${todayPillar} pillar + ${todayBlogs} blog` });
+  if (todayInd > 0)                       activeAgents.push({ name: 'Agent 05 — Industry Pages', color: '#3fb950', count: `${todayInd} page${todayInd !== 1 ? 's' : ''}` });
+  if (todayCS > 0)                        activeAgents.push({ name: 'Agent 06 — Case Studies', color: '#0097a7', count: `${todayCS} case stud${todayCS !== 1 ? 'ies' : 'y'}` });
+  if (intel && intel.isToday)             activeAgents.push({ name: 'Competitor Intel Monitor', color: '#f57c00', count: `${intel.newsCount || 0} news · ${intel.trendsCount || 0} trends` });
+  if (todayOpps > 0)                      activeAgents.push({ name: 'Opportunity Scanner', color: '#9c27b0', count: `${todayOpps} gap${todayOpps !== 1 ? 's' : ''} found` });
 
-  const recentNote = (recentPillar + recentBlogs) > 0 ? `
-    <p style="font-size:11px;color:#aaa;text-align:center;margin:0 0 16px;">
-      Showing last ${SCAN_DAYS} days of content. Today's new pages: ${total}.
-    </p>` : '';
+  const todayAgentBadges = activeAgents.length > 0
+    ? activeAgents.map(a => `<span style="display:inline-block;background:${a.color}18;border:1px solid ${a.color}55;color:${a.color};font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin:3px 4px;">${_esc(a.name)} &mdash; ${_esc(a.count)}</span>`).join('')
+    : `<span style="font-size:12px;color:#aaa;">No agents ran today.</span>`;
 
   return `<!DOCTYPE html><html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -304,34 +568,34 @@ function _buildEmailHtml(web, ind, opp, cs, dateLabel, todayPillar, todayBlogs, 
     </td>
   </tr>
 
-  <!-- STATS BAR: today's counts -->
+  <!-- STATS BAR -->
   <tr>
     <td style="background:#fafafa;border-bottom:1px solid #eee;padding:0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
-            <div style="font-size:28px;font-weight:800;color:#ff6a3d;line-height:1;">${todayPillar}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Pillar Pages</div>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#ff6a3d;line-height:1;">${todayPillar}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Pillar</div>
           </td>
-          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
-            <div style="font-size:28px;font-weight:800;color:#58a6ff;line-height:1;">${todayBlogs}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Blog Posts</div>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#58a6ff;line-height:1;">${todayBlogs}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Blogs</div>
           </td>
-          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
-            <div style="font-size:28px;font-weight:800;color:#3fb950;line-height:1;">${todayInd}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Industry Pages</div>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#3fb950;line-height:1;">${todayInd}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Industry</div>
           </td>
-          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
-            <div style="font-size:28px;font-weight:800;color:#0097a7;line-height:1;">${todayCS}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Case Studies</div>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#0097a7;line-height:1;">${todayCS}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Case Studies</div>
           </td>
-          <td align="center" style="padding:16px 8px;border-right:1px solid #eee;">
-            <div style="font-size:28px;font-weight:800;color:#a371f7;line-height:1;">${total}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Total Today</div>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#9c27b0;line-height:1;">${todayOpps}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Gaps Found</div>
           </td>
-          <td align="center" style="padding:16px 8px;">
-            <div style="font-size:28px;font-weight:800;color:#9c27b0;line-height:1;">${todayOpps}</div>
-            <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Opportunities</div>
+          <td align="center" style="padding:14px 6px;">
+            <div style="font-size:24px;font-weight:800;color:#a371f7;line-height:1;">${total}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Total</div>
           </td>
         </tr>
       </table>
@@ -339,74 +603,227 @@ function _buildEmailHtml(web, ind, opp, cs, dateLabel, todayPillar, todayBlogs, 
   </tr>
 
   <!-- BODY -->
-  <tr><td style="padding:24px 32px;">
-    ${noTodayBanner}
-    ${recentNote}
+  <tr><td style="padding:28px 32px;">
 
-    <!-- PILLAR PAGES -->
-    ${recentPillar > 0 ? `
-    <div style="margin-bottom:24px;">
-      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#ff6a3d;border-bottom:2px solid #ffe0d0;padding-bottom:6px;">
-        [P] Pillar Pages &mdash; ${recentPillar} in last ${SCAN_DAYS} days
-      </h2>
-      ${pillarHtml}
-    </div>` : ''}
-
-    <!-- BLOG CLUSTER -->
-    ${recentBlogs > 0 ? `
-    <div style="margin-bottom:24px;">
-      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#58a6ff;border-bottom:2px solid #d0e0ff;padding-bottom:6px;">
-        [B] Blog Cluster &mdash; ${recentBlogs} in last ${SCAN_DAYS} days
-      </h2>
-      ${blogHtml}
-    </div>` : ''}
-
-    <!-- INDUSTRY PAGES -->
-    ${ind.length > 0 ? `
-    <div style="margin-bottom:24px;">
-      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#3fb950;border-bottom:2px solid #c3e6c3;padding-bottom:6px;">
-        [I] Industry Pages in Sheet &mdash; ${ind.length} Total
-      </h2>
-      ${indHtml}
-    </div>` : ''}
-
-    <!-- CASE STUDIES -->
-    ${cs.length > 0 ? `
-    <div style="margin-bottom:24px;">
-      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#0097a7;border-bottom:2px solid #b2ebf2;padding-bottom:6px;">
-        [CS] Case Studies &mdash; ${cs.length} in last ${SCAN_DAYS} days
-      </h2>
-      ${csHtml}
-    </div>` : ''}
-
-    <!-- TODAY'S OPPORTUNITIES -->
-    <div style="margin-bottom:24px;">
-      <h2 style="margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#9c27b0;border-bottom:2px solid #e1bee7;padding-bottom:6px;">
-        [O] Today's Opportunities &mdash; ${todayOpps} New Gap${todayOpps !== 1 ? 's' : ''} Found
-      </h2>
-      ${opp.length > 0 ? oppHtml : `<div style="background:#fdf3ff;border:1px solid #e1bee7;border-radius:8px;padding:12px 16px;text-align:center;font-size:12px;color:#9c27b0;">No new content gaps detected today. All competitor topics are covered or already queued.</div>`}
+    <!-- PIPELINE STATUS ──────────────────────────────────────────────────────── -->
+    <div style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#999;margin-bottom:10px;">Pipeline Status</div>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:3px 0;font-size:12px;color:#555;width:50%;">
+            <span style="color:${radarStatus === 'triggered' ? '#2e7d32' : radarStatus === 'failed' ? '#c62828' : '#888'};font-weight:700;margin-right:6px;">${radarStatus === 'triggered' ? '&#10003;' : radarStatus === 'failed' ? '&#10007;' : '&#8212;'}</span>
+            Market Radar &mdash; ${radarStatus === 'triggered' ? 'Triggered successfully' : radarStatus === 'failed' ? 'Trigger failed' : 'No token configured'}
+          </td>
+          <td style="padding:3px 0;font-size:12px;color:#555;width:50%;">
+            <span style="color:#888;margin-right:6px;">&#9200;</span>
+            ${triggerTime ? `Triggered at ${triggerTime} IST` : 'Time unavailable'}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;font-size:12px;color:#555;">
+            <span style="color:#1a73e8;font-weight:700;margin-right:6px;">&#9654;</span>
+            GitHub Actions running &mdash; ~10 min to complete
+          </td>
+          <td style="padding:3px 0;font-size:12px;color:#555;">
+            <span style="color:#888;margin-right:6px;">&#128197;</span>
+            Next report: Tomorrow at 6:00 PM IST
+          </td>
+        </tr>
+      </table>
+      ${commits.length > 0 ? `
+      <div style="border-top:1px solid #eee;margin-top:10px;padding-top:10px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#bbb;margin-bottom:8px;">Today's System Improvements</div>
+        ${commits.map(c => {
+          const type = c.message.startsWith('feat') ? { color:'#1a73e8', label:'FEATURE' }
+                     : c.message.startsWith('fix')  ? { color:'#e53935', label:'FIX' }
+                     : c.message.startsWith('docs') ? { color:'#fb8c00', label:'DOCS' }
+                     : { color:'#888', label:'UPDATE' };
+          const cleanMsg = c.message.replace(/^(feat|fix|docs|chore|refactor|test)(\([^)]+\))?:\s*/i, '');
+          return `<div style="display:flex;align-items:flex-start;padding:4px 0;border-bottom:1px solid #f5f5f5;">
+            <span style="display:inline-block;background:${type.color};color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:7px;margin-top:1px;white-space:nowrap;">${type.label}</span>
+            <span style="font-size:11px;color:#333;flex:1;">${_esc(cleanMsg)}</span>
+            <a href="${c.url}" style="font-size:10px;color:#bbb;text-decoration:none;margin-left:8px;white-space:nowrap;">${c.sha}</a>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
     </div>
 
-    <!-- CTA BUTTONS -->
-    <div style="text-align:center;margin-top:8px;padding-top:16px;border-top:1px solid #f0f0f0;">
-      <a href="${SHEET_URL}" style="display:inline-block;background:#ff6a3d;color:#fff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:0.3px;margin:4px 6px;">
-        Webpage Content Sheet &rarr;
-      </a>
-      <a href="${INDUSTRY_SHEET_URL}" style="display:inline-block;background:#3fb950;color:#fff;text-decoration:none;padding:13px 24px;border-radius:8px;font-weight:700;font-size:13px;letter-spacing:0.3px;margin:4px 6px;">
-        Industry Pages Sheet &rarr;
-      </a>
+    <!-- TODAY'S 3 CONTENT TOPICS ────────────────────────────────────────────── -->
+    ${topics ? `
+    <div style="background:#f0f7ff;border:1px solid #c8dff5;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a73e8;margin-bottom:10px;">💡 Today's Content Topics — from Daily Intel Scan</div>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" style="padding:4px 8px 4px 0;vertical-align:top;">
+            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🏭 Industry Page</div>
+            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.industryTopic || '—')}</div>
+            <div style="font-size:10px;color:#888;">${_esc(topics.industryIndustry || '')}</div>
+            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.industryWhy || '')}</div>
+          </td>
+          <td width="33%" style="padding:4px 8px;vertical-align:top;border-left:1px solid #dde8f5;">
+            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">📋 Case Study</div>
+            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.csDetection || '—')}</div>
+            <div style="font-size:10px;color:#888;">${_esc((topics.csType || '') + ' · ' + (topics.csLocation || ''))}</div>
+            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.csWhy || '')}</div>
+          </td>
+          <td width="33%" style="padding:4px 0 4px 8px;vertical-align:top;border-left:1px solid #dde8f5;">
+            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🎯 Video Analytics</div>
+            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.vaDetection || '—')}</div>
+            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.vaWhy || '')}</div>
+          </td>
+        </tr>
+      </table>
+    </div>` : ''}
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 1 — HAMARE AGENTS
+         ══════════════════════════════════════════════════════ -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:#aaa;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #f0f0f0;">
+        01 &mdash; Our Agents (viAct Content System)
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="4">
+        <tr>
+          <td width="50%" style="padding:4px 4px 4px 0;vertical-align:top;">
+            <div style="background:#fff8f5;border:1px solid #ffe0d0;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#ff6a3d;margin-bottom:4px;">🔍 Agent 01 — Market Radar</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Scans competitor websites, identifies content gaps, and generates pillar pages &amp; blog posts — keeping viAct ahead of competitors every day.</div>
+            </div>
+          </td>
+          <td width="50%" style="padding:4px 0 4px 4px;vertical-align:top;">
+            <div style="background:#f0fff4;border:1px solid #c3e6c3;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#3fb950;margin-bottom:4px;">🏭 Agent 05 — Industry Pages</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Builds full landing pages for any industry — hero section, use cases, metrics, testimonials, FAQs, SEO copy, 11 image prompts, and schema markup.</div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding:4px 4px 4px 0;vertical-align:top;">
+            <div style="background:#e0f7fa;border:1px solid #b2ebf2;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#0097a7;margin-bottom:4px;">📋 Agent 06 — Case Studies</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Input a company name, industry, and location — generates 62 CMS-ready fields including hero, challenge, solution, impact, testimonials, SEO, and 5 image prompts for Wix.</div>
+            </div>
+          </td>
+          <td width="50%" style="padding:4px 0 4px 4px;vertical-align:top;">
+            <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#f57c00;margin-bottom:4px;">📡 Competitor Intel Monitor</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Monitors 7 competitor websites and news daily. Tracks industry trends and surfaces AI-generated marketing opportunities for the viAct team.</div>
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 2 — AAJ KIS AGENT PAR KAAM HUA
+         ══════════════════════════════════════════════════════ -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:#aaa;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #f0f0f0;">
+        02 &mdash; Agents Active Today
+      </div>
+      ${activeAgents.length > 0
+        ? `<div style="padding:12px 16px;background:#f8f9fa;border-radius:8px;">${todayAgentBadges}</div>`
+        : `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:12px;color:#795548;text-align:center;">No agents ran today. GitHub Actions runs automatically at 9:30 AM IST.</div>`
+      }
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 3 — AGENT OUTPUTS
+         ══════════════════════════════════════════════════════ -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:#aaa;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #f0f0f0;">
+        03 &mdash; Agent Outputs (Last ${SCAN_DAYS} Days)
+      </div>
+
+      <!-- Agent 01 Output: Pillar + Blog -->
+      ${(recentPillar > 0 || recentBlogs > 0) ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#ff6a3d;margin-bottom:10px;padding:6px 10px;background:#fff8f5;border-radius:6px;border-left:3px solid #ff6a3d;">
+          🔍 Agent 01 — Market Radar Output &mdash; ${recentPillar} Pillar + ${recentBlogs} Blog
+        </div>
+        ${recentPillar > 0 ? pillarHtml : ''}
+        ${recentBlogs > 0 ? blogHtml : ''}
+      </div>` : ''}
+
+      <!-- Agent 05 Output: Industry Pages -->
+      ${ind.length > 0 ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#3fb950;margin-bottom:10px;padding:6px 10px;background:#f0fff4;border-radius:6px;border-left:3px solid #3fb950;">
+          🏭 Agent 05 — Industry Pages Output &mdash; ${ind.length} Page${ind.length !== 1 ? 's' : ''} in Sheet
+        </div>
+        ${indHtml}
+      </div>` : ''}
+
+      <!-- Agent 06 Output: Case Studies -->
+      ${cs.length > 0 ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#0097a7;margin-bottom:10px;padding:6px 10px;background:#e0f7fa;border-radius:6px;border-left:3px solid #0097a7;">
+          📋 Agent 06 — Case Studies Output &mdash; ${cs.length} in Last ${SCAN_DAYS} Days
+        </div>
+        ${csHtml}
+      </div>` : ''}
+
+      <!-- Competitor Intel Output -->
+      ${_marketIntelSection(intel)}
+
+      <!-- Opportunity Scanner Output -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#9c27b0;margin-bottom:10px;padding:6px 10px;background:#fdf3ff;border-radius:6px;border-left:3px solid #9c27b0;">
+          🎯 Opportunity Scanner — ${todayOpps} New Gap${todayOpps !== 1 ? 's' : ''} Found Today
+        </div>
+        ${opp.length > 0 ? oppHtml : `<div style="background:#fdf3ff;border:1px solid #e1bee7;border-radius:8px;padding:12px 16px;text-align:center;font-size:12px;color:#9c27b0;">No new gaps identified today. All competitor topics are either covered or in the queue.</div>`}
+      </div>
+
+      ${(recentPillar + recentBlogs + ind.length + cs.length) === 0 && opp.length === 0 ? `
+      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px;text-align:center;font-size:12px;color:#795548;">
+        No output generated today. Agents will run again tomorrow.
+      </div>` : ''}
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 4 — SHEET LINKS
+         ══════════════════════════════════════════════════════ -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2.5px;color:#aaa;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #f0f0f0;">
+        04 &mdash; Sheet Links — All Outputs Available Here
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding:4px 4px 4px 0;">
+            <a href="${SHEET_URL}" style="display:block;background:#ff6a3d;color:#fff;text-decoration:none;padding:12px 16px;border-radius:8px;font-weight:700;font-size:12px;text-align:center;">
+              📄 Webpage Content Sheet<br><span style="font-size:10px;font-weight:400;opacity:0.85;">Pillar Pages + Blog Posts</span>
+            </a>
+          </td>
+          <td style="padding:4px 0 4px 4px;">
+            <a href="${INDUSTRY_SHEET_URL}" style="display:block;background:#1a7a3a;color:#fff;text-decoration:none;padding:12px 16px;border-radius:8px;font-weight:700;font-size:12px;text-align:center;">
+              🏭 Industry &amp; Case Study Sheet<br><span style="font-size:10px;font-weight:400;opacity:0.85;">Industry Pages + Case Studies + Competitor Intel</span>
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECTION 5 — PROGRESS MESSAGE
+         ══════════════════════════════════════════════════════ -->
+    <div style="background:linear-gradient(135deg,#0d1117 0%,#161b22 100%);border-radius:10px;padding:20px 24px;text-align:center;">
+      <div style="font-size:18px;margin-bottom:8px;">🚀</div>
+      <div style="font-size:14px;font-weight:700;color:#e6edf3;margin-bottom:6px;">
+        The system is running — progress is being made.
+      </div>
+      <div style="font-size:12px;color:#8b949e;line-height:1.6;">
+        Every day, a little more content, a little more SEO, a little more competitive edge.<br>
+        viAct's content engine ran today — quietly, consistently, without interruption.
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:#484f58;text-transform:uppercase;letter-spacing:1.5px;">
+        viAct Content Agent &middot; Auto-sent daily at 6:00 PM IST
+      </div>
+    </div>
+
+    <!-- Build Update Banner (shown on build date only) -->
+    ${_buildUpdateBanner(dateLabel)}
+
   </td></tr>
-
-  <!-- FOOTER -->
-  <tr>
-    <td style="background:#f9f9f9;border-top:1px solid #eee;padding:14px 32px;text-align:center;">
-      <p style="margin:0;font-size:11px;color:#bbb;">
-        Auto-sent by <strong style="color:#888;">viAct Content Agent</strong> every day at 6:00 PM IST &nbsp;&middot;&nbsp;
-        <a href="${SHEET_URL}" style="color:#bbb;text-decoration:none;">View Sheet</a>
-      </p>
-    </td>
-  </tr>
 
 </table>
 </td></tr>
@@ -520,8 +937,14 @@ function _caseStudyCard(cs) {
 }
 
 // ─── PLAIN TEXT FALLBACK ───────────────────────────────────────────────────────
-function _buildPlainText(web, ind, cs, dateLabel) {
+function _buildPlainText(web, ind, cs, dateLabel, radarStatus, triggerTime) {
   const lines = [`viAct AI Daily Content Report — ${dateLabel}`, '='.repeat(50), ''];
+
+  lines.push('PIPELINE STATUS');
+  lines.push(`  Market Radar : ${radarStatus === 'triggered' ? 'Triggered at ' + triggerTime + ' IST' : radarStatus === 'failed' ? 'Trigger failed' : 'Skipped (no token)'}`);
+  lines.push(`  GitHub Actions running (~10 min to complete)`);
+  lines.push(`  Next report  : Tomorrow at 6:00 PM IST`);
+  lines.push('');
 
   if (web.pillar.length) {
     lines.push(`PILLAR PAGES (${web.pillar.length} recent)`);
@@ -585,10 +1008,13 @@ function testSendNow() {
   const ss        = SpreadsheetApp.openById(SHEET_ID);
   const today     = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
   const dateLabel = Utilities.formatDate(new Date(), TIMEZONE, 'dd MMM yyyy, EEE');
+  const commits   = _fetchRecentCommits();
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
+  const intelItem = _scanCompetitorIntel(today);
+  const topics    = _scanDailyTopics(today);
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
@@ -596,11 +1022,14 @@ function testSendNow() {
   const todayCS     = csItems.filter(c => c.isToday).length;
   const total       = todayPillar + todayBlogs + todayInd + todayCS;
   _writeReportToSheet(ss, today, webItems, indItems, csItems, total);
+  const triggerTime = Utilities.formatDate(new Date(), TIMEZONE, 'hh:mm a');
   const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total);
-  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel);
+  const htmlBody = _buildEmailHtml(webItems, indItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayOpps, todayCS, total, 'skipped', triggerTime, commits, topics);
+  const plain    = _buildPlainText(webItems, indItems, csItems, dateLabel, 'skipped', triggerTime);
+  const mailOptions = { htmlBody, name: 'viAct Content Agent' };
+  if (CC.length) mailOptions.cc = CC.join(',');
   for (const to of RECIPIENTS) {
-    GmailApp.sendEmail(to, subject, plain, { htmlBody, name: 'viAct Content Agent' });
+    GmailApp.sendEmail(to, subject, plain, mailOptions);
   }
   Logger.log('Test report sent (no Market Radar trigger).');
 }

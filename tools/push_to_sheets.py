@@ -962,8 +962,9 @@ def push_case_study(result: dict, sheet_id: str = "") -> int:
     f("h1",               cms.get("hero_h1", ""))
     f("h2",               cms.get("h2", ""))
     f("h3 Intro",         cms.get("h3", ""))
-    f("Hero Image Brief", cms.get("hero_image_brief", ""))
-    f("Hero Alt Text",    cms.get("hero_alt_text", ""))
+    f("Hero Image Brief",     cms.get("hero_image_brief", ""))
+    f("Hero Alt Text",        cms.get("hero_alt_text", ""))
+    f("Overview Image Brief", cms.get("overview_image_brief", ""))
     blank()
 
     # ── Key Metrics ──────────────────────────────────────────────────────────
@@ -985,12 +986,14 @@ def push_case_study(result: dict, sheet_id: str = "") -> int:
     sec("THE SOLUTION")
     f("Solution Title",     cms.get("solution_title", ""))
     f("Solution Body",      cms.get("solution_body", ""))
-    f("Sub1 Title",         cms.get("solution_sub1_title", ""))
-    f("Sub1 Body",          cms.get("solution_sub1_body", ""))
-    f("Sub1 Alt Text",      cms.get("solution_1_alt_text", ""))
-    f("Sub2 Title",         cms.get("solution_sub2_title", ""))
-    f("Sub2 Body",          cms.get("solution_sub2_body", ""))
-    f("Sub2 Alt Text",      cms.get("solution_2_alt_text", ""))
+    f("Sub1 Title",          cms.get("solution_sub1_title", ""))
+    f("Sub1 Body",           cms.get("solution_sub1_body", ""))
+    f("Sub1 Image Brief",    cms.get("solution_1_image_brief", ""))
+    f("Sub1 Alt Text",       cms.get("solution_1_alt_text", ""))
+    f("Sub2 Title",          cms.get("solution_sub2_title", ""))
+    f("Sub2 Body",           cms.get("solution_sub2_body", ""))
+    f("Sub2 Image Brief",    cms.get("solution_2_image_brief", ""))
+    f("Sub2 Alt Text",       cms.get("solution_2_alt_text", ""))
     blank()
 
     # ── Impact ───────────────────────────────────────────────────────────────
@@ -1005,6 +1008,9 @@ def push_case_study(result: dict, sheet_id: str = "") -> int:
         f(f"Testimonial {i} Quote",   cms.get(f"testimonial_{i}_quote", ""))
         f(f"Testimonial {i} Role",    cms.get(f"testimonial_{i}_role", ""))
         f(f"Testimonial {i} Company", cms.get(f"testimonial_{i}_company", ""))
+    f("Testimonial Image Brief",  cms.get("testimonial_image_brief", ""))
+    f("Company Logo Alt Text",    cms.get("company_logo_alt_text", ""))
+    f("Profile Image Alt Text",   cms.get("profile_image_alt_text", ""))
     blank()
 
     # ── CTA & SEO ────────────────────────────────────────────────────────────
@@ -1022,10 +1028,10 @@ def push_case_study(result: dict, sheet_id: str = "") -> int:
 
     # ── Alt Texts ────────────────────────────────────────────────────────────
     sec("ALT TEXTS")
-    f("Section Alt Text",  cms.get("section_alt_text", ""))
-    f("Industry Alt Text", cms.get("industry_alt_text", ""))
-    f("Location Alt Text", cms.get("location_alt_text", ""))
-    f("Use Case Alt Text", cms.get("use_case_alt_text", ""))
+    f("Company Overview Alt Text", cms.get("section_alt_text", ""))
+    f("Industry Alt Text",         cms.get("industry_alt_text", ""))
+    f("Location Alt Text",         cms.get("location_alt_text", ""))
+    f("Use Case Alt Text",         cms.get("use_case_alt_text", ""))
     blank()
 
     # ── Quality Gate ─────────────────────────────────────────────────────────
@@ -1297,6 +1303,362 @@ def write_dedup_log(service, sheet_id: str, seen: dict) -> None:
         ).execute()
     except Exception as exc:
         print(f"[dedup] Sheets write failed: {exc}", flush=True)
+
+
+# ── Competitor Intel tab — daily news + trend monitor results ─────────────────
+COMPETITOR_INTEL_TAB = "Competitor Intel"
+COMPETITOR_INTEL_HEADER = [
+    "Date", "Urgency", "Executive Summary", "Top Competitor Move",
+    "Trending Topic", "viAct Opportunity",
+    "Competitor News Count", "Trends Count", "Opportunities Count",
+    "Top 3 Competitor News", "Top 3 Trends", "Top 3 Opportunities",
+]
+
+
+def push_competitor_intel(intel: dict, sheet_id: str = "") -> int:
+    """
+    Append today's competitor intelligence to 'Competitor Intel' tab.
+    Creates tab + header on first call.
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service = get_sheets_service()
+
+    # Create tab if missing
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if COMPETITOR_INTEL_TAB not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": COMPETITOR_INTEL_TAB}}}]},
+        ).execute()
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITOR_INTEL_TAB}'!A1",
+            valueInputOption="RAW",
+            body={"values": [COMPETITOR_INTEL_HEADER]},
+        ).execute()
+        # Format header row
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        gid = next(s["properties"]["sheetId"] for s in meta2["sheets"]
+                   if s["properties"]["title"] == COMPETITOR_INTEL_TAB)
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(COMPETITOR_INTEL_HEADER)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.051, "green": 0.278, "blue": 0.631},
+                        "textFormat": {"bold": True, "fontSize": 10, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    # Build summary strings
+    top_news = " | ".join(
+        f"[{n['competitor']}] {n['title'][:60]}"
+        for n in intel.get("competitor_news", [])[:3]
+    )
+    top_trends = " | ".join(
+        t["title"][:60] for t in intel.get("industry_trends", [])[:3]
+    )
+    top_opps = " | ".join(
+        o["title"][:60] for o in intel.get("marketing_opportunities", [])[:3]
+    )
+    counts = intel.get("counts", {})
+
+    row = [
+        intel.get("date", ""),
+        intel.get("urgency", "medium").upper(),
+        intel.get("executive_summary", ""),
+        intel.get("top_competitor_move", ""),
+        intel.get("trending_topic", ""),
+        intel.get("viact_opportunity", ""),
+        str(counts.get("competitor_news", 0)),
+        str(counts.get("trends", 0)),
+        str(counts.get("opportunities", 0)),
+        top_news,
+        top_trends,
+        top_opps,
+    ]
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{COMPETITOR_INTEL_TAB}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": [row]},
+    ).execute()
+    return 1
+
+
+# ── Daily Topics — one row per day, cumulative history ───────────────────────
+
+DAILY_TOPICS_TAB = "Daily Topics"
+DAILY_TOPICS_HEADER = [
+    "Date",
+    "Industry Topic", "Industry", "Industry Why",
+    "CS Company Type", "CS Industry", "CS Location", "CS Detection Focus", "CS Why",
+    "VA Detection", "VA Why",
+    "Urgency",
+]
+
+
+def push_daily_topics(intel: dict, sheet_id: str = "") -> int:
+    """
+    Append one row to 'Daily Topics' tab with today's 3 suggested content topics.
+    Creates tab + header on first call. Appends (never overwrites) for history.
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service = get_sheets_service()
+
+    # Create tab + header if missing
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if DAILY_TOPICS_TAB not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": DAILY_TOPICS_TAB}}}]},
+        ).execute()
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"'{DAILY_TOPICS_TAB}'!A1",
+            valueInputOption="RAW",
+            body={"values": [DAILY_TOPICS_HEADER]},
+        ).execute()
+        # Bold blue header
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        gid = next(s["properties"]["sheetId"] for s in meta2["sheets"]
+                   if s["properties"]["title"] == DAILY_TOPICS_TAB)
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(DAILY_TOPICS_HEADER)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.051, "green": 0.278, "blue": 0.631},
+                        "textFormat": {"bold": True, "fontSize": 10,
+                                       "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    topics = intel.get("daily_topics", {})
+    ind    = topics.get("industry_topic", {})
+    cs     = topics.get("case_study_topic", {})
+    va     = topics.get("va_topic", {})
+
+    row = [
+        intel.get("date", ""),
+        ind.get("topic", ""),
+        ind.get("industry", ""),
+        ind.get("why", ""),
+        cs.get("company_type", ""),
+        cs.get("industry", ""),
+        cs.get("location", ""),
+        cs.get("detection_focus", ""),
+        cs.get("why", ""),
+        va.get("detection_name", ""),
+        va.get("why", ""),
+        intel.get("urgency", "medium").upper(),
+    ]
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{DAILY_TOPICS_TAB}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": [row]},
+    ).execute()
+    return 1
+
+
+# ── Video Analytics Item Pages — one tab per detection type ──────────────────
+
+def push_video_analytics_page(result: dict, sheet_id: str = "") -> int:
+    """
+    Push video analytics item page content to a tab named "VA — {detection_name}".
+    Layout: field name in col A, value in col B (vertical, same as push_case_study).
+    Creates tab if missing; clears and rewrites on each run (fresh, not appended).
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service       = get_sheets_service()
+    cms           = result.get("cms_fields", {})
+    meta          = result.get("generation_meta", {})
+    errors        = result.get("quality_gate_errors", [])
+    detection     = cms.get("title", meta.get("detection_name", "VA Page")).strip()
+    tab_name      = f"VA — {detection}"[:100]
+
+    # Create tab or clear existing
+    sheet_meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing   = [s["properties"]["title"] for s in sheet_meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    else:
+        service.spreadsheets().values().clear(
+            spreadsheetId=sheet_id, range=f"'{tab_name}'!A:B",
+        ).execute()
+
+    rows: list[list] = []
+    section_rows: list[int] = []
+
+    def sec(title):
+        section_rows.append(len(rows))
+        rows.append([title, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # ── META ─────────────────────────────────────────────────────────────────
+    sec("META")
+    f("Generated",    meta.get("timestamp", "")[:19].replace("T", " ") + " UTC")
+    f("Status",       "Draft")
+    f("Model",        meta.get("model_used", ""))
+    f("Retry Count",  str(meta.get("retry_count", 0)))
+    blank()
+
+    # ── SEO & META ────────────────────────────────────────────────────────────
+    sec("SEO & META")
+    f("Meta Title",        cms.get("meta_title", ""))
+    f("Meta Description",  cms.get("meta_descriptions", ""))
+    f("Keywords",          cms.get("keywords", ""))
+    blank()
+
+    # ── HERO ─────────────────────────────────────────────────────────────────
+    sec("HERO SECTION")
+    f("Title",           cms.get("title", ""))
+    f("H1",              cms.get("h1", ""))
+    f("H2",              cms.get("h2", ""))
+    f("H3",              cms.get("h3", ""))
+    f("First Paragraph", cms.get("first_paragraph", ""))
+    blank()
+
+    # ── CHALLENGES ───────────────────────────────────────────────────────────
+    sec("CHALLENGES (t1 block)")
+    f("Section Title [t1]", cms.get("t1", ""))
+    f("Body [td]",          cms.get("td", ""))
+    blank()
+
+    # ── HOW IT WORKS ─────────────────────────────────────────────────────────
+    sec("HOW COMPUTER VISION WORKS (t2 block)")
+    f("Section Title [t2]",         cms.get("t2", ""))
+    f("Step 1 Title [t2_ct2]",      cms.get("t2_ct2", ""))
+    f("Step 1 Description",         cms.get("t2_cdesc2", ""))
+    f("Step 2 Title [t2_t1]",       cms.get("t2_t1", ""))
+    f("Step 2 Description",         cms.get("t2_1d", ""))
+    f("Step 3 Title [t3_1t]",       cms.get("t3_1t", ""))
+    f("Step 3 Description",         cms.get("t3_1d", ""))
+    f("Step 4 Title [t4_t1]",       cms.get("t4_t1", ""))
+    f("Step 4 Description",         cms.get("t4_td", ""))
+    blank()
+
+    # ── WHERE NEEDED MOST (s6) ────────────────────────────────────────────────
+    sec("WHERE NEEDED MOST (s6)")
+    f("Section Title [s6_title]",   cms.get("s6_title", ""))
+    f("Intro [s6_descriptions]",    cms.get("s6_descriptions", ""))
+    for i in range(1, 6):
+        f(f"Use Case {i} Title [s6_t{i}]",   cms.get(f"s6_t{i}", ""))
+        f(f"Use Case {i} Desc [s6_desc{i}]", cms.get(f"s6_desc{i}", ""))
+    blank()
+
+    # ── CASE STUDY SNAPSHOT (s7) ──────────────────────────────────────────────
+    sec("CASE STUDY SNAPSHOT (s7)")
+    f("Headline [s7_title]",              cms.get("s7_title", ""))
+    f("Industry Label",                   cms.get("construction", ""))
+    f("Location Label",                   cms.get("singapore", ""))
+    f("Module Label",                     cms.get("open_edge_detection", ""))
+    f("The Problem",                      cms.get("problem_description", ""))
+    f("The Solution",                     cms.get("solution_description", ""))
+    f("The viAct impAct",                 cms.get("viact_impact_descriptions", ""))
+    blank()
+
+    # ── WHY VIACT (s8) ────────────────────────────────────────────────────────
+    sec("WHY VIACT (s8)")
+    f("Section Title [s8_title]",   cms.get("s8_title", ""))
+    f("Intro Line [s8_description]", cms.get("s8_description", ""))
+    for i in range(1, 8):
+        f(f"Bullet {i} [s8_{i}]", cms.get(f"s8_{i}", ""))
+    blank()
+
+    # ── ALT TEXTS ────────────────────────────────────────────────────────────
+    sec("ALT TEXTS")
+    f("Hero Image Alt Text",   cms.get("hero_image_alt_text", ""))
+    f("Image Alt Text 1",      cms.get("image_alt_text_1", ""))
+    f("Image Alt Text 2",      cms.get("image_alt_text_2", ""))
+    f("Image Alt Text 3",      cms.get("image_alt_text_3", ""))
+    f("Image Alt Text 4",      cms.get("image_alt_text_4", ""))
+    f("S7 Image Alt Text",     cms.get("s7_image_alt_text", ""))
+    blank()
+
+    # ── QUALITY GATE ─────────────────────────────────────────────────────────
+    if errors:
+        sec("⚠️ QUALITY GATE WARNINGS")
+        for e in errors:
+            f("Warning", e)
+        blank()
+
+    # Write rows
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    # Format: green section headers + column widths
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+    fmt_requests = []
+    for row_idx in section_rows:
+        fmt_requests.append({
+            "repeatCell": {
+                "range": {"sheetId": sheet_gid, "startRowIndex": row_idx,
+                           "endRowIndex": row_idx + 1, "startColumnIndex": 0, "endColumnIndex": 2},
+                "cell": {"userEnteredFormat": {
+                    "backgroundColor": {"red": 0.718, "green": 0.882, "blue": 0.804},
+                    "textFormat": {"bold": True, "fontSize": 10},
+                }},
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+    fmt_requests += [
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+            "properties": {"pixelSize": 220}, "fields": "pixelSize",
+        }},
+        {"updateDimensionProperties": {
+            "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+            "properties": {"pixelSize": 700}, "fields": "pixelSize",
+        }},
+    ]
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id, body={"requests": fmt_requests},
+    ).execute()
+    return 1
 
 
 if __name__ == "__main__":

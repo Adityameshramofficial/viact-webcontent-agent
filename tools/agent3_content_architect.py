@@ -330,7 +330,7 @@ Return a single JSON object:
 
   "extended_faqs": [],
 
-  "schema_json_ld": "FAQPage JSON-LD using the 3 schema_faqs above",
+  "schema_json_ld": {{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{{"@type": "Question", "name": "[question from schema_faqs 1]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 1]"}}}}, {{"@type": "Question", "name": "[question 2]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 2]"}}}}, {{"@type": "Question", "name": "[question 3]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 3]"}}}}]}},
 
   "seo_suite": {{
     "meta_title": "Max 60 chars — blog format (e.g. '{topic}: Singapore Construction Guide')",
@@ -372,6 +372,8 @@ Return a single JSON object:
         max_tokens=3072,
         response_format={"type": "json_object"},
     ))
+    if isinstance(result.get("schema_json_ld"), dict):
+        result["schema_json_ld"] = json.dumps(result["schema_json_ld"], ensure_ascii=False)
     result["webpage_html"] = build_webpage_html(result)
     return result
 
@@ -485,6 +487,30 @@ def _validate_industry_page(content: dict) -> list[str]:
     return errors
 
 
+def _tavily_industry_research(industry_name: str) -> str:
+    """Fetch live industry stats + regs via Tavily. 2 credits. Returns snippet text ≤1200 chars."""
+    import requests
+    queries = [
+        f"{industry_name} AI safety statistics incidents 2025",
+        f"{industry_name} safety regulation compliance update APAC",
+    ]
+    snippets = []
+    for q in queries:
+        try:
+            resp = requests.post(
+                "https://api.tavily.com/search",
+                json={"api_key": get_env("TAVILY_API_KEY"), "query": q,
+                      "search_depth": "basic", "max_results": 3},
+                timeout=15,
+            )
+            for r in resp.json().get("results", []):
+                snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
+        except Exception:
+            pass
+    combined = "\n".join(snippets[:6])
+    return combined[:1200]
+
+
 def generate_industry_page(
     industry_name: str,
     industry_slug: str,
@@ -493,6 +519,7 @@ def generate_industry_page(
     references: str,
     viact_pages: list[str],
     custom_instructions: str = "",
+    run_tavily: bool = True,
 ) -> dict:
     """
     Generate a full industry vertical landing page for viAct.ai.
@@ -526,6 +553,8 @@ def generate_industry_page(
     competitor_block = _build_competitor_block(competitor_content)
     denied_urls = [u for u, r in competitor_content.items() if not r.get("success")]
     env_desc = _industry_visual_env(industry_name)
+
+    tavily_research = _tavily_industry_research(industry_name) if run_tavily else ""
 
     # Extract real client data from viact.ai page (compact facts, not raw truncated markdown)
     viact_client_data = _extract_viact_client_data(viact_page_content, industry_name, client)
@@ -572,6 +601,9 @@ INSTRUCTIONS: Use client names above for testimonial sources (company type, not 
 
 === VIACT EXISTING PAGE (TONE REFERENCE) ===
 {viact_block}
+
+=== LIVE INDUSTRY RESEARCH (Tavily — use real stats/incidents, do not invent numbers) ===
+{tavily_research if tavily_research else "[No live research available — use verified stats below]"}
 
 === COMPETITOR INDUSTRY PAGES (RESEARCH) ===
 {competitor_block}
@@ -675,7 +707,7 @@ Return a single JSON object. Every field must be fully written out — no placeh
     {{"question": "Can viAct integrate with existing {industry_name} management systems (ERP, SCADA, HSE software)?", "answer": "80-120 words. Integration, API, no rip-and-replace."}}
   ],
 
-  "schema_json_ld": "FAQPage JSON-LD using 5 schema_faqs. Format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
+  "schema_json_ld": {{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{{"@type": "Question", "name": "[question from schema_faqs 1]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 1]"}}}}, {{"@type": "Question", "name": "[question 2]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 2]"}}}}, {{"@type": "Question", "name": "[question 3]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 3]"}}}}, {{"@type": "Question", "name": "[question 4]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 4]"}}}}, {{"@type": "Question", "name": "[question 5]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 5]"}}}}]}},
 
   "seo_suite": {{
     "meta_title": "≤60 chars. E.g. 'AI Safety for {industry_name} | viAct.ai'",
@@ -766,6 +798,8 @@ Return a single JSON object. Every field must be fully written out — no placeh
         truncated = seo["meta_description"][:160].rsplit(" ", 1)[0].rstrip(",. ")
         seo["meta_description"] = truncated
 
+    if isinstance(result.get("schema_json_ld"), dict):
+        result["schema_json_ld"] = json.dumps(result["schema_json_ld"], ensure_ascii=False)
     result["content_type"] = "industry_page"
     result["quality_gate_errors"] = _validate_industry_page(result)  # re-check after post-processing
     result["webpage_html"] = build_webpage_html(result)
@@ -898,7 +932,7 @@ Return a single JSON object with all fields below. Quality over word count — k
     {{"question": "How does viAct differ from checklist-based or wearable safety tools?", "answer": "80-120 words. Real-time detection vs reactive compliance."}}
   ],
 
-  "schema_json_ld": "FAQPage JSON-LD using only the 5 schema_faqs. Format: {{\\\"@context\\\":\\\"https://schema.org\\\",\\\"@type\\\":\\\"FAQPage\\\",\\\"mainEntity\\\":[...]}}",
+  "schema_json_ld": {{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{{"@type": "Question", "name": "[question from schema_faqs 1]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 1]"}}}}, {{"@type": "Question", "name": "[question 2]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 2]"}}}}, {{"@type": "Question", "name": "[question 3]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 3]"}}}}, {{"@type": "Question", "name": "[question 4]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 4]"}}}}, {{"@type": "Question", "name": "[question 5]", "acceptedAnswer": {{"@type": "Answer", "text": "[answer 5]"}}}}]}},
 
   "seo_suite": {{
     "meta_title": "SEO_SUITE — Max 60 chars. Primary keyword + viAct brand name.",
@@ -950,6 +984,8 @@ Return a single JSON object with all fields below. Quality over word count — k
         max_tokens=4096,
         response_format={"type": "json_object"},
     ))
+    if isinstance(result.get("schema_json_ld"), dict):
+        result["schema_json_ld"] = json.dumps(result["schema_json_ld"], ensure_ascii=False)
     result["webpage_html"] = build_webpage_html(result)
     return result
 
