@@ -456,6 +456,30 @@ def push_webpage_vertical(
     sec("DECISION LOGIC (for email to Gary / Surendra)")
     f("Decision Logic", decision_logic or content.get("decision_logic", ""))
 
+    # Fetch sheet metadata (needed for gid + row count check)
+    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+    current_rows = next(
+        s["properties"]["gridProperties"]["rowCount"]
+        for s in meta2["sheets"]
+        if s["properties"]["title"] == tab_name
+    )
+    # Expand sheet rows if needed before writing
+    end_row_needed = start_row + len(rows)
+    if end_row_needed > current_rows:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"appendDimension": {
+                "sheetId": sheet_gid,
+                "dimension": "ROWS",
+                "length": end_row_needed - current_rows + 1000,
+            }}]},
+        ).execute()
+
     # Write rows
     service.spreadsheets().values().update(
         spreadsheetId=sheet_id,
@@ -464,13 +488,7 @@ def push_webpage_vertical(
         body={"values": rows},
     ).execute()
 
-    # Apply formatting
-    meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
-    sheet_gid = next(
-        s["properties"]["sheetId"]
-        for s in meta2["sheets"]
-        if s["properties"]["title"] == tab_name
-    )
+    # Apply formatting (sheet_gid already fetched above)
 
     offset = start_row - 1   # convert to 0-based
     fmt_reqs = []
