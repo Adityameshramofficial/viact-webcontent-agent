@@ -1693,6 +1693,14 @@ with tab_industry:
                 st.session_state["ip_refs_saved"]       = _refs_combined
                 st.session_state["ip_custom_inst_saved"]= ip_custom_inst.strip() if ip_custom_inst else ""
                 st.session_state["ip_step"]             = 1
+                # Auto-save to Sheets immediately after generation
+                try:
+                    from push_to_sheets import push_industry_page_vertical as _push_ip_auto
+                    _auto_ip_sid = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+                    _push_ip_auto(content=_result, industry_name=ip_industry, sheet_id=_auto_ip_sid)
+                    st.toast(f"✓ Auto-saved to Sheets: {ip_industry}")
+                except Exception as _ip_ae:
+                    st.toast(f"⚠ Auto-save failed: {_ip_ae}")
                 _prog.empty()
                 st.rerun()
             except Exception as _e:
@@ -2146,6 +2154,14 @@ with tab_casestudy:
                 st.session_state["cs_result"]       = _cs_result
                 st.session_state["cs_company_saved"] = cs_company.strip()
                 st.session_state["cs_step"]          = 1
+                # Auto-save to Sheets immediately after generation
+                try:
+                    from push_to_sheets import push_case_study as _push_cs_auto
+                    _auto_cs_sid = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+                    _push_cs_auto(_cs_result, sheet_id=_auto_cs_sid)
+                    st.toast(f"✓ Auto-saved to Sheets: {cs_company.strip()}")
+                except Exception as _cs_ae:
+                    st.toast(f"⚠ Auto-save failed: {_cs_ae}")
                 _cs_prog.empty()
                 st.rerun()
             except Exception as _ce:
@@ -2369,6 +2385,13 @@ with tab_va:
             from agent7_video_analytics_page import generate_va_page as _gen_va_page
             _va_res = _gen_va_page(_va_detection, progress_callback=lambda m: st.toast(m))
             st.session_state["va_result"] = _va_res
+            # Auto-save to Sheets immediately after generation
+            try:
+                from push_to_sheets import push_video_analytics_page as _push_va_auto
+                _push_va_auto(_va_res)
+                st.toast(f"✓ Auto-saved to Sheets: VA — {_va_detection}")
+            except Exception as _va_ae:
+                st.toast(f"⚠ Auto-save failed: {_va_ae}")
 
         _va_errors = _va_res.get("quality_gate_errors", [])
         if _va_errors:
