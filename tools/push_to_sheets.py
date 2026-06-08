@@ -1549,6 +1549,7 @@ def push_video_analytics_page(result: dict, sheet_id: str = "") -> int:
 
     # ── META ─────────────────────────────────────────────────────────────────
     sec("META")
+    f("Date",         meta.get("timestamp", "")[:10])  # yyyy-MM-dd for GAS isToday check
     f("Generated",    meta.get("timestamp", "")[:19].replace("T", " ") + " UTC")
     f("Status",       "Draft")
     f("Model",        meta.get("model_used", ""))
