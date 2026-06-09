@@ -87,12 +87,23 @@ LAUNCH_KEYWORDS = [
 ]
 
 
-def _tavily_search(query: str, max_results: int = 5, search_depth: str = "basic") -> list[dict]:
+# Module-level flag — once Tavily limit hit, skip for rest of session
+_TAVILY_LIMIT_HIT = False
+
+
+def _tavily_search_raw(query: str, max_results: int = 5, search_depth: str = "basic"):
+    """
+    Returns list[dict] on success, None when monthly limit hit (432).
+    Caller should set _TAVILY_LIMIT_HIT=True on None and switch to RSS.
+    """
     try:
+        key = os.getenv("TAVILY_API_KEY", "")
+        if not key:
+            return None
         resp = requests.post(
             "https://api.tavily.com/search",
             json={
-                "api_key": get_env("TAVILY_API_KEY"),
+                "api_key": key,
                 "query": query,
                 "search_depth": search_depth,
                 "max_results": max_results,
@@ -100,9 +111,58 @@ def _tavily_search(query: str, max_results: int = 5, search_depth: str = "basic"
             },
             timeout=20,
         )
+        if resp.status_code == 432:   # monthly limit exhausted
+            return None
+        if resp.status_code != 200:
+            return []
         return resp.json().get("results", [])
     except Exception:
         return []
+
+
+def _google_news_search(query: str, max_results: int = 5) -> list[dict]:
+    """Free Google News RSS search — no API key, no limits."""
+    import xml.etree.ElementTree as ET
+    from urllib.parse import quote
+    try:
+        url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return []
+        root = ET.fromstring(resp.content)
+        items = root.findall(".//item")
+        results = []
+        for item in items[:max_results]:
+            title   = item.findtext("title", "")
+            link    = item.findtext("link", "")
+            desc    = item.findtext("description", "")
+            # Strip HTML tags from description
+            import re
+            desc = re.sub(r"<[^>]+>", "", desc)
+            results.append({"title": title, "url": link, "content": desc[:200]})
+        return results
+    except Exception:
+        return []
+
+
+def _web_search(query: str, max_results: int = 5, search_depth: str = "basic") -> list[dict]:
+    """
+    Unified search: Tavily first (credits available) → Google News RSS fallback.
+    Once Tavily limit hit, uses RSS for the entire session automatically.
+    """
+    global _TAVILY_LIMIT_HIT
+    if not _TAVILY_LIMIT_HIT:
+        result = _tavily_search_raw(query, max_results, search_depth)
+        if result is not None:
+            return result
+        _TAVILY_LIMIT_HIT = True
+        print("[search] Tavily limit hit — switching to Google News RSS", flush=True)
+    return _google_news_search(query, max_results)
+
+
+# Keep _tavily_search as alias for backward compatibility (used in competitor_page_monitor)
+def _tavily_search(query: str, max_results: int = 5, search_depth: str = "basic") -> list[dict]:
+    return _web_search(query, max_results, search_depth)
 
 
 def _scan_competitor_news(emit=print) -> list[dict]:

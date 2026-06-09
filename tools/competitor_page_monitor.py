@@ -29,17 +29,45 @@ SNAPSHOT_PATH = os.path.join(
 )
 
 
-def _tavily_search(query: str, max_results: int = 10) -> list[dict]:
-    """Run a Tavily search. Returns list of {title, url, content} dicts."""
-    payload = {
-        "api_key": get_env("TAVILY_API_KEY"),
-        "query": query,
-        "search_depth": "basic",
-        "max_results": max_results,
-    }
-    resp = requests.post("https://api.tavily.com/search", json=payload, timeout=20)
-    resp.raise_for_status()
-    return resp.json().get("results", [])
+def _web_search_pages(query: str, max_results: int = 10) -> list[dict]:
+    """
+    Search for competitor pages: Tavily first → Google News RSS fallback.
+    Used when sitemap.xml is blocked.
+    """
+    # Try Tavily
+    try:
+        key = os.getenv("TAVILY_API_KEY", "")
+        if key:
+            resp = requests.post(
+                "https://api.tavily.com/search",
+                json={"api_key": key, "query": query, "search_depth": "basic",
+                      "max_results": max_results},
+                timeout=20,
+            )
+            if resp.status_code == 200:
+                return resp.json().get("results", [])
+    except Exception:
+        pass
+    # Google News RSS fallback
+    import xml.etree.ElementTree as ET
+    import re
+    from urllib.parse import quote
+    try:
+        url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return []
+        root = ET.fromstring(resp.content)
+        results = []
+        for item in root.findall(".//item")[:max_results]:
+            results.append({
+                "url":     item.findtext("link", ""),
+                "title":   item.findtext("title", ""),
+                "content": re.sub(r"<[^>]+>", "", item.findtext("description", ""))[:300],
+            })
+        return results
+    except Exception:
+        return []
 
 
 def _fetch_sitemap_urls(domain: str) -> list[str]:
@@ -77,10 +105,10 @@ def _get_competitor_urls(competitor: dict) -> list[dict]:
     if sitemap_urls:
         return [{"url": u, "title": "", "snippet": ""} for u in sitemap_urls]
 
-    # Tavily fallback — surfaces recently indexed pages
+    # Web search fallback — surfaces recently indexed pages
     query = f"site:{domain} safety AI construction monitoring"
     try:
-        results = _tavily_search(query, max_results=10)
+        results = _web_search_pages(query, max_results=10)
         return [
             {
                 "url": r.get("url", ""),
