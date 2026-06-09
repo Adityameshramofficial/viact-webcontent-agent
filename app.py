@@ -1525,7 +1525,15 @@ with tab_industry:
     # ── Suggested topic banner (from Daily Intel Scan) ────────────────────────
     _sug_ind = st.session_state.get("suggested_industry_topic")
     if _sug_ind and ip_step == 0:
-        st.info(f"💡 **Today's suggested topic:** {_sug_ind.get('topic', '')} — _{_sug_ind.get('industry', '')}_\n\n_{_sug_ind.get('why', '')}_")
+        _si_col, _si_btn = st.columns([5, 1])
+        with _si_col:
+            st.info(f"💡 **Today's suggested topic:** {_sug_ind.get('topic', '')} — _{_sug_ind.get('industry', '')}_\n\n_{_sug_ind.get('why', '')}_")
+        with _si_btn:
+            st.write("")
+            if st.button("Use This →", key="ip_use_suggested", use_container_width=True):
+                st.session_state["ip_industry_select"] = "Custom (type below) →"
+                st.session_state["ip_custom_industry_text"] = _sug_ind.get("industry", "")
+                st.rerun()
 
     # =========================================================================
     # INDUSTRY STEP 0 — Select Industry & Generate
@@ -2036,11 +2044,19 @@ with tab_casestudy:
     # ── Suggested topic banner (from Daily Intel Scan) ────────────────────────
     _sug_cs = st.session_state.get("suggested_cs_topic")
     if _sug_cs and cs_step == 0:
-        st.info(
-            f"💡 **Today's suggested case study:** {_sug_cs.get('company_type', '')} · "
-            f"{_sug_cs.get('location', '')} · {_sug_cs.get('detection_focus', '')}\n\n"
-            f"_{_sug_cs.get('why', '')}_"
-        )
+        _sc_col, _sc_btn = st.columns([5, 1])
+        with _sc_col:
+            st.info(
+                f"💡 **Today's suggested case study:** {_sug_cs.get('company_type', '')} · "
+                f"{_sug_cs.get('location', '')} · {_sug_cs.get('detection_focus', '')}\n\n"
+                f"_{_sug_cs.get('why', '')}_"
+            )
+        with _sc_btn:
+            st.write("")
+            if st.button("Use This →", key="cs_use_suggested", use_container_width=True):
+                st.session_state["cs_location"] = _sug_cs.get("location", "")
+                st.session_state["cs_products"] = _sug_cs.get("detection_focus", "")
+                st.rerun()
 
     # =========================================================================
     # CASE STUDY STEP 0 — Inputs
@@ -2377,7 +2393,14 @@ with tab_va:
     # ── Suggested topic banner (from Daily Intel Scan) ────────────────────────
     _sug_va = st.session_state.get("suggested_va_topic")
     if _sug_va and st.session_state.get("va_result") is None:
-        st.info(f"💡 **Today's suggested detection:** **{_sug_va.get('detection_name', '')}**\n\n_{_sug_va.get('why', '')}_")
+        _sv_col, _sv_btn = st.columns([5, 1])
+        with _sv_col:
+            st.info(f"💡 **Today's suggested detection:** **{_sug_va.get('detection_name', '')}**\n\n_{_sug_va.get('why', '')}_")
+        with _sv_btn:
+            st.write("")
+            if st.button("Use This →", key="va_use_suggested", use_container_width=True):
+                st.session_state["va_detection_input"] = _sug_va.get("detection_name", "")
+                st.rerun()
 
     _va_detection = st.text_input(
         "Detection Type",
