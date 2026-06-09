@@ -343,11 +343,14 @@ def generate_va_page(
 
     # Hard post-processing: enforce limits the LLM may still miss
     meta_desc = cms.get("meta_descriptions", "")
-    if len(meta_desc) > 160:
-        cms["meta_descriptions"] = meta_desc[:160].rsplit(" ", 1)[0].rstrip(",. ")
+    if len(meta_desc) > 165:
+        cms["meta_descriptions"] = meta_desc[:165].rsplit(" ", 1)[0].rstrip(",. ")
 
     # Ensure title is always set correctly
     cms["title"] = detection_name
+
+    # Re-validate after post-processing so error list reflects final state
+    errors = _validate(cms, detection_name)
 
     return {
         "cms_fields": cms,
