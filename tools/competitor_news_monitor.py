@@ -19,14 +19,35 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import get_env
 
 COMPETITORS = [
-    {"name": "Protex AI",    "domain": "protex.ai"},
-    {"name": "Intenseye",    "domain": "intenseye.com"},
-    {"name": "Visionify",    "domain": "visionify.ai"},
-    {"name": "Wakecap",      "domain": "wakecap.com"},
-    {"name": "OpenSpace",    "domain": "openspace.ai"},
-    {"name": "Safesite",     "domain": "safesitehq.com"},
-    {"name": "Assignar",     "domain": "assignar.com"},
-    {"name": "Voxel AI",     "domain": "voxelai.com"},
+    # ── AI Vision / Computer Vision Safety ──────────────────────────────────
+    {"name": "Protex AI",            "domain": "protex.ai"},
+    {"name": "Intenseye",            "domain": "intenseye.com"},
+    {"name": "Visionify",            "domain": "visionify.ai"},
+    {"name": "Voxel AI",             "domain": "voxelai.com"},
+    {"name": "Smartvid.io",          "domain": "smartvid.io"},
+    {"name": "Detect Technologies",  "domain": "detecttechnologies.com"},
+    {"name": "Chooch",               "domain": "chooch.com"},
+    {"name": "Hakimo AI",            "domain": "hakimo.ai"},
+    {"name": "Surveily",             "domain": "surveily.com"},
+    {"name": "Arvist AI",            "domain": "arvist.ai"},
+    {"name": "Buildots",             "domain": "buildots.com"},
+    {"name": "DroneDeploy",          "domain": "dronedeploy.com"},
+    {"name": "Fyld",                 "domain": "fyld.ai"},
+    {"name": "Attentive AI",         "domain": "attentive.ai"},
+    # ── Wearables / IoT ─────────────────────────────────────────────────────
+    {"name": "Wakecap",              "domain": "wakecap.com"},
+    {"name": "Guardhat",             "domain": "guardhat.com"},
+    {"name": "Proxgy",               "domain": "proxgy.com"},
+    # ── Site Documentation / Progress ───────────────────────────────────────
+    {"name": "OpenSpace",            "domain": "openspace.ai"},
+    # ── Compliance / Safety Management ──────────────────────────────────────
+    {"name": "Safesite",             "domain": "safesitehq.com"},
+    {"name": "Assignar",             "domain": "assignar.com"},
+    {"name": "HammerTech",           "domain": "hammertech.com"},
+    {"name": "Field1st",             "domain": "field1st.com"},
+    {"name": "SafetyCulture",        "domain": "safetyculture.com"},
+    {"name": "Sitedocs",             "domain": "sitedocs.com"},
+    {"name": "SafetyMint",           "domain": "safetymint.com"},
 ]
 
 INDUSTRY_TREND_QUERIES = [

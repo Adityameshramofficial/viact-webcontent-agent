@@ -30,9 +30,20 @@ COMPETITOR_MAP = {
     "ai_vision": {
         "label": "AI Vision / Real-Time Detection",
         "competitors": [
-            {"name": "Protex AI",   "url": "https://www.protex.ai/"},
-            {"name": "Intenseye",   "url": "https://www.intenseye.com/"},
-            {"name": "Visionify",   "url": "https://visionify.ai/"},
+            {"name": "Protex AI",           "url": "https://www.protex.ai/"},
+            {"name": "Intenseye",           "url": "https://www.intenseye.com/"},
+            {"name": "Visionify",           "url": "https://visionify.ai/"},
+            {"name": "Voxel AI",            "url": "https://www.voxelai.com/"},
+            {"name": "Smartvid.io",         "url": "https://www.smartvid.io/"},
+            {"name": "Detect Technologies", "url": "https://www.detecttechnologies.com/"},
+            {"name": "Chooch",              "url": "https://chooch.com/"},
+            {"name": "Hakimo AI",           "url": "https://www.hakimo.ai/"},
+            {"name": "Surveily",            "url": "https://surveily.com/"},
+            {"name": "Arvist AI",           "url": "https://arvist.ai/"},
+            {"name": "Buildots",            "url": "https://www.buildots.com/"},
+            {"name": "DroneDeploy",         "url": "https://www.dronedeploy.com/"},
+            {"name": "Fyld",                "url": "https://fyld.ai/"},
+            {"name": "Attentive AI",        "url": "https://www.attentive.ai/"},
         ],
         "keywords": [
             "computer vision", "ai detection", "real-time", "camera", "vision",
@@ -43,7 +54,9 @@ COMPETITOR_MAP = {
     "wearables_iot": {
         "label": "Wearables / IoT Safety",
         "competitors": [
-            {"name": "Wakecap", "url": "https://wakecap.com/"},
+            {"name": "Wakecap",   "url": "https://wakecap.com/"},
+            {"name": "Guardhat",  "url": "https://guardhat.com/"},
+            {"name": "Proxgy",    "url": "https://proxgy.com/"},
         ],
         "keywords": [
             "wearable", "helmet", "iot", "sensor", "smart device",
@@ -63,8 +76,13 @@ COMPETITOR_MAP = {
     "compliance_checklist": {
         "label": "Compliance / Checklist Tools",
         "competitors": [
-            {"name": "Safesite",  "url": "https://safesitehq.com/"},
-            {"name": "Assignar",  "url": "https://www.assignar.com/"},
+            {"name": "Safesite",       "url": "https://safesitehq.com/"},
+            {"name": "Assignar",       "url": "https://www.assignar.com/"},
+            {"name": "HammerTech",     "url": "https://www.hammertech.com/"},
+            {"name": "Field1st",       "url": "https://field1st.com/"},
+            {"name": "SafetyCulture",  "url": "https://safetyculture.com/"},
+            {"name": "Sitedocs",       "url": "https://www.sitedocs.com/"},
+            {"name": "SafetyMint",     "url": "https://www.safetymint.com/"},
         ],
         "keywords": [
             "checklist", "compliance", "inspection", "form", "audit", "permit",
