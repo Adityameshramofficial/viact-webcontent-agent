@@ -338,8 +338,9 @@ def main():
             log(f"  Dedup log write failed: {exc}")
 
     if not gaps:
-        log("No confirmed gaps found. Check TAVILY_API_KEY and competitor list. Exiting.")
-        sys.exit(1)
+        log("No confirmed gaps found — Tavily limit likely exhausted. Skipping content generation.")
+        log("Daily Full Pipeline will still run (competitor intel scan uses RSS fallback).")
+        return
 
     log(f"Found {len(gaps)} gap(s): {[g['topic'] for g in gaps]}")
 
