@@ -487,8 +487,31 @@ def _validate_industry_page(content: dict) -> list[str]:
     return errors
 
 
+def _google_news_rss(query: str, max_results: int = 3) -> list[dict]:
+    """Google News RSS fallback. Returns [{title, url, content}]."""
+    import xml.etree.ElementTree as ET
+    import re
+    from urllib.parse import quote
+    try:
+        url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return []
+        root = ET.fromstring(resp.content)
+        results = []
+        for item in root.findall(".//item")[:max_results]:
+            results.append({
+                "url": item.findtext("link", ""),
+                "title": item.findtext("title", ""),
+                "content": re.sub(r"<[^>]+>", "", item.findtext("description", ""))[:300],
+            })
+        return results
+    except Exception:
+        return []
+
+
 def _tavily_industry_research(industry_name: str) -> str:
-    """Fetch live industry stats + regs via Tavily. 2 credits. Returns snippet text ≤1200 chars."""
+    """Fetch live industry stats + regs via Tavily, with Google News RSS fallback."""
     import requests
     queries = [
         f"{industry_name} AI safety statistics incidents 2025",
@@ -503,10 +526,15 @@ def _tavily_industry_research(industry_name: str) -> str:
                       "search_depth": "basic", "max_results": 3},
                 timeout=15,
             )
+            if resp.status_code in (429, 432):
+                for r in _google_news_rss(q):
+                    snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
+                continue
             for r in resp.json().get("results", []):
                 snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
         except Exception:
-            pass
+            for r in _google_news_rss(q):
+                snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
     combined = "\n".join(snippets[:6])
     return combined[:1200]
 

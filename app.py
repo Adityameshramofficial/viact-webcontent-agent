@@ -763,13 +763,21 @@ with tab_radar:
                 _tavily_ok = _r.status_code == 200
                 if not _tavily_ok:
                     _err_body = _r.json() if _r.headers.get("content-type","").startswith("application/json") else {}
-                    _err_msg = _err_body.get("message") or _err_body.get("detail") or f"HTTP {_r.status_code}"
-                    st.error(
-                        f"**Tavily API key failed** ({_err_msg}).  "
-                        f"Key in use: `{_tavily_key[:20]}...`  \n\n"
-                        "**Fix:** Get a new free key at [tavily.com](https://tavily.com) "
-                        "and update it in `.env` (local) or Streamlit Cloud → Settings → Secrets."
-                    )
+                    _err_code = _r.status_code
+                    _err_msg = _err_body.get("message") or _err_body.get("detail") or f"HTTP {_err_code}"
+                    if _err_code in (429, 432):
+                        st.warning(
+                            f"**Tavily monthly limit reached** ({_err_msg}). "
+                            "Search will use Google News RSS as fallback — results may vary slightly."
+                        )
+                        _tavily_ok = True  # allow pipeline to continue; agents handle fallback internally
+                    else:
+                        st.error(
+                            f"**Tavily API key failed** ({_err_msg}).  "
+                            f"Key in use: `{_tavily_key[:20]}...`  \n\n"
+                            "**Fix:** Get a new free key at [tavily.com](https://tavily.com) "
+                            "and update it in `.env` (local) or Streamlit Cloud → Settings → Secrets."
+                        )
             except Exception as _te:
                 st.error(f"Tavily connection error: {_te}")
 

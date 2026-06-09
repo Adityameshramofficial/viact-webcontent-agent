@@ -60,8 +60,32 @@ def _groq_call(messages: list[dict], max_tokens: int = 3500, temperature: float 
         raise
 
 
+def _google_news_rss(query: str, max_results: int = 3) -> list:
+    """Google News RSS fallback. Returns [{title, url, content}]."""
+    import requests
+    import xml.etree.ElementTree as ET
+    import re
+    from urllib.parse import quote
+    try:
+        url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return []
+        root = ET.fromstring(resp.content)
+        results = []
+        for item in root.findall(".//item")[:max_results]:
+            results.append({
+                "url": item.findtext("link", ""),
+                "title": item.findtext("title", ""),
+                "content": re.sub(r"<[^>]+>", "", item.findtext("description", ""))[:300],
+            })
+        return results
+    except Exception:
+        return []
+
+
 def _tavily_research(company: str, industry: str, location: str) -> str:
-    """Search for company + viAct context. Returns combined snippet text."""
+    """Search for company + viAct context. Falls back to Google News RSS."""
     import requests
     queries = [
         f"{company} {industry} safety AI viAct results {location}",
@@ -76,10 +100,15 @@ def _tavily_research(company: str, industry: str, location: str) -> str:
                       "search_depth": "basic", "max_results": 3},
                 timeout=15,
             )
+            if resp.status_code in (429, 432):
+                for r in _google_news_rss(q):
+                    snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
+                continue
             for r in resp.json().get("results", []):
                 snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
         except Exception:
-            pass
+            for r in _google_news_rss(q):
+                snippets.append(f"[{r.get('title','')}] {r.get('content','')[:200]}")
     return "\n".join(snippets[:6])
 
 
