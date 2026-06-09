@@ -2637,8 +2637,7 @@ with tab_product:
             "Select a viAct product. The system will:<br>"
             "&nbsp;1. Scrape the existing viact.ai product page (tone reference via Firecrawl)<br>"
             "&nbsp;2. Scrape competitor product pages (optional)<br>"
-            "&nbsp;3. Generate all CMS fields + image prompts (Groq / Llama 3.3 70B)<br>"
-            "&nbsp;4. Generate a designed HTML page (Claude API) — requires ANTHROPIC_API_KEY"
+            "&nbsp;3. Generate all CMS fields + image prompts (Groq / Llama 3.3 70B)"
             "</div></div>"
         ), unsafe_allow_html=True)
 
@@ -2770,45 +2769,6 @@ with tab_product:
             f"<p style='color:#3fb950; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>✓ {_pp_product_label.upper()} — CONTENT GENERATED</p>",
             unsafe_allow_html=True,
         )
-
-        # ── Generate HTML Design (Claude) ──────────────────────────────────────
-        st.markdown(_html(
-            '<div class="glass-card" style="margin-bottom:18px; border-top-color:#3fb950;">'
-            '<div style="font-size:0.88rem; color:#c9d1d9; font-weight:700; margin-bottom:8px;">🎨 Generate HTML Design (Claude Design)</div>'
-            '<div style="color:#8b949e; font-size:0.82rem; line-height:1.6;">'
-            "Uses Claude API to turn the content above into a production-ready HTML page matching viact.ai quality.<br>"
-            "Requires <code style='background:#1a1a1a; padding:1px 5px; border-radius:3px; color:#ff6a3d;'>ANTHROPIC_API_KEY</code> in your .env file."
-            "</div></div>"
-        ), unsafe_allow_html=True)
-
-        _pp_gen_html_col, _pp_dl_col = st.columns([1, 1], gap="small")
-        with _pp_gen_html_col:
-            if st.button("🖥️ Generate HTML Page (Claude Design)", key="pp_gen_html_btn", type="primary"):
-                with st.spinner("Claude is designing the HTML page... (~30 seconds)"):
-                    try:
-                        _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
-                        from claude_designer import generate_product_html as _gph
-                        _pp_html = _gph(
-                            content=_pp_result,
-                            reference_page_md=st.session_state.get("pp_viact_md", ""),
-                        )
-                        st.session_state["pp_html"] = _pp_html
-                        st.success("✓ HTML page generated — download below or preview in your browser.")
-                    except Exception as _html_err:
-                        st.error(f"HTML generation failed: {_html_err}")
-
-        if "pp_html" in st.session_state:
-            with _pp_dl_col:
-                _pp_filename = f"{_pp_result.get('product_slug', 'product-page')}.html"
-                st.download_button(
-                    label="⬇️ Download HTML Page",
-                    data=st.session_state["pp_html"].encode("utf-8"),
-                    file_name=_pp_filename,
-                    mime="text/html",
-                    key="pp_download_html_btn",
-                )
-
-        st.write("")
 
         # ── Content Preview Tabs ───────────────────────────────────────────────
         _pp_t1, _pp_t2, _pp_t3, _pp_t4, _pp_t5, _pp_t6 = st.tabs([
