@@ -59,3 +59,15 @@ jobs:
           path: .tmp/opportunities_*.json
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Run Daily Full Pipeline (Intel Scan + All 5 Agents)
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          INDUSTRY_SHEET_ID: ${{ secrets.INDUSTRY_SHEET_ID }}
+          DEV_MODE: "false"
+        run: python daily_full_pipeline.py

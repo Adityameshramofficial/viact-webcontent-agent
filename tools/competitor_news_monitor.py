@@ -343,6 +343,17 @@ VA_DETECTION_OPTIONS = [
     "Improper Equipment Operation Detection",
 ]
 
+PILLAR_PAGE_TOPICS = [
+    "AI PPE Compliance Monitoring",
+    "Construction Site Safety Automation",
+    "Computer Vision Workplace Safety",
+    "Real-Time Hazard Detection AI",
+    "Safety Compliance Software Construction",
+    "AI Video Analytics Construction",
+    "Fall Detection Construction Sites",
+    "Permit to Work Automation",
+]
+
 
 def _detect_product_launches(competitor_news: list, emit=print) -> list[dict]:
     """
@@ -452,6 +463,8 @@ def _generate_daily_topics(
     industries_str = ", ".join(INDUSTRY_OPTIONS)
     va_options_str = ", ".join(VA_DETECTION_OPTIONS)
 
+    pillar_examples_str = ", ".join(PILLAR_PAGE_TOPICS[:6])
+
     prompt = f"""You are a content strategist for viAct, an AI construction safety platform.
 
 TODAY'S COMPETITOR INTEL:
@@ -463,14 +476,25 @@ TODAY'S INDUSTRY TRENDS:
 TODAY'S MARKETING OPPORTUNITIES:
 {opps_text}
 
-Based on this intel, suggest the SINGLE BEST content topic for each of these 3 page types.
+Based on this intel, suggest the SINGLE BEST content topic for each of these 5 page types.
 Pick topics that are timely, have search demand, and fill competitive gaps.
 
 Available industries (pick one): {industries_str}
 Available VA detections (pick one OR suggest a new one): {va_options_str}
+Pillar page topic examples (or create a new one): {pillar_examples_str}
 
 Return JSON:
 {{
+  "pillar_topic": {{
+    "topic": "SEO-focused pillar page title (8-12 words, target a high-volume keyword)",
+    "primary_keyword": "main keyword this page targets (4-7 words)",
+    "why": "one sentence: why this pillar page is timely based on today's intel"
+  }},
+  "blog_topic": {{
+    "topic": "blog post title (8-14 words, conversational + SEO-friendly)",
+    "primary_keyword": "main keyword this blog targets (4-7 words)",
+    "why": "one sentence: why this blog post angle is relevant today"
+  }},
   "industry_topic": {{
     "industry": "one of the 6 industries above",
     "topic": "specific landing page topic title (8-12 words)",
@@ -493,13 +517,23 @@ Return JSON:
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=500,
+            max_tokens=700,
             temperature=0.5,
             response_format={"type": "json_object"},
         )
         return json.loads(resp.choices[0].message.content)
     except Exception:
         return {
+            "pillar_topic": {
+                "topic": "AI-Powered Construction Site Safety Monitoring Platform",
+                "primary_keyword": "construction site safety AI monitoring",
+                "why": "Fallback — high search volume, core viAct offering.",
+            },
+            "blog_topic": {
+                "topic": "How AI Is Reducing Construction Fatalities in Asia in 2025",
+                "primary_keyword": "AI construction safety Asia 2025",
+                "why": "Fallback — evergreen topic with strong regional relevance.",
+            },
             "industry_topic": {
                 "industry": "Construction Safety",
                 "topic": "AI Safety Monitoring for High-Rise Construction Sites",

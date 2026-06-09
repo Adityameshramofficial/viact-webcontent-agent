@@ -1424,6 +1424,8 @@ DAILY_TOPICS_HEADER = [
     "CS Company Type", "CS Industry", "CS Location", "CS Detection Focus", "CS Why",
     "VA Detection", "VA Why",
     "Urgency",
+    "Pillar Topic", "Pillar Keyword", "Pillar Why",
+    "Blog Topic", "Blog Keyword", "Blog Why",
 ]
 
 
@@ -1472,10 +1474,12 @@ def push_daily_topics(intel: dict, sheet_id: str = "") -> int:
             }]},
         ).execute()
 
-    topics = intel.get("daily_topics", {})
-    ind    = topics.get("industry_topic", {})
-    cs     = topics.get("case_study_topic", {})
-    va     = topics.get("va_topic", {})
+    topics  = intel.get("daily_topics", {})
+    ind     = topics.get("industry_topic", {})
+    cs      = topics.get("case_study_topic", {})
+    va      = topics.get("va_topic", {})
+    pillar  = topics.get("pillar_topic", {})
+    blog    = topics.get("blog_topic", {})
 
     row = [
         intel.get("date", ""),
@@ -1490,6 +1494,12 @@ def push_daily_topics(intel: dict, sheet_id: str = "") -> int:
         va.get("detection_name", ""),
         va.get("why", ""),
         intel.get("urgency", "medium").upper(),
+        pillar.get("topic", ""),
+        pillar.get("primary_keyword", ""),
+        pillar.get("why", ""),
+        blog.get("topic", ""),
+        blog.get("primary_keyword", ""),
+        blog.get("why", ""),
     ]
 
     service.spreadsheets().values().append(

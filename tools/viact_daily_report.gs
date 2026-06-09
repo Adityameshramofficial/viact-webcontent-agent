@@ -312,7 +312,7 @@ function _writeReportToSheet(ss, today, web, ind, va, cs, total) {
   ]);
 }
 
-// ─── SCAN "Daily Topics" tab — today's 3 suggested content topics ─────────────
+// ─── SCAN "Daily Topics" tab — today's 5 suggested content topics ─────────────
 function _scanDailyTopics(today) {
   try {
     const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
@@ -321,7 +321,8 @@ function _scanDailyTopics(today) {
     const data = sh.getDataRange().getValues();
     if (data.length < 2) return null;
     const latest = data[data.length - 1];
-    // Columns: Date|Industry Topic|Industry|Industry Why|CS Company Type|CS Industry|CS Location|CS Detection Focus|CS Why|VA Detection|VA Why|Urgency
+    // Cols 0-11: Date|Industry Topic|Industry|Industry Why|CS Type|CS Ind|CS Loc|CS Detection|CS Why|VA Detection|VA Why|Urgency
+    // Cols 12-17: Pillar Topic|Pillar Keyword|Pillar Why|Blog Topic|Blog Keyword|Blog Why
     if (!latest[0]) return null;
     return {
       date:            String(latest[0]).trim(),
@@ -336,6 +337,12 @@ function _scanDailyTopics(today) {
       vaDetection:     String(latest[9]).trim(),
       vaWhy:           String(latest[10]).trim(),
       urgency:         String(latest[11]).trim(),
+      pillarTopic:     String(latest[12] || '').trim(),
+      pillarKeyword:   String(latest[13] || '').trim(),
+      pillarWhy:       String(latest[14] || '').trim(),
+      blogTopic:       String(latest[15] || '').trim(),
+      blogKeyword:     String(latest[16] || '').trim(),
+      blogWhy:         String(latest[17] || '').trim(),
       isToday:         String(latest[0]).trim() === today,
     };
   } catch(e) {
@@ -799,28 +806,56 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
       </div>` : ''}
     </div>
 
-    <!-- TODAY'S 3 CONTENT TOPICS ────────────────────────────────────────────── -->
+    <!-- TODAY'S 5 CONTENT TOPICS ────────────────────────────────────────────── -->
     ${topics ? `
     <div style="background:#f0f7ff;border:1px solid #c8dff5;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a73e8;margin-bottom:10px;">💡 Today's Content Topics — from Daily Intel Scan</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1a73e8;margin-bottom:10px;">💡 Today's 5 Content Topics — from Daily Intel Scan${topics.isToday ? '' : ' <span style=\'color:#aaa;font-size:9px;font-weight:400;\'>(last scan: ' + _esc(topics.date) + ')</span>'}</div>
+      <!-- Row 1: Pillar + Blog -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+        <tr>
+          <td width="50%" style="padding:4px 8px 4px 0;vertical-align:top;">
+            <div style="background:#fff8f5;border:1px solid #ffd4c0;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#ff6a3d;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🔍 Pillar Page</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.pillarTopic || '—')}</div>
+              ${topics.pillarKeyword ? `<div style="font-size:10px;color:#888;margin-bottom:2px;">Keyword: <strong>${_esc(topics.pillarKeyword)}</strong></div>` : ''}
+              <div style="font-size:10px;color:#aaa;font-style:italic;">${_esc(topics.pillarWhy || '')}</div>
+            </div>
+          </td>
+          <td width="50%" style="padding:4px 0 4px 8px;vertical-align:top;">
+            <div style="background:#f5f8ff;border:1px solid #c8d8ff;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">✍️ Blog Post</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.blogTopic || '—')}</div>
+              ${topics.blogKeyword ? `<div style="font-size:10px;color:#888;margin-bottom:2px;">Keyword: <strong>${_esc(topics.blogKeyword)}</strong></div>` : ''}
+              <div style="font-size:10px;color:#aaa;font-style:italic;">${_esc(topics.blogWhy || '')}</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <!-- Row 2: Industry + Case Study + VA -->
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td width="33%" style="padding:4px 8px 4px 0;vertical-align:top;">
-            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🏭 Industry Page</div>
-            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.industryTopic || '—')}</div>
-            <div style="font-size:10px;color:#888;">${_esc(topics.industryIndustry || '')}</div>
-            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.industryWhy || '')}</div>
+          <td width="33%" style="padding:4px 6px 4px 0;vertical-align:top;">
+            <div style="background:#f0fff4;border:1px solid #c3e6c3;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#3fb950;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🏭 Industry Page</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.industryTopic || '—')}</div>
+              <div style="font-size:10px;color:#888;">${_esc(topics.industryIndustry || '')}</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.industryWhy || '')}</div>
+            </div>
           </td>
-          <td width="33%" style="padding:4px 8px;vertical-align:top;border-left:1px solid #dde8f5;">
-            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">📋 Case Study</div>
-            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.csDetection || '—')}</div>
-            <div style="font-size:10px;color:#888;">${_esc((topics.csType || '') + ' · ' + (topics.csLocation || ''))}</div>
-            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.csWhy || '')}</div>
+          <td width="33%" style="padding:4px 3px;vertical-align:top;">
+            <div style="background:#e0f7fa;border:1px solid #b2ebf2;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#0097a7;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">📋 Case Study</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.csDetection || '—')}</div>
+              <div style="font-size:10px;color:#888;">${_esc((topics.csType || '') + (topics.csLocation ? ' · ' + topics.csLocation : ''))}</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.csWhy || '')}</div>
+            </div>
           </td>
-          <td width="33%" style="padding:4px 0 4px 8px;vertical-align:top;border-left:1px solid #dde8f5;">
-            <div style="font-size:10px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🎯 Video Analytics</div>
-            <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.vaDetection || '—')}</div>
-            <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.vaWhy || '')}</div>
+          <td width="33%" style="padding:4px 0 4px 6px;vertical-align:top;">
+            <div style="background:#f5f0ff;border:1px solid #d4b8f7;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🎯 Video Analytics</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.vaDetection || '—')}</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.vaWhy || '')}</div>
+            </div>
           </td>
         </tr>
       </table>
