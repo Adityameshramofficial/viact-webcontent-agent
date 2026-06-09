@@ -33,7 +33,7 @@ def run_intel_scan() -> dict:
     log("=== Step 1: Competitor Intel Scan ===")
     from competitor_news_monitor import run_daily_monitor
     result = run_daily_monitor(
-        progress_callback=lambda phase, msg: log(f"  {msg}")
+        progress_callback=lambda msg: log(f"  {msg}")
     )
     log(f"  Intel scan complete — urgency: {result.get('urgency', '?').upper()}")
     log(f"  Competitor news: {result.get('counts', {}).get('competitor_news', 0)}")
