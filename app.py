@@ -639,11 +639,12 @@ with tab_radar:
 
         if run_intel:
             from competitor_news_monitor import run_daily_monitor
-            from push_to_sheets import push_competitor_intel, push_daily_topics
+            from push_to_sheets import push_competitor_intel, push_daily_topics, push_product_launches
             with st.spinner("Scanning competitors, trends & topics... ~45 sec"):
                 _intel_result = run_daily_monitor(progress_callback=lambda m: st.toast(m))
             push_competitor_intel(_intel_result)
             push_daily_topics(_intel_result)
+            push_product_launches(_intel_result)
 
             # Save suggested topics to session state for other tabs to pick up
             _dt = _intel_result.get("daily_topics", {})
@@ -675,8 +676,26 @@ with tab_radar:
                 st.markdown(f"**🎯 Video Analytics**")
                 st.markdown(f"**{_va_t.get('detection_name', '—')}**")
                 st.caption(_va_t.get("why", ""))
-            st.success(f"✅ Scan done — {_intel_result['counts']['competitor_news']} competitor news · {_intel_result['counts']['trends']} trends · topics saved to sheet + session")
+            st.success(f"✅ Scan done — {_intel_result['counts']['competitor_news']} competitor news · {_intel_result['counts']['trends']} trends · {_intel_result['counts'].get('product_launches', 0)} launches · topics saved to sheet + session")
             st.divider()
+
+            # ── Competitor Product Launches ───────────────────────────────────
+            _launches = _intel_result.get("product_launches", [])
+            if _launches:
+                st.markdown("### 🚀 Competitor Product Launches Detected")
+                for _launch in _launches:
+                    _lc1, _lc2 = st.columns([4, 1])
+                    with _lc1:
+                        st.warning(
+                            f"**{_launch['competitor']}** — **{_launch['product_name']}**\n\n"
+                            f"{_launch.get('snippet', '')[:150]}..."
+                        )
+                    with _lc2:
+                        if st.button("Respond with Page →", key=f"respond_{abs(hash(_launch['url']))}"):
+                            st.session_state["product_prefill_url"]  = _launch["url"]
+                            st.session_state["product_prefill_name"] = _launch["product_name"]
+                            st.rerun()
+                st.divider()
 
             # ── Intel details ─────────────────────────────────────────────────
             _urgency = _intel_result.get("urgency", "medium").upper()
@@ -2563,6 +2582,13 @@ with tab_product:
             st.rerun()
 
     st.write("")
+
+    # ── Competitor launch prefill banner ──────────────────────────────────────
+    _pp_prefill_url  = st.session_state.pop("product_prefill_url", None)
+    _pp_prefill_name = st.session_state.pop("product_prefill_name", None)
+    if _pp_prefill_url:
+        st.info(f"💡 Responding to competitor launch: **{_pp_prefill_name}** — URL pre-filled in competitor URLs below.")
+        st.session_state["pp_competitor_urls"] = _pp_prefill_url
 
     # =========================================================================
     # PRODUCT STEP 0 — Configure + Run

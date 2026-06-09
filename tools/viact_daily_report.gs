@@ -96,8 +96,9 @@ function sendDailyViActReport() {
   const vaItems   = _scanVATabs(today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
-  const intelItem = _scanCompetitorIntel(today);
-  const topics    = _scanDailyTopics(today);
+  const intelItem  = _scanCompetitorIntel(today);
+  const topics     = _scanDailyTopics(today);
+  const launches   = _scanProductLaunches(today);
 
   // Stats: count only TODAY's entries
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
@@ -111,7 +112,7 @@ function sendDailyViActReport() {
   _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics);
+  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches);
   const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, dateLabel, radarStatus, triggerTime);
 
   const mailOptions = { htmlBody, name: 'viAct Content Agent' };
@@ -376,6 +377,32 @@ function _scanCompetitorIntel(today) {
   }
 }
 
+// ─── SCAN "Product Launches" tab — competitor product launches ─────────────────
+function _scanProductLaunches(today) {
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    const sh = indSs.getSheetByName('Product Launches');
+    if (!sh) return [];
+    const lastRow = sh.getLastRow();
+    if (lastRow < 2) return [];
+    // Columns: Date | Competitor | Product / Feature Name | URL | Snippet | Status
+    const data = sh.getRange(2, 1, lastRow - 1, 6).getValues();
+    return data
+      .filter(r => String(r[0]).trim() === today)
+      .map(r => ({
+        date:        String(r[0]).trim(),
+        competitor:  String(r[1]).trim(),
+        productName: String(r[2]).trim(),
+        url:         String(r[3]).trim(),
+        snippet:     String(r[4]).trim(),
+        status:      String(r[5]).trim(),
+      }));
+  } catch(e) {
+    Logger.log('_scanProductLaunches error: ' + e.message);
+    return [];
+  }
+}
+
 // ─── SCAN "Opportunities" tab — today's new gaps ───────────────────────────────
 function _scanOpportunities(today) {
   try {
@@ -564,8 +591,33 @@ function _buildUpdateBanner(dateLabel) {
   </div>`;
 }
 
+// ─── COMPETITOR PRODUCT LAUNCHES SECTION ──────────────────────────────────────
+function _productLaunchesSection(launches) {
+  if (!launches || launches.length === 0) return '';
+  const cards = launches.map(l => `
+    <div style="background:#fff8f0;border:1px solid #f97316;border-left:4px solid #f97316;border-radius:8px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div>
+          <span style="background:#f97316;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:1px;">NEW LAUNCH</span>
+          <span style="font-size:12px;font-weight:700;color:#1a1a1a;margin-left:8px;">${_esc(l.competitor)}</span>
+        </div>
+        <span style="font-size:10px;color:#999;">${_esc(l.date)}</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:6px;">${_esc(l.productName)}</div>
+      <div style="font-size:11px;color:#555;line-height:1.5;margin-bottom:8px;">${_esc(l.snippet.substring(0,180))}${l.snippet.length > 180 ? '…' : ''}</div>
+      ${l.url ? `<a href="${_esc(l.url)}" style="font-size:11px;color:#f97316;text-decoration:none;font-weight:600;">View Launch →</a>` : ''}
+    </div>`).join('');
+  return `
+  <div style="margin-bottom:20px;">
+    <div style="font-size:11px;font-weight:700;color:#f97316;margin-bottom:10px;padding:6px 10px;background:#fff8f0;border-radius:6px;border-left:3px solid #f97316;">
+      🚀 Competitor Product Launches — ${launches.length} Detected Today
+    </div>
+    ${cards}
+  </div>`;
+}
+
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics) {
+function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches) {
   radarStatus = radarStatus || 'skipped';
   triggerTime = triggerTime || '';
   commits     = commits     || [];
@@ -828,6 +880,9 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
 
       <!-- Competitor Intel Output -->
       ${_marketIntelSection(intel)}
+
+      <!-- Competitor Product Launches -->
+      ${_productLaunchesSection(launches)}
 
       <!-- Opportunity Scanner Output -->
       <div style="margin-bottom:20px;">
@@ -1101,6 +1156,7 @@ function testSendNow() {
   const csItems   = _scanCaseStudies(today);
   const intelItem = _scanCompetitorIntel(today);
   const topics    = _scanDailyTopics(today);
+  const launches  = _scanProductLaunches(today);
   const todayPillar = webItems.pillar.filter(p => p.isToday).length;
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
@@ -1111,7 +1167,7 @@ function testSendNow() {
   _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, total);
   const triggerTime = Utilities.formatDate(new Date(), TIMEZONE, 'hh:mm a');
   const subject  = `[TEST] viAct AI Daily Report — ${dateLabel}`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, 'skipped', triggerTime, commits, topics);
+  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, 'skipped', triggerTime, commits, topics, launches);
   const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, dateLabel, 'skipped', triggerTime);
   const mailOptions = { htmlBody, name: 'viAct Content Agent' };
   if (CC.length) mailOptions.cc = CC.join(',');

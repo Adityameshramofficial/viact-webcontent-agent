@@ -44,6 +44,18 @@ MARKETING_OPPORTUNITY_QUERIES = [
     "workplace safety compliance regulation new 2025",
 ]
 
+PRODUCT_LAUNCH_QUERIES = [
+    "Protex AI OR Intenseye OR Visionify OR Voxel AI new product launch feature release 2025",
+    "construction safety AI software new product announcement release 2025",
+]
+
+LAUNCH_KEYWORDS = [
+    "launch", "launches", "launched", "release", "released", "releases",
+    "new product", "new feature", "new module", "new capability",
+    "introduces", "introduce", "announces", "announced", "unveils", "unveiled",
+    "new solution", "new platform", "new tool",
+]
+
 
 def _tavily_search(query: str, max_results: int = 5, search_depth: str = "basic") -> list[dict]:
     try:
@@ -216,6 +228,86 @@ VA_DETECTION_OPTIONS = [
 ]
 
 
+def _detect_product_launches(competitor_news: list, emit=print) -> list[dict]:
+    """
+    Detect competitor product launches by:
+    1. Filtering existing competitor_news for launch keywords (0 extra credits)
+    2. Running 2 dedicated Tavily queries (2 credits)
+    Then using Groq to extract a clean product_name from each match.
+    """
+    from groq import Groq
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    seen_urls = set()
+    raw_launches = []
+
+    # Pass 1 — filter existing competitor_news
+    for item in competitor_news:
+        text = (item.get("title", "") + " " + item.get("snippet", "")).lower()
+        if any(kw in text for kw in LAUNCH_KEYWORDS):
+            url = item.get("url", "")
+            if url not in seen_urls:
+                seen_urls.add(url)
+                raw_launches.append(item)
+
+    # Pass 2 — 2 dedicated Tavily queries
+    emit("  Scanning for competitor product launches (2 Tavily credits)...")
+    for query in PRODUCT_LAUNCH_QUERIES:
+        hits = _tavily_search(query, max_results=4)
+        for h in hits:
+            url = h.get("url", "")
+            if url in seen_urls:
+                continue
+            # Match to a known competitor
+            matched_comp = next(
+                (c["name"] for c in COMPETITORS if c["domain"] in url or c["name"].lower().replace(" ", "") in url.lower()),
+                None,
+            )
+            text = (h.get("title", "") + " " + h.get("content", "")).lower()
+            if matched_comp and any(kw in text for kw in LAUNCH_KEYWORDS):
+                seen_urls.add(url)
+                raw_launches.append({
+                    "competitor": matched_comp,
+                    "title":      h.get("title", ""),
+                    "url":        url,
+                    "snippet":    h.get("content", "")[:200],
+                })
+
+    if not raw_launches:
+        return []
+
+    # Groq call to extract clean product_name from each title
+    try:
+        client = Groq(api_key=get_env("GROQ_API_KEY"))
+        items_text = "\n".join(
+            f"{i+1}. [{r.get('competitor','Unknown')}] {r.get('title','')}"
+            for i, r in enumerate(raw_launches[:8])
+        )
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": (
+                f"For each competitor news item below, extract a clean product or feature name (3-7 words max).\n\n{items_text}\n\n"
+                "Return JSON: {\"names\": [\"Product Name 1\", \"Product Name 2\", ...]}"
+            )}],
+            max_tokens=300,
+            temperature=0.2,
+            response_format={"type": "json_object"},
+        )
+        names = json.loads(resp.choices[0].message.content).get("names", [])
+    except Exception:
+        names = []
+
+    launches = []
+    for i, item in enumerate(raw_launches[:8]):
+        launches.append({
+            "competitor":    item.get("competitor", "Unknown"),
+            "product_name":  names[i] if i < len(names) else item.get("title", "")[:60],
+            "url":           item.get("url", ""),
+            "snippet":       item.get("snippet", "")[:200],
+            "date":          today,
+        })
+    return launches
+
+
 def _generate_daily_topics(
     competitor_news: list,
     trends: list,
@@ -333,6 +425,9 @@ def run_daily_monitor(progress_callback=None) -> dict:
     emit("Step 5/5 — Generating today's 3 content topics...")
     daily_topics = _generate_daily_topics(competitor_news, trends, opportunities, emit)
 
+    emit("Step 5b — Detecting competitor product launches...")
+    product_launches = _detect_product_launches(competitor_news, emit)
+
     return {
         "timestamp":        datetime.now(timezone.utc).isoformat(),
         "date":             datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -345,9 +440,11 @@ def run_daily_monitor(progress_callback=None) -> dict:
         "industry_trends":  trends,
         "marketing_opportunities": opportunities,
         "daily_topics":     daily_topics,
+        "product_launches": product_launches,
         "counts": {
             "competitor_news":  len(competitor_news),
             "trends":           len(trends),
             "opportunities":    len(opportunities),
+            "product_launches": len(product_launches),
         },
     }

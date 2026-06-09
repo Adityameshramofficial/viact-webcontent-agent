@@ -1502,6 +1502,83 @@ def push_daily_topics(intel: dict, sheet_id: str = "") -> int:
     return 1
 
 
+# ── Product Launches — competitor product/feature launch tracker ──────────────
+
+PRODUCT_LAUNCHES_TAB = "Product Launches"
+PRODUCT_LAUNCHES_HEADER = [
+    "Date", "Competitor", "Product / Feature Name", "URL", "Snippet", "Status",
+]
+
+
+def push_product_launches(intel: dict, sheet_id: str = "") -> int:
+    """
+    Append today's detected competitor product launches to 'Product Launches' tab.
+    Creates tab + dark-blue header on first call. Appends — never overwrites.
+    Returns number of rows written.
+    """
+    launches = intel.get("product_launches", [])
+    if not launches:
+        return 0
+
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service = get_sheets_service()
+
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if PRODUCT_LAUNCHES_TAB not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": PRODUCT_LAUNCHES_TAB}}}]},
+        ).execute()
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"'{PRODUCT_LAUNCHES_TAB}'!A1",
+            valueInputOption="RAW",
+            body={"values": [PRODUCT_LAUNCHES_HEADER]},
+        ).execute()
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        gid = next(s["properties"]["sheetId"] for s in meta2["sheets"]
+                   if s["properties"]["title"] == PRODUCT_LAUNCHES_TAB)
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(PRODUCT_LAUNCHES_HEADER)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.051, "green": 0.110, "blue": 0.310},
+                        "textFormat": {"bold": True, "fontSize": 10,
+                                       "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    rows = [
+        [
+            launch.get("date", ""),
+            launch.get("competitor", ""),
+            launch.get("product_name", ""),
+            launch.get("url", ""),
+            launch.get("snippet", "")[:200],
+            "New",
+        ]
+        for launch in launches
+    ]
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{PRODUCT_LAUNCHES_TAB}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": rows},
+    ).execute()
+    return len(rows)
+
+
 # ── Video Analytics Item Pages — one tab per detection type ──────────────────
 
 def push_video_analytics_page(result: dict, sheet_id: str = "") -> int:
