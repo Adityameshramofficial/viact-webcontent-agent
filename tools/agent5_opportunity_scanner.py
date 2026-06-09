@@ -52,7 +52,31 @@ def _topic_slug(topic: str) -> str:
     return " ".join(sorted(topic.lower().split()))
 
 
+def _google_news_rss(query: str, max_results: int = 5) -> list[dict]:
+    """Google News RSS fallback. Returns [{title, url, content}]."""
+    import xml.etree.ElementTree as ET
+    import re
+    from urllib.parse import quote
+    try:
+        url = f"https://news.google.com/rss/search?q={quote(query)}&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return []
+        root = ET.fromstring(resp.content)
+        results = []
+        for item in root.findall(".//item")[:max_results]:
+            results.append({
+                "url": item.findtext("link", ""),
+                "title": item.findtext("title", ""),
+                "content": re.sub(r"<[^>]+>", "", item.findtext("description", ""))[:300],
+            })
+        return results
+    except Exception:
+        return []
+
+
 def _tavily_search(query: str, max_results: int = 5, include_domains: list | None = None) -> list[dict]:
+    """Run a Tavily search. Falls back to Google News RSS on 429/432 or any error."""
     payload: dict = {
         "api_key": get_env("TAVILY_API_KEY"),
         "query": query,
@@ -63,10 +87,12 @@ def _tavily_search(query: str, max_results: int = 5, include_domains: list | Non
         payload["include_domains"] = include_domains
     try:
         resp = requests.post("https://api.tavily.com/search", json=payload, timeout=20)
+        if resp.status_code in (429, 432):
+            return _google_news_rss(query, max_results)
         resp.raise_for_status()
         return resp.json().get("results", [])
     except Exception:
-        return []
+        return _google_news_rss(query, max_results)
 
 
 def _groq_call(messages: list[dict], max_tokens: int = 1500, temperature: float = 0.4) -> str:
