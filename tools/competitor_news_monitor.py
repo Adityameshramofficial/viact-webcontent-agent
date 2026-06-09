@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 import requests
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import get_env
+from utils import get_env, scrape_url
 
 COMPETITORS = [
     # ── AI Vision / Computer Vision Safety ──────────────────────────────────
@@ -481,21 +481,11 @@ def _detect_website_changes(emit=print) -> list[dict]:
     if not raw_changes:
         return []
 
-    # Optional: Firecrawl snippet for NEW pages only
-    firecrawl_key = os.getenv("FIRECRAWL_API_KEY", "")
+    # Fetch content snippet for NEW pages via scrape_url (Firecrawl → Jina fallback)
     for ch in raw_changes[:8]:
-        if ch.get("change_type") == "new_page" and firecrawl_key:
-            try:
-                r = requests.post(
-                    "https://api.firecrawl.dev/v1/scrape",
-                    headers={"Authorization": f"Bearer {firecrawl_key}"},
-                    json={"url": ch["url"], "formats": ["markdown"], "onlyMainContent": True},
-                    timeout=15,
-                )
-                md = r.json().get("data", {}).get("markdown", "")
-                ch["content_snippet"] = md[:400]
-            except Exception:
-                ch["content_snippet"] = ch.get("snippet", "")
+        if ch.get("change_type") == "new_page":
+            content = scrape_url(ch["url"], max_chars=400)
+            ch["content_snippet"] = content if content else ch.get("snippet", "")
         else:
             ch["content_snippet"] = ch.get("snippet", "")
 

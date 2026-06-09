@@ -20,58 +20,25 @@ if sys.stderr.encoding != "utf-8":
     sys.stderr.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, os.path.dirname(__file__))
-from utils import get_env
+from utils import get_env, scrape_url
 
 import requests
 
 ACCESS_DENIED = "[ACCESS DENIED]"
-FIRECRAWL_ENDPOINT = "https://api.firecrawl.dev/v1/scrape"
 
 
 def _scrape_one(url: str) -> dict:
     """
-    Scrape a single URL via Firecrawl.
+    Scrape a single URL via scrape_url() — Firecrawl first, Jina fallback.
+    DEV_MODE=true skips Firecrawl and uses Jina directly.
     Returns {"success": True/False, "markdown": "...", "word_count": N}.
-    ACCESS_DENIED sentinel is set on any failure.
     """
-    try:
-        resp = requests.post(
-            FIRECRAWL_ENDPOINT,
-            headers={
-                "Authorization": f"Bearer {get_env('FIRECRAWL_API_KEY')}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "url": url,
-                "formats": ["markdown"],
-                "onlyMainContent": True,
-            },
-            timeout=30,
-        )
-        if resp.status_code != 200:
-            return {"success": False, "markdown": ACCESS_DENIED, "word_count": 0,
-                    "error": f"HTTP {resp.status_code}"}
-
-        data = resp.json()
-        if not data.get("success"):
-            return {"success": False, "markdown": ACCESS_DENIED, "word_count": 0,
-                    "error": data.get("error", "Firecrawl returned success=false")}
-
-        markdown = (data.get("data", {}).get("markdown") or "").strip()
-        if not markdown:
-            return {"success": False, "markdown": ACCESS_DENIED, "word_count": 0,
-                    "error": "Empty markdown returned"}
-
-        truncated = markdown[:6000]
-        word_count = len(truncated.split())
-        return {"success": True, "markdown": truncated, "word_count": word_count}
-
-    except requests.exceptions.Timeout:
+    markdown = scrape_url(url, max_chars=6000)
+    if not markdown or markdown.strip() == "":
         return {"success": False, "markdown": ACCESS_DENIED, "word_count": 0,
-                "error": "Timeout after 30s"}
-    except Exception as exc:
-        return {"success": False, "markdown": ACCESS_DENIED, "word_count": 0,
-                "error": str(exc)}
+                "error": "No content returned"}
+    word_count = len(markdown.split())
+    return {"success": True, "markdown": markdown, "word_count": word_count}
 
 
 def extract_competitor_content(urls: list[str], progress_callback=None) -> dict:
