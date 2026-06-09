@@ -639,12 +639,13 @@ with tab_radar:
 
         if run_intel:
             from competitor_news_monitor import run_daily_monitor
-            from push_to_sheets import push_competitor_intel, push_daily_topics, push_product_launches
+            from push_to_sheets import push_competitor_intel, push_daily_topics, push_product_launches, push_competitor_site_changes
             with st.spinner("Scanning competitors, trends & topics... ~45 sec"):
                 _intel_result = run_daily_monitor(progress_callback=lambda m: st.toast(m))
             push_competitor_intel(_intel_result)
             push_daily_topics(_intel_result)
             push_product_launches(_intel_result)
+            push_competitor_site_changes(_intel_result)
 
             # Save suggested topics to session state for other tabs to pick up
             _dt = _intel_result.get("daily_topics", {})
@@ -676,7 +677,7 @@ with tab_radar:
                 st.markdown(f"**🎯 Video Analytics**")
                 st.markdown(f"**{_va_t.get('detection_name', '—')}**")
                 st.caption(_va_t.get("why", ""))
-            st.success(f"✅ Scan done — {_intel_result['counts']['competitor_news']} competitor news · {_intel_result['counts']['trends']} trends · {_intel_result['counts'].get('product_launches', 0)} launches · topics saved to sheet + session")
+            st.success(f"✅ Scan done — {_intel_result['counts']['competitor_news']} competitor news · {_intel_result['counts']['trends']} trends · {_intel_result['counts'].get('product_launches', 0)} launches · {_intel_result['counts'].get('website_changes', 0)} site changes · topics saved to sheet + session")
             st.divider()
 
             # ── Competitor Product Launches ───────────────────────────────────
@@ -694,6 +695,30 @@ with tab_radar:
                         if st.button("Respond with Page →", key=f"respond_{abs(hash(_launch['url']))}"):
                             st.session_state["product_prefill_url"]  = _launch["url"]
                             st.session_state["product_prefill_name"] = _launch["product_name"]
+                            st.rerun()
+                st.divider()
+
+            # ── Competitor Website Changes ────────────────────────────────────
+            _wchanges = _intel_result.get("website_changes", [])
+            if _wchanges:
+                st.markdown("### 🔍 Competitor Website Changes")
+                for _wc in _wchanges:
+                    _wc1, _wc2 = st.columns([4, 1])
+                    with _wc1:
+                        _wc_badge = "🆕 New Page" if _wc["change_type"] == "new_page" else "✏️ Updated"
+                        _wc_title = _wc.get("title") or _wc.get("url", "")
+                        st.info(
+                            f"{_wc_badge} **{_wc['competitor']}** — "
+                            f"[{_wc_title[:80]}]({_wc['url']})\n\n"
+                            f"💡 *{_wc['marketing_response']}*"
+                        )
+                    with _wc2:
+                        if st.button("Build Counter-Page →", key=f"counter_{abs(hash(_wc['url']))}"):
+                            st.session_state["suggested_industry_topic"] = {
+                                "industry": "Construction Safety",
+                                "topic": f"viAct vs {_wc['competitor']}: {_wc_title[:60]}",
+                                "why": _wc["marketing_response"],
+                            }
                             st.rerun()
                 st.divider()
 

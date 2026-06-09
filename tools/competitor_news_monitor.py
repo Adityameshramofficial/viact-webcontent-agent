@@ -403,6 +403,85 @@ Return JSON:
         }
 
 
+def _detect_website_changes(emit=print) -> list[dict]:
+    """
+    Detect new/updated pages on competitor websites via sitemap comparison.
+    Calls competitor_page_monitor.get_new_competitor_pages() (0–4 Tavily credits).
+    For NEW pages: optionally fetches content via Firecrawl.
+    For each change: Groq generates a 1-sentence marketing response.
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(__file__))
+        from competitor_page_monitor import get_new_competitor_pages
+    except ImportError:
+        return []
+
+    emit("  Scanning competitor websites for page changes...")
+    try:
+        raw_changes = get_new_competitor_pages(progress_callback=lambda phase, msg: None)
+    except Exception:
+        return []
+
+    if not raw_changes:
+        return []
+
+    # Optional: Firecrawl snippet for NEW pages only
+    firecrawl_key = os.getenv("FIRECRAWL_API_KEY", "")
+    for ch in raw_changes[:8]:
+        if ch.get("change_type") == "new_page" and firecrawl_key:
+            try:
+                r = requests.post(
+                    "https://api.firecrawl.dev/v1/scrape",
+                    headers={"Authorization": f"Bearer {firecrawl_key}"},
+                    json={"url": ch["url"], "formats": ["markdown"], "onlyMainContent": True},
+                    timeout=15,
+                )
+                md = r.json().get("data", {}).get("markdown", "")
+                ch["content_snippet"] = md[:400]
+            except Exception:
+                ch["content_snippet"] = ch.get("snippet", "")
+        else:
+            ch["content_snippet"] = ch.get("snippet", "")
+
+    # Groq: 1-sentence marketing response for each change
+    try:
+        from groq import Groq
+        client = Groq(api_key=get_env("GROQ_API_KEY"))
+        items_text = "\n".join(
+            f"{i+1}. [{ch.get('competitor','')}] {ch.get('change_type','').upper()}: {ch.get('title', ch.get('url',''))}"
+            for i, ch in enumerate(raw_changes[:8])
+        )
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": (
+                "You are a marketing strategist for viAct (AI construction safety). "
+                "For each competitor website change below, suggest a 1-sentence marketing action viAct should take.\n\n"
+                f"{items_text}\n\n"
+                'Return JSON: {"responses": ["action 1", "action 2", ...]}'
+            )}],
+            max_tokens=400,
+            temperature=0.4,
+            response_format={"type": "json_object"},
+        )
+        responses = json.loads(resp.choices[0].message.content).get("responses", [])
+    except Exception:
+        responses = []
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    result = []
+    for i, ch in enumerate(raw_changes[:8]):
+        result.append({
+            "date":               today,
+            "competitor":         ch.get("competitor", ""),
+            "change_type":        ch.get("change_type", "new_page"),
+            "url":                ch.get("url", ""),
+            "title":              ch.get("title", ""),
+            "content_snippet":    ch.get("content_snippet", "")[:300],
+            "marketing_response": responses[i] if i < len(responses) else "Monitor this change and create a counter-page.",
+        })
+    return result
+
+
 def run_daily_monitor(progress_callback=None) -> dict:
     """
     Run full competitor + trend + opportunity scan.
@@ -410,22 +489,25 @@ def run_daily_monitor(progress_callback=None) -> dict:
     """
     emit = progress_callback or print
 
-    emit("Step 1/4 — Scanning competitor news...")
+    emit("Step 0/6 — Checking competitor websites for changes...")
+    website_changes = _detect_website_changes(emit)
+
+    emit("Step 1/6 — Scanning competitor news...")
     competitor_news = _scan_competitor_news(emit)
 
-    emit("Step 2/4 — Scanning industry trends...")
+    emit("Step 2/6 — Scanning industry trends...")
     trends = _scan_industry_trends(emit)
 
-    emit("Step 3/4 — Scanning marketing opportunities...")
+    emit("Step 3/6 — Scanning marketing opportunities...")
     opportunities = _scan_marketing_opportunities(emit)
 
-    emit("Step 4/5 — Generating AI executive summary...")
+    emit("Step 4/6 — Generating AI executive summary...")
     summary = _llm_summarize(competitor_news, trends, opportunities)
 
-    emit("Step 5/5 — Generating today's 3 content topics...")
+    emit("Step 5/6 — Generating today's 3 content topics...")
     daily_topics = _generate_daily_topics(competitor_news, trends, opportunities, emit)
 
-    emit("Step 5b — Detecting competitor product launches...")
+    emit("Step 6/6 — Detecting competitor product launches...")
     product_launches = _detect_product_launches(competitor_news, emit)
 
     return {
@@ -436,15 +518,17 @@ def run_daily_monitor(progress_callback=None) -> dict:
         "trending_topic":       summary.get("trending_topic", ""),
         "viact_opportunity":    summary.get("viact_opportunity", ""),
         "urgency":              summary.get("urgency", "medium"),
-        "competitor_news":  competitor_news,
-        "industry_trends":  trends,
+        "competitor_news":      competitor_news,
+        "industry_trends":      trends,
         "marketing_opportunities": opportunities,
-        "daily_topics":     daily_topics,
-        "product_launches": product_launches,
+        "daily_topics":         daily_topics,
+        "product_launches":     product_launches,
+        "website_changes":      website_changes,
         "counts": {
             "competitor_news":  len(competitor_news),
             "trends":           len(trends),
             "opportunities":    len(opportunities),
             "product_launches": len(product_launches),
+            "website_changes":  len(website_changes),
         },
     }

@@ -1579,6 +1579,86 @@ def push_product_launches(intel: dict, sheet_id: str = "") -> int:
     return len(rows)
 
 
+# ── Competitor Site Changes — website page change tracker ─────────────────────
+
+COMPETITOR_SITE_CHANGES_TAB = "Competitor Site Changes"
+COMPETITOR_SITE_CHANGES_HEADER = [
+    "Date", "Competitor", "Change Type", "URL",
+    "Page Title", "Content Snippet", "Marketing Response", "Status",
+]
+
+
+def push_competitor_site_changes(intel: dict, sheet_id: str = "") -> int:
+    """
+    Append today's detected competitor website changes to 'Competitor Site Changes' tab.
+    Creates tab + teal header on first call. Appends — never overwrites.
+    Returns number of rows written.
+    """
+    changes = intel.get("website_changes", [])
+    if not changes:
+        return 0
+
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service = get_sheets_service()
+
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if COMPETITOR_SITE_CHANGES_TAB not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": COMPETITOR_SITE_CHANGES_TAB}}}]},
+        ).execute()
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITOR_SITE_CHANGES_TAB}'!A1",
+            valueInputOption="RAW",
+            body={"values": [COMPETITOR_SITE_CHANGES_HEADER]},
+        ).execute()
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        gid = next(s["properties"]["sheetId"] for s in meta2["sheets"]
+                   if s["properties"]["title"] == COMPETITOR_SITE_CHANGES_TAB)
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(COMPETITOR_SITE_CHANGES_HEADER)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.0, "green": 0.412, "blue": 0.361},
+                        "textFormat": {"bold": True, "fontSize": 10,
+                                       "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    rows = [
+        [
+            ch.get("date", ""),
+            ch.get("competitor", ""),
+            ch.get("change_type", "").replace("_", " ").title(),
+            ch.get("url", ""),
+            ch.get("title", ""),
+            ch.get("content_snippet", "")[:200],
+            ch.get("marketing_response", ""),
+            "New",
+        ]
+        for ch in changes
+    ]
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{COMPETITOR_SITE_CHANGES_TAB}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": rows},
+    ).execute()
+    return len(rows)
+
+
 # ── Video Analytics Item Pages — one tab per detection type ──────────────────
 
 def push_video_analytics_page(result: dict, sheet_id: str = "") -> int:
