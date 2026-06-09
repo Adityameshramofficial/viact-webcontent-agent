@@ -65,6 +65,15 @@ MARKETING_OPPORTUNITY_QUERIES = [
     "workplace safety compliance regulation new 2025",
 ]
 
+# Batched news queries — 5 searches cover all 25 competitors (5 credits vs 25)
+COMPETITOR_NEWS_BATCHES = [
+    "Protex AI OR Intenseye OR Visionify OR Voxel AI OR Smartvid construction safety news 2025",
+    "Detect Technologies OR Chooch OR Hakimo AI OR Surveily OR Arvist AI safety AI 2025",
+    "Buildots OR DroneDeploy OR Fyld OR Attentive AI construction safety news 2025",
+    "SafetyCulture OR HammerTech OR Field1st OR Safesite OR Assignar safety software news 2025",
+    "Wakecap OR Guardhat OR Proxgy OR OpenSpace OR SafetyMint workplace safety 2025",
+]
+
 PRODUCT_LAUNCH_QUERIES = [
     "Protex AI OR Intenseye OR Visionify OR Voxel AI new product launch feature release 2025",
     "construction safety AI software new product announcement release 2025",
@@ -97,23 +106,49 @@ def _tavily_search(query: str, max_results: int = 5, search_depth: str = "basic"
 
 
 def _scan_competitor_news(emit=print) -> list[dict]:
-    """Search for recent news/announcements from each competitor."""
+    """
+    Search for recent competitor news using 5 batched queries (5 credits total).
+    Each batch covers 5 competitors. Results tagged by which competitor is mentioned.
+    """
+    emit("  Scanning competitor news (batched)...")
     results = []
-    for comp in COMPETITORS:
-        emit(f"  Scanning {comp['name']}...")
-        query = f"{comp['name']} {comp['domain']} new feature product launch announcement 2025"
-        hits = _tavily_search(query, max_results=3)
+    seen = set()
+
+    # Build name→competitor lookup for tagging results
+    name_map = {c["name"].lower(): c["name"] for c in COMPETITORS}
+    # Also map short tokens (e.g. "protex" → "Protex AI")
+    token_map = {}
+    for c in COMPETITORS:
+        for token in c["name"].lower().split():
+            if len(token) > 4:  # skip short words like "ai"
+                token_map.setdefault(token, c["name"])
+
+    for query in COMPETITOR_NEWS_BATCHES:
+        hits = _tavily_search(query, max_results=5)
         for h in hits:
-            url = h.get("url", "")
-            # Only include results actually from this competitor's domain
-            if comp["domain"] in url or comp["name"].lower().replace(" ", "") in url.lower():
-                results.append({
-                    "competitor": comp["name"],
-                    "title":      h.get("title", ""),
-                    "url":        url,
-                    "snippet":    h.get("content", "")[:200],
-                    "type":       "competitor_news",
-                })
+            url   = h.get("url", "")
+            title = h.get("title", "")
+            text  = (title + " " + h.get("content", "")).lower()
+            if url in seen:
+                continue
+            # Tag to the first competitor name found in title/content
+            matched = None
+            for c in COMPETITORS:
+                cname = c["name"].lower()
+                if cname in text or c["domain"].split(".")[0] in text:
+                    matched = c["name"]
+                    break
+            if not matched:
+                continue
+            seen.add(url)
+            results.append({
+                "competitor": matched,
+                "title":      title,
+                "url":        url,
+                "snippet":    h.get("content", "")[:200],
+                "type":       "competitor_news",
+            })
+
     return results
 
 

@@ -151,8 +151,12 @@ def get_new_competitor_pages(progress_callback=None) -> list[dict]:
         }
 
         if not is_first_run:
-            prev_urls = set(previous.get(name, {}).get("urls", []))
-            prev_titles = previous.get(name, {}).get("titles", {})
+            comp_prev = previous.get(name)
+            # Skip if no baseline for this competitor (0 pages = treat as first run)
+            if not comp_prev or not comp_prev.get("urls"):
+                continue
+            prev_urls = set(comp_prev.get("urls", []))
+            prev_titles = comp_prev.get("titles", {})
 
             for entry in page_entries:
                 url = entry["url"]
