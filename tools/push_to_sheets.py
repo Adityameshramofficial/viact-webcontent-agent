@@ -1992,12 +1992,24 @@ def push_solutions_page(result: dict, sheet_id: str = "") -> int:
 
     # FAQs — combined Q+A per field (Wix format: "Question?\n\nAnswer.")
     sec("FAQs (Wix: Q+A combined per field)")
-    for i in range(1, 11):
+    for i in range(1, 6):
         q = cms.get(f"faq_{i}_q", "")
         a = cms.get(f"faq_{i}_a", "")
         if q or a:
             f(f"faq{i}", f"{q}\n\n{a}" if q and a else (q or a))
     blank()
+
+    # IMAGE PROMPTS (Nano Banana)
+    image_prompts = result.get("image_prompts", [])
+    if image_prompts:
+        sec("IMAGE PROMPTS (Nano Banana)")
+        for img in image_prompts:
+            placement = img.get("placement", "")
+            prompt    = img.get("prompt", "")
+            alt_text  = img.get("alt_text", "")
+            f(f"[{placement}] prompt", prompt)
+            f(f"[{placement}] alt_text", alt_text)
+        blank()
 
     service.spreadsheets().values().update(
         spreadsheetId=sheet_id,

@@ -656,6 +656,8 @@ with tab_radar:
                 st.session_state["suggested_cs_topic"] = _dt["case_study_topic"]
             if _dt.get("va_topic"):
                 st.session_state["suggested_va_topic"] = _dt["va_topic"]
+            if _dt.get("solutions_topic"):
+                st.session_state["suggested_solutions_topic"] = _dt["solutions_topic"]
 
             # ── Today's 3 Topics card ─────────────────────────────────────────
             _dt = _intel_result.get("daily_topics", {})
@@ -2887,179 +2889,341 @@ with tab_product:
 # Session state prefix: sol_
 # =============================================================================
 with tab_solutions:
-    if "sol_result" not in st.session_state:
-        st.session_state["sol_result"] = None
-
-    if st.session_state["sol_result"] is None:
-        st.markdown(_html("""
-        <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">🔧</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Select Solution</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">List se ek solution choose karo — jaise "Job Hazard Analysis Software", "Crane Safety Software". Ya Market Radar se suggested topic use karo.</div>
-          </div>
-          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">🤖</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Page</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">AI generates tagline, features, metrics, UVPs, 10 FAQs, SEO fields — all Wix CMS fields in one shot.</div>
-          </div>
-          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review & Push</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review generated content. Push to Google Sheets for CMS import.</div>
-          </div>
-        </div>
-        """), unsafe_allow_html=True)
-
     import sys as _sys
     _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
     from agent8_solutions_page import SOLUTIONS_LIST as _SOL_LIST
 
-    # Prefill from Market Radar daily topic
-    _sol_prefill = st.session_state.pop("sol_prefill", "")
+    if "sol_step" not in st.session_state:
+        st.session_state["sol_step"] = 0
 
-    st.markdown("### 🔧 Solutions Item Page Generator")
+    _sol_step = st.session_state["sol_step"]
 
-    _sol_input = st.selectbox(
-        "Solution Name",
-        options=[""] + _SOL_LIST,
-        index=(_SOL_LIST.index(_sol_prefill) + 1) if _sol_prefill in _SOL_LIST else 0,
-        key="sol_select",
-    )
-    if not _sol_input and _sol_prefill:
-        _sol_input = _sol_prefill
+    if _sol_step == 0:
+        st.markdown(_html("""
+        <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">🔧</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Solution Name</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Solution ka naam type karo — jaise "Job Hazard Analysis Software", "Working at Height Safety Software". Ya Market Radar se suggested topic use karo.</div>
+          </div>
+          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">🤖</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Solutions Page" click karo. AI tagline, features (14 bullets), metrics, UVPs, 10 FAQs, image alt texts — sab Wix CMS fields ek shot mein banata hai.</div>
+          </div>
+          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review &amp; Save</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">3 tabs mein review karo — Webpage Content, SEO, Image Alts. "Save to Google Sheets" click karo — tab "Sol — {Solution}" naam se save hoga.</div>
+          </div>
+        </div>
+        """), unsafe_allow_html=True)
 
-    _sol_custom = st.text_input(
-        "Or type a custom solution name",
-        value="" if _sol_input else _sol_prefill,
-        placeholder="e.g. Permit to Work Software",
-        key="sol_custom_input",
-    )
-    _sol_final = _sol_custom.strip() or _sol_input
+    if _sol_step > 0:
+        st.write("")
+        if st.button("↩ Start Over", key="sol_reset"):
+            for _k in [_k for _k in st.session_state if _k.startswith("sol_")]:
+                del st.session_state[_k]
+            st.rerun()
 
-    if st.session_state.get("sol_prefill_banner"):
-        st.info(f"Pre-filled from Market Radar: **{st.session_state.pop('sol_prefill_banner', '')}**")
+    st.write("")
 
-    _sol_col1, _sol_col2 = st.columns([1, 3])
-    with _sol_col1:
-        _sol_run_tavily = st.checkbox("Live research (Tavily/RSS)", value=True, key="sol_tavily")
+    # ── Suggested topic banner (from Daily Intel Scan) ────────────────────────
+    _sug_sol = st.session_state.get("suggested_solutions_topic")
+    if _sug_sol and _sol_step == 0:
+        _ss_col, _ss_btn = st.columns([5, 1])
+        with _ss_col:
+            st.info(f"💡 **Today's suggested topic:** {_sug_sol.get('solution_name', '')} — _{_sug_sol.get('why', '')}_")
+        with _ss_btn:
+            st.write("")
+            if st.button("Use This →", key="sol_use_suggested", use_container_width=True):
+                st.session_state["sol_input_val"] = _sug_sol.get("solution_name", "")
+                st.rerun()
 
-    if st.button("⚙️ Generate Solutions Page", key="sol_gen_btn", type="primary", disabled=not _sol_final):
-        with st.spinner(f"Generating '{_sol_final}' (~45 seconds)..."):
+    # =========================================================================
+    # SOLUTIONS STEP 0 — Select Solution & Generate
+    # =========================================================================
+    if _sol_step == 0:
+        st.markdown(
+            "<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>GENERATE A FULL SOLUTIONS LANDING PAGE</p>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(_html(
+            '<div class="glass-card" style="margin-bottom:18px;">'
+            '<div style="color:#8b949e; font-size:0.82rem; line-height:1.7;">'
+            "Solution ka naam enter karo. System will:<br>"
+            "&nbsp;1. Live research — Tavily / Google News RSS fallback<br>"
+            "&nbsp;2. Generate complete Wix CMS page: Hero, Features (14 bullets in 5 tabs), Metrics, UVPs, FAQs, SEO, Image Alt Texts"
+            "</div></div>"
+        ), unsafe_allow_html=True)
+
+        # Prefill from Market Radar
+        _sol_prefill = st.session_state.pop("sol_prefill", "") or st.session_state.pop("sol_input_val", "")
+
+        _sol_final = st.text_input(
+            "Solution Name",
+            value=_sol_prefill or "",
+            placeholder="e.g. Working at Height Safety Software",
+            key="sol_input",
+        ).strip()
+
+        with st.expander("Quick pick from standard solutions list"):
+            _sol_pick = st.selectbox("Standard solutions", options=[""] + _SOL_LIST, key="sol_select")
+            if _sol_pick:
+                st.caption(f"Selected: **{_sol_pick}** — copy it into the field above")
+
+        _sol_col1, _sol_col2 = st.columns([1, 3])
+        with _sol_col1:
+            _sol_run_tavily = st.checkbox("Live research (Tavily/RSS)", value=True, key="sol_tavily")
+
+        st.write("")
+
+        if st.button("🔧  Generate Solutions Page", type="primary", key="sol_gen_btn", disabled=not _sol_final):
+            if not _sol_final.strip():
+                st.warning("Please enter a solution name.")
+                st.stop()
+
+            _prog = st.empty()
+            with _prog.container():
+                st.info("Step 1/2 — Researching solution via Tavily / Google News RSS...")
+
             try:
                 from agent8_solutions_page import generate_solutions_page as _gen_sol
+
+                with _prog.container():
+                    st.info("Step 2/2 — Generating all Wix CMS fields (Llama 3.3 70B)...")
+
                 _sol_result = _gen_sol(
                     solution_name=_sol_final,
                     run_tavily=_sol_run_tavily,
                     progress_callback=lambda msg: None,
                 )
-                st.session_state["sol_result"] = _sol_result
+                st.session_state["sol_result"]        = _sol_result
+                st.session_state["sol_solution_label"] = _sol_final
+                st.session_state["sol_step"]           = 1
+                # Auto-save to Sheets
+                try:
+                    from push_to_sheets import push_solutions_page as _push_sol_auto
+                    _push_sol_auto(result=_sol_result)
+                    st.toast(f"✓ Auto-saved to Sheets: Sol — {_sol_final}")
+                except Exception as _sol_ae:
+                    st.toast(f"⚠ Auto-save failed: {_sol_ae}")
+                _prog.empty()
                 st.rerun()
             except Exception as _sol_err:
+                _prog.empty()
                 st.error(f"Generation failed: {_sol_err}")
 
-    if st.session_state.get("sol_result"):
+    # =========================================================================
+    # SOLUTIONS STEP 1 — Preview + Push to Sheets
+    # =========================================================================
+    elif _sol_step == 1:
         _sol_result = st.session_state["sol_result"]
         _sol_cms    = _sol_result.get("cms_fields", {})
-        _sol_meta   = _sol_result.get("generation_meta", {})
         _sol_errors = _sol_result.get("quality_gate_errors", [])
-        _sol_name   = _sol_cms.get("solution_name", _sol_final)
+        _sol_label  = st.session_state.get("sol_solution_label", _sol_cms.get("solution_name", ""))
+
+        # ── Quality gate warning ─────────────────────────────────────────────
+        if _sol_errors:
+            st.warning(
+                "⚠️ **Quality gate retry was triggered** — issues detected in first generation:\n"
+                + "\n".join(f"- {e}" for e in _sol_errors)
+                + "\n\nReview the output below to confirm corrections were applied."
+            )
 
         st.markdown(_html(
-            f"<p style='color:#3fb950;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;'>"
-            f"✓ {_sol_name.upper()} — CONTENT GENERATED</p>"
+            '<div class="glass-card" style="border-color:rgba(249,199,79,0.3); background:rgba(22,25,33,0.8);">'
+            '<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">'
+            '<div style="display:flex; align-items:center; gap:12px;">'
+            '<div style="background:rgba(249,199,79,0.15); border:1px solid rgba(249,199,79,0.4); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">🔧</div>'
+            '<div>'
+            '<div style="color:#f9c74f; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:3px;">Solutions Page Ready</div>'
+            f'<h3 style="margin:0; color:#e6edf3; font-size:1.1rem;">{_t(_sol_label)}</h3>'
+            '</div></div>'
+            '<div style="display:flex; gap:8px; flex-wrap:wrap;">'
+            '<span style="background:rgba(249,199,79,0.1); color:#f9c74f; border:1px solid rgba(249,199,79,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#129302; Llama 3.3 written</span>'
+            '<span style="background:rgba(63,185,80,0.08); color:#3fb950; border:1px solid rgba(63,185,80,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#127979; Wix CMS ready</span>'
+            '<span style="background:rgba(88,166,255,0.1); color:#58a6ff; border:1px solid rgba(88,166,255,0.25); border-radius:6px; padding:4px 10px; font-size:0.75rem;">&#128203; 50+ fields</span>'
+            '</div></div></div>'
         ), unsafe_allow_html=True)
 
-        if _sol_errors:
-            st.warning(f"Quality gate: {'; '.join(_sol_errors)}")
-
-        # Push to Sheets button
-        if st.button("📤 Push to Google Sheets", key="sol_push_btn"):
-            with st.spinner("Pushing to Sheets..."):
+        _sol_push_col, _sol_info_col = st.columns([1, 3])
+        with _sol_push_col:
+            if st.button("📊  Save to Google Sheets", type="primary", key="sol_push_btn", use_container_width=True):
                 try:
                     from push_to_sheets import push_solutions_page as _push_sol
                     _push_sol(result=_sol_result)
-                    st.success(f"✓ Pushed to Sheets: 'Sol — {_sol_name}'")
+                    _sheet_id = os.getenv("SHEET_ID", "")
+                    _sheet_url = f"https://docs.google.com/spreadsheets/d/{_sheet_id}/edit"
+                    st.success(f"✅ Saved to **'Sol — {_sol_label}'** tab in your Sheet — [Open Sheet ↗]({_sheet_url})")
                 except Exception as _push_err:
-                    st.error(f"Push failed: {_push_err}")
+                    st.error(f"Sheets error: {_push_err}")
+        with _sol_info_col:
+            st.markdown(_html(
+                f'<div style="background:rgba(22,25,33,0.5); border:1px solid #2d303a; border-radius:8px; padding:10px 14px; font-size:0.8rem; color:#8b949e; margin-top:4px;">'
+                f'&#128221; Creates a <strong style="color:#c9d1d9;">Sol — {_t(_sol_label)}</strong> tab in your Sheet. Fields in col A, values in col B — copy directly into Wix CMS.'
+                f'</div>'
+            ), unsafe_allow_html=True)
 
-        if st.button("🔄 Generate Another", key="sol_reset_btn"):
-            st.session_state["sol_result"] = None
-            st.rerun()
+        st.markdown("<hr/>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:8px;'>PREVIEW ALL SECTIONS</p>", unsafe_allow_html=True)
 
-        # Preview tabs
-        _sol_t1, _sol_t2, _sol_t3, _sol_t4, _sol_t5, _sol_t6 = st.tabs([
-            "📝 Hero & Diff Section",
-            "⚡ Features & Metrics",
-            "💡 UVPs & Demo",
+        _sol_t1, _sol_t2, _sol_t3, _sol_t4 = st.tabs([
+            "📝 Webpage Content",
             "🔍 SEO",
-            "❓ FAQs",
-            "🔧 Raw JSON",
+            "🖼 Image Alts",
+            "🎨 Image Prompts",
         ])
 
         with _sol_t1:
-            st.text_input("Tagline", value=_sol_cms.get("tagline", ""), key="sol_tagline")
-            st.text_area("Short Description", value=_sol_cms.get("short_description", ""), height=80, key="sol_short_desc")
-            st.text_area("Testimonial Quote", value=_sol_cms.get("testimonial_quote", ""), height=70, key="sol_testimonial")
-            st.text_input("Attribution", value=_sol_cms.get("testimonial_attribution", ""), key="sol_attrib")
-            st.markdown("---")
+            st.markdown(
+                "<div style='background:rgba(249,199,79,0.06); border:1px solid rgba(249,199,79,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.83rem; color:#f9c74f;'>"
+                "<strong>Wix CMS Fields</strong> — Each field maps directly to a Wix CMS dynamic field. Copy one field at a time into the matching Wix field."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+
+            # HERO
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:10px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Hero Section</div>", unsafe_allow_html=True)
+            st.text_input("Title (Text 1)", value=_sol_cms.get("solution_name", ""), key="sol_title")
+            st.text_input("Tagline (Text 2)", value=_sol_cms.get("tagline", ""), key="sol_tagline")
+            st.text_area("Short Description (Text 3)", value=_sol_cms.get("short_description", ""), height=80, key="sol_short_desc")
+
+            # TESTIMONIAL
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Testimonial</div>", unsafe_allow_html=True)
+            st.text_area("Quote (Text 5)", value=_sol_cms.get("testimonial_quote", ""), height=70, key="sol_testimonial")
+            st.text_input("Attribution (review subtitle)", value=_sol_cms.get("testimonial_attribution", ""), key="sol_attrib")
+
+            # DIFFERENCE SECTION
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Difference Section</div>", unsafe_allow_html=True)
+            st.text_input("Diff Section Heading (Text 7)", value=_sol_cms.get("diff_section_title", ""), key="sol_diff_h")
             _d1, _d2, _d3 = st.columns(3)
             with _d1:
-                st.text_input("Trend Title", value=_sol_cms.get("trend_title", ""), key="sol_trend_t")
-                st.text_area("Trend Desc", value=_sol_cms.get("trend_description", ""), height=100, key="sol_trend_d")
+                st.caption("TRENDS")
+                st.text_input("Title (Text 8)", value=_sol_cms.get("trend_title", ""), key="sol_trend_t")
+                st.text_area("Description (Text 9)", value=_sol_cms.get("trend_description", ""), height=120, key="sol_trend_d")
             with _d2:
-                st.text_input("Stats Title", value=_sol_cms.get("stats_title", ""), key="sol_stats_t")
-                st.text_area("Stats Desc", value=_sol_cms.get("stats_description", ""), height=100, key="sol_stats_d")
+                st.caption("STATISTICS")
+                st.text_input("Title (Text 10)", value=_sol_cms.get("stats_title", ""), key="sol_stats_t")
+                st.text_area("Description (Text 11)", value=_sol_cms.get("stats_description", ""), height=120, key="sol_stats_d")
             with _d3:
-                st.text_input("Outcome Title", value=_sol_cms.get("outcome_title", ""), key="sol_outcome_t")
-                st.text_area("Outcome Desc", value=_sol_cms.get("outcome_description", ""), height=100, key="sol_outcome_d")
+                st.caption("OUTCOME")
+                st.text_input("Title (Text 12)", value=_sol_cms.get("outcome_title", ""), key="sol_outcome_t")
+                st.text_area("Description (Text 13)", value=_sol_cms.get("outcome_description", ""), height=120, key="sol_outcome_d")
 
-        with _sol_t2:
-            st.text_area("CTA Text", value=_sol_cms.get("cta_text", ""), height=80, key="sol_cta_text")
-            st.text_input("CTA Button", value=_sol_cms.get("cta_button", ""), key="sol_cta_btn")
-            st.markdown("**Feature Tabs**")
-            _ft1, _ft2 = st.columns(2)
+            # CTA
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>CTA Block</div>", unsafe_allow_html=True)
+            st.text_area("CTA Block (Text 14)", value=_sol_cms.get("cta_text", ""), height=90, key="sol_cta_text")
+            st.text_input("CTA Button (Text 15)", value=_sol_cms.get("cta_button", ""), key="sol_cta_btn")
+
+            # FEATURES
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Key Features (5 Tabs × Bullets)</div>", unsafe_allow_html=True)
+            st.text_input("Features Section Title (Text 16)", value=_sol_cms.get("features_title", ""), key="sol_feat_title")
+            _bullet_groups = [(1, 3), (4, 6), (7, 9), (10, 11), (12, 14)]
             for _fi in range(1, 6):
-                (_ft1 if _fi % 2 != 0 else _ft2).text_input(
-                    f"Tab {_fi}", value=_sol_cms.get(f"feature_tab_{_fi}", ""), key=f"sol_tab_{_fi}")
-            st.markdown("**Feature Bullets**")
-            for _bi in range(1, 15):
-                st.text_area(f"Bullet {_bi}", value=_sol_cms.get(f"bullet_{_bi}", ""),
-                             height=70, key=f"sol_bullet_{_bi}")
-            st.markdown("**Performance Metrics**")
+                _tab_name = _sol_cms.get(f"feature_tab_{_fi}", f"Feature Tab {_fi}")
+                with st.expander(f"Tab {_fi}: {_tab_name}"):
+                    st.text_input(f"Tab Name (Text {16+_fi})", value=_tab_name, key=f"sol_tab_{_fi}")
+                    _b_start, _b_end = _bullet_groups[_fi - 1]
+                    for _bi in range(_b_start, _b_end + 1):
+                        st.text_area(f"Bullet {_bi}", value=_sol_cms.get(f"bullet_{_bi}", ""), height=70, key=f"sol_bullet_{_bi}")
+
+            # METRICS
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Post Deployment Metrics (3 Stats)</div>", unsafe_allow_html=True)
             _mc1, _mc2, _mc3 = st.columns(3)
             for _mi, _mc in enumerate([_mc1, _mc2, _mc3], start=1):
                 with _mc:
-                    st.text_input(f"Metric {_mi} Value", value=_sol_cms.get(f"metric_{_mi}_value", ""), key=f"sol_m{_mi}v")
-                    st.text_area(f"Metric {_mi} Desc", value=_sol_cms.get(f"metric_{_mi}_desc", ""), height=80, key=f"sol_m{_mi}d")
+                    st.text_input(f"Metric {_mi} Value (Text {36+(_mi-1)*2})", value=_sol_cms.get(f"metric_{_mi}_value", ""), key=f"sol_m{_mi}v")
+                    st.text_area(f"Metric {_mi} Desc (Text {37+(_mi-1)*2})", value=_sol_cms.get(f"metric_{_mi}_desc", ""), height=90, key=f"sol_m{_mi}d")
 
-        with _sol_t3:
-            st.markdown("**Unique Value Propositions**")
+            # UVPs
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Unique Value Propositions (5)</div>", unsafe_allow_html=True)
             for _ui in range(1, 6):
                 _uc1, _uc2 = st.columns([1, 2])
                 with _uc1:
-                    st.text_input(f"UVP {_ui} Title", value=_sol_cms.get(f"uvp_{_ui}_title", ""), key=f"sol_uvp{_ui}t")
+                    st.text_input(f"UVP {_ui} Title (Text {43+(_ui-1)*2})", value=_sol_cms.get(f"uvp_{_ui}_title", ""), key=f"sol_uvp{_ui}t")
                 with _uc2:
-                    st.text_area(f"UVP {_ui} Desc", value=_sol_cms.get(f"uvp_{_ui}_desc", ""), height=70, key=f"sol_uvp{_ui}d")
-            st.markdown("---")
-            st.text_input("Demo Title", value=_sol_cms.get("demo_title", ""), key="sol_demo_title")
-            st.text_area("Demo Description", value=_sol_cms.get("demo_description", ""), height=100, key="sol_demo_desc")
-            for _dbi in range(1, 7):
-                st.text_input(f"Demo Bullet {_dbi}", value=_sol_cms.get(f"demo_bullet_{_dbi}", ""), key=f"sol_db{_dbi}")
+                    st.text_area(f"UVP {_ui} Desc (Text {44+(_ui-1)*2})", value=_sol_cms.get(f"uvp_{_ui}_desc", ""), height=70, key=f"sol_uvp{_ui}d")
+
+            # BOTTOM CTA
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Bottom CTA</div>", unsafe_allow_html=True)
+            st.text_input("Bottom CTA (new cta text)", value=_sol_cms.get("new_cta_text", ""), key="sol_new_cta")
+
+            # FAQs
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>FAQs — Ask Our Expert (5)</div>", unsafe_allow_html=True)
+            for _qi in range(1, 6):
+                _fq = _sol_cms.get(f"faq_{_qi}_q", "")
+                _fa = _sol_cms.get(f"faq_{_qi}_a", "")
+                if _fq or _fa:
+                    with st.expander(f"FAQ {_qi}: {_fq[:60]}{'...' if len(_fq) > 60 else ''}"):
+                        st.text_input("Q", value=_fq, key=f"sol_faq{_qi}q")
+                        st.text_area("A", value=_fa, height=120, key=f"sol_faq{_qi}a")
+
+        with _sol_t2:
+            st.markdown(
+                "<div style='background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.83rem; color:#58a6ff;'>"
+                "<strong>SEO Fields</strong> — Paste meta title &amp; description into Wix SEO settings. Use slug for the page URL. Keywords for on-page copy."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            _c1, _c2 = st.columns(2)
+            with _c1:
+                st.text_input("Slug (Solutions URL)", value=_sol_cms.get("slug", ""), key="sol_slug")
+                _stc = len(_sol_cms.get("seo_meta_title", ""))
+                st.text_input(f"Meta Title", value=_sol_cms.get("seo_meta_title", ""), key="sol_seo_title")
+                st.caption(f"{_stc} chars — target 50-60")
+                _sdc = len(_sol_cms.get("seo_meta_description", ""))
+                st.text_area("Meta Description", value=_sol_cms.get("seo_meta_description", ""), height=90, key="sol_seo_desc")
+                st.caption(f"{_sdc} chars — target 140-165")
+            with _c2:
+                st.text_area("Meta Keywords", value=_sol_cms.get("seo_keywords", ""), height=140, key="sol_keywords")
+
+        with _sol_t3:
+            st.markdown(
+                "<div style='background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.83rem; color:#58a6ff;'>"
+                "<strong>Image Alt Texts</strong> — Copy each alt text into the matching image field in Wix CMS. Field names match exactly."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:10px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Hero &amp; Sections</div>", unsafe_allow_html=True)
+            st.text_input("hero image", value=_sol_cms.get("hero_image_alt", ""), key="sol_alt_hero")
+            st.text_input("Trends img", value=_sol_cms.get("trends_image_alt", ""), key="sol_alt_trends")
+            st.text_input("STATISTICS img", value=_sol_cms.get("stats_image_alt", ""), key="sol_alt_stats")
+            st.text_input("OUTCOME img", value=_sol_cms.get("outcome_image_alt", ""), key="sol_alt_outcome")
+            st.text_input("dashboard img", value=_sol_cms.get("dashboard_image_alt", ""), key="sol_alt_dash")
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Key Features Images (5)</div>", unsafe_allow_html=True)
+            for _fi in range(1, 6):
+                st.text_input(f"{_fi} Key features", value=_sol_cms.get(f"feature_{_fi}_img_alt", ""), key=f"sol_alt_feat{_fi}")
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Unique Value Images (5)</div>", unsafe_allow_html=True)
+            for _ui in range(1, 6):
+                st.text_input(f"{_ui} Unique Value", value=_sol_cms.get(f"uvp_{_ui}_img_alt", ""), key=f"sol_alt_uvp{_ui}")
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin:14px 0 6px; text-transform:uppercase; letter-spacing:1.2px;'>Other</div>", unsafe_allow_html=True)
+            st.text_input("1 check", value=_sol_cms.get("check_img_alt", ""), key="sol_alt_check")
+            st.text_input("Solution list image", value=_sol_cms.get("list_image_alt", ""), key="sol_alt_list")
 
         with _sol_t4:
-            st.text_input("Slug", value=_sol_cms.get("slug", ""), key="sol_slug")
-            st.text_input("SEO Meta Title", value=_sol_cms.get("seo_meta_title", ""), key="sol_seo_title")
-            st.text_area("SEO Meta Description", value=_sol_cms.get("seo_meta_description", ""), height=80, key="sol_seo_desc")
-            st.text_area("Keywords", value=_sol_cms.get("seo_keywords", ""), height=70, key="sol_keywords")
-
-        with _sol_t5:
-            for _qi in range(1, 11):
-                with st.expander(f"FAQ {_qi}: {_sol_cms.get(f'faq_{_qi}_q', '')[:60]}"):
-                    st.text_input(f"Q{_qi}", value=_sol_cms.get(f"faq_{_qi}_q", ""), key=f"sol_faq{_qi}q")
-                    st.text_area(f"A{_qi}", value=_sol_cms.get(f"faq_{_qi}_a", ""), height=120, key=f"sol_faq{_qi}a")
-
-        with _sol_t6:
-            st.json(_sol_result)
+            _sol_imgs = _sol_result.get("image_prompts", [])
+            if not _sol_imgs:
+                st.info("No image prompts in this result — regenerate to get Nano Banana prompts.")
+            else:
+                st.markdown(
+                    "<div style='background:rgba(88,166,255,0.06); border:1px solid rgba(88,166,255,0.2); border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:0.83rem; color:#58a6ff;'>"
+                    "<strong>Nano Banana Prompts</strong> — Copy each prompt and paste into Nano Banana (or any image tool). "
+                    "7 prompts with exact Wix dimensions: Hero (1155×764), Dashboard (1620×705), "
+                    "Key Features 1–5 (800×672 / 755×561 / 699×498 / 794×504 / 851×572)."
+                    "</div>",
+                    unsafe_allow_html=True,
+                )
+                for _i, _img in enumerate(_sol_imgs, 1):
+                    _placement = _img.get("placement", f"Image {_i}")
+                    _prompt    = _img.get("prompt", "")
+                    _alt       = _img.get("alt_text", "")
+                    with st.expander(f"Image {_i} — {_placement}"):
+                        st.text_area("Prompt", value=_prompt, height=140, key=f"sol_img_prompt_{_i}")
+                        st.markdown(
+                            f"<div style='color:#8b949e; font-size:0.82rem; margin-top:6px;'>"
+                            f"<strong style='color:#e6edf3;'>Alt text:</strong> {_t(_alt)}</div>",
+                            unsafe_allow_html=True,
+                        )
