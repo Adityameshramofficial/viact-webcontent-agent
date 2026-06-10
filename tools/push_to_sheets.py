@@ -1847,6 +1847,161 @@ def push_video_analytics_page(result: dict, sheet_id: str = "") -> int:
     return 1
 
 
+def push_solutions_page(result: dict, sheet_id: str = "") -> int:
+    """
+    Push solutions item page content to a tab named "Sol — {solution_name}".
+    Vertical layout: field name in col A, value in col B.
+    Creates tab if missing; clears and rewrites on each run.
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service  = get_sheets_service()
+    cms      = result.get("cms_fields", {})
+    meta     = result.get("generation_meta", {})
+    errors   = result.get("quality_gate_errors", [])
+    sol_name = cms.get("solution_name", meta.get("solution_name", "Solution")).strip()
+    tab_name = f"Sol — {sol_name}"[:100]
+
+    sheet_meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing   = [s["properties"]["title"] for s in sheet_meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    else:
+        service.spreadsheets().values().clear(
+            spreadsheetId=sheet_id, range=f"'{tab_name}'!A:B",
+        ).execute()
+
+    rows: list[list] = []
+    section_rows: list[int] = []
+
+    def sec(title):
+        section_rows.append(len(rows))
+        rows.append([title, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # META
+    sec("META")
+    f("Date",          meta.get("timestamp", "")[:10])
+    f("Solution Name", sol_name)
+    f("Slug",          cms.get("slug", ""))
+    f("Status",        "Draft")
+    f("Retry Count",   str(meta.get("retry_count", 0)))
+    f("Quality Errors", "; ".join(errors) if errors else "None")
+    blank()
+
+    # SEO
+    sec("SEO")
+    f("Meta Title",       cms.get("seo_meta_title", ""))
+    f("Meta Description", cms.get("seo_meta_description", ""))
+    f("Keywords",         cms.get("seo_keywords", ""))
+    blank()
+
+    # HERO
+    sec("HERO")
+    f("Tagline",           cms.get("tagline", ""))
+    f("Short Description", cms.get("short_description", ""))
+    f("Long Description",  cms.get("long_description", ""))
+    f("Testimonial Quote", cms.get("testimonial_quote", ""))
+    f("Attribution",       cms.get("testimonial_attribution", ""))
+    blank()
+
+    # DIFFERENCE SECTION
+    sec("DIFFERENCE SECTION (Trends / Stats / Outcome)")
+    f("Section Title",    cms.get("diff_section_title", ""))
+    f("Trend Title",      cms.get("trend_title", ""))
+    f("Trend Desc",       cms.get("trend_description", ""))
+    f("Stats Title",      cms.get("stats_title", ""))
+    f("Stats Desc",       cms.get("stats_description", ""))
+    f("Outcome Title",    cms.get("outcome_title", ""))
+    f("Outcome Desc",     cms.get("outcome_description", ""))
+    blank()
+
+    # CTA
+    sec("CTA")
+    f("CTA Text",   cms.get("cta_text", ""))
+    f("CTA Button", cms.get("cta_button", ""))
+    blank()
+
+    # FEATURES
+    sec("FEATURES")
+    f("Features Title", cms.get("features_title", ""))
+    for i in range(1, 6):
+        f(f"Feature Tab {i}", cms.get(f"feature_tab_{i}", ""))
+    blank()
+    for i in range(1, 15):
+        f(f"Bullet {i}", cms.get(f"bullet_{i}", ""))
+    blank()
+
+    # PERFORMANCE METRICS
+    sec("POST-DEPLOYMENT METRICS")
+    for i in range(1, 4):
+        f(f"Metric {i} Value", cms.get(f"metric_{i}_value", ""))
+        f(f"Metric {i} Desc",  cms.get(f"metric_{i}_desc", ""))
+    blank()
+
+    # UVPs
+    sec("UNIQUE VALUE PROPOSITIONS")
+    for i in range(1, 6):
+        f(f"UVP {i} Title", cms.get(f"uvp_{i}_title", ""))
+        f(f"UVP {i} Desc",  cms.get(f"uvp_{i}_desc", ""))
+    blank()
+
+    # DEMO
+    sec("DEMO SECTION")
+    f("Demo Title",       cms.get("demo_title", ""))
+    f("Demo Description", cms.get("demo_description", ""))
+    for i in range(1, 7):
+        f(f"Demo Bullet {i}", cms.get(f"demo_bullet_{i}", ""))
+    blank()
+
+    # FAQs
+    sec("FAQs")
+    for i in range(1, 11):
+        f(f"FAQ {i} Q", cms.get(f"faq_{i}_q", ""))
+        f(f"FAQ {i} A", cms.get(f"faq_{i}_a", ""))
+    blank()
+
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    # Format: bold section headers, wide col B
+    sheet_gid = next(
+        s["properties"]["sheetId"]
+        for s in service.spreadsheets().get(spreadsheetId=sheet_id).execute().get("sheets", [])
+        if s["properties"]["title"] == tab_name
+    )
+    fmt_requests = [
+        {"repeatCell": {
+            "range": {"sheetId": sheet_gid, "startRowIndex": r, "endRowIndex": r + 1,
+                      "startColumnIndex": 0, "endColumnIndex": 1},
+            "cell": {"userEnteredFormat": {"textFormat": {"bold": True},
+                                           "backgroundColor": {"red": 0.18, "green": 0.18, "blue": 0.24}}},
+            "fields": "userEnteredFormat(textFormat,backgroundColor)",
+        }} for r in section_rows
+    ] + [{"updateDimensionProperties": {
+        "range": {"sheetId": sheet_gid, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+        "properties": {"pixelSize": 700}, "fields": "pixelSize",
+    }}]
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id, body={"requests": fmt_requests},
+    ).execute()
+    return 1
+
+
 if __name__ == "__main__":
     import argparse
 

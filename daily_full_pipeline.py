@@ -284,6 +284,35 @@ def run_va_agent(topic_obj: dict) -> bool:
         return False
 
 
+def run_solutions_agent(topic_obj: dict) -> bool:
+    """Generate a Solutions item page from the daily solutions topic."""
+    solution_name = topic_obj.get("solution_name", "")
+    why = topic_obj.get("why", "")
+
+    if not solution_name:
+        log("  Solutions: no solution_name — skipping.")
+        return False
+
+    log(f"  Solutions: '{solution_name}'")
+    try:
+        from agent8_solutions_page import generate_solutions_page
+        from push_to_sheets import push_solutions_page
+
+        result = generate_solutions_page(
+            solution_name=solution_name,
+            run_tavily=True,
+            progress_callback=lambda msg: log(f"    {msg}"),
+        )
+
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or os.getenv("SHEET_ID", "")
+        push_solutions_page(result=result, sheet_id=sheet_id)
+        log(f"  Solutions page saved to Sheets: '{solution_name}'")
+        return True
+    except Exception as e:
+        log(f"  Solutions agent failed: {e}")
+        return False
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def main():
@@ -296,21 +325,22 @@ def main():
     # Step 2 — Push to Sheets
     push_intel_to_sheets(intel)
 
-    # Step 3 — Run all 5 agents
-    log("=== Step 3: Running all 5 content agents ===")
+    # Step 3 — Run all 6 agents
+    log("=== Step 3: Running all 6 content agents ===")
 
     results = {
-        "pillar":   run_pillar_agent(topics.get("pillar_topic", {})),
-        "blog":     run_blog_agent(topics.get("blog_topic", {})),
-        "industry": run_industry_agent(topics.get("industry_topic", {})),
-        "cs":       run_case_study_agent(topics.get("case_study_topic", {})),
-        "va":       run_va_agent(topics.get("va_topic", {})),
+        "pillar":    run_pillar_agent(topics.get("pillar_topic", {})),
+        "blog":      run_blog_agent(topics.get("blog_topic", {})),
+        "industry":  run_industry_agent(topics.get("industry_topic", {})),
+        "cs":        run_case_study_agent(topics.get("case_study_topic", {})),
+        "va":        run_va_agent(topics.get("va_topic", {})),
+        "solutions": run_solutions_agent(topics.get("solutions_topic", {})),
     }
 
     succeeded = sum(1 for v in results.values() if v)
     failed    = sum(1 for v in results.values() if not v)
 
-    log(f"\n=== Pipeline Complete — {succeeded}/5 agents succeeded, {failed} failed ===")
+    log(f"\n=== Pipeline Complete — {succeeded}/6 agents succeeded, {failed} failed ===")
     for name, ok in results.items():
         status = "OK" if ok else "FAILED/SKIPPED"
         log(f"  {name:12} {status}")

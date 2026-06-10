@@ -465,6 +465,16 @@ def _generate_daily_topics(
 
     pillar_examples_str = ", ".join(PILLAR_PAGE_TOPICS[:6])
 
+    solutions_options_str = (
+        "Job Hazard Analysis Software, Incident Management Software, Lone Worker Monitoring System, "
+        "Vehicle Control Management Software, Industrial Space Management Solution, "
+        "Behaviour Based Safety Software, Scaffolding Safety Software, "
+        "Housekeeping Assessment Software Solution, Crane Safety Software, "
+        "Inventory Utilization Monitoring System, Ergonomics Assessment Software, "
+        "Forklift Safety System, Area Control Safety System, "
+        "Industrial Workforce Productivity Monitoring Solution"
+    )
+
     prompt = f"""You are a content strategist for viAct, an AI construction safety platform.
 
 TODAY'S COMPETITOR INTEL:
@@ -476,12 +486,13 @@ TODAY'S INDUSTRY TRENDS:
 TODAY'S MARKETING OPPORTUNITIES:
 {opps_text}
 
-Based on this intel, suggest the SINGLE BEST content topic for each of these 5 page types.
+Based on this intel, suggest the SINGLE BEST content topic for each of these 6 page types.
 Pick topics that are timely, have search demand, and fill competitive gaps.
 
 Available industries (pick one): {industries_str}
 Available VA detections (pick one OR suggest a new one): {va_options_str}
 Pillar page topic examples (or create a new one): {pillar_examples_str}
+Available solutions pages (pick one): {solutions_options_str}
 
 Return JSON:
 {{
@@ -510,6 +521,10 @@ Return JSON:
   "va_topic": {{
     "detection_name": "exact detection type name (from list or a new relevant one)",
     "why": "one sentence: why this detection type is worth a new page"
+  }},
+  "solutions_topic": {{
+    "solution_name": "exact solution name from the list above",
+    "why": "one sentence: why this solution page is worth refreshing/creating today"
   }}
 }}"""
 
@@ -517,7 +532,7 @@ Return JSON:
         resp = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=700,
+            max_tokens=850,
             temperature=0.5,
             response_format={"type": "json_object"},
         )
@@ -549,6 +564,10 @@ Return JSON:
             "va_topic": {
                 "detection_name": "Hot Work Perimeter Violation Detection",
                 "why": "Fallback — strong competitor gap exists.",
+            },
+            "solutions_topic": {
+                "solution_name": "Job Hazard Analysis Software",
+                "why": "Fallback — high search volume, core viAct product.",
             },
         }
 

@@ -354,12 +354,13 @@ st.markdown(_html("""
 # =============================================================================
 # TABS — Market Radar  |  Industry Pages
 # =============================================================================
-tab_radar, tab_industry, tab_casestudy, tab_product, tab_va = st.tabs([
+tab_radar, tab_industry, tab_casestudy, tab_product, tab_va, tab_solutions = st.tabs([
     "📡  Agent 01 — Market Radar",
     "🏭  Agent 02 — Industry Pages",
     "📋  Agent 03 — Case Studies",
     "🖥️  Agent 04 — Product Pages",
     "🎯  Agent 07 — Video Analytics",
+    "🔧  Agent 08 — Solutions Pages",
 ])
 
 with tab_radar:
@@ -2880,3 +2881,185 @@ with tab_product:
         # ── Raw JSON ───────────────────────────────────────────────────────────
         with st.expander("📄 Raw JSON Output"):
             st.json(_pp_result)
+
+# =============================================================================
+# TAB — SOLUTIONS PAGES (Agent 08)
+# Session state prefix: sol_
+# =============================================================================
+with tab_solutions:
+    if "sol_result" not in st.session_state:
+        st.session_state["sol_result"] = None
+
+    if st.session_state["sol_result"] is None:
+        st.markdown(_html("""
+        <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">🔧</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Select Solution</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">List se ek solution choose karo — jaise "Job Hazard Analysis Software", "Crane Safety Software". Ya Market Radar se suggested topic use karo.</div>
+          </div>
+          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">🤖</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Page</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">AI generates tagline, features, metrics, UVPs, 10 FAQs, SEO fields — all Wix CMS fields in one shot.</div>
+          </div>
+          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
+          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
+            <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review & Push</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review generated content. Push to Google Sheets for CMS import.</div>
+          </div>
+        </div>
+        """), unsafe_allow_html=True)
+
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+    from agent8_solutions_page import SOLUTIONS_LIST as _SOL_LIST
+
+    # Prefill from Market Radar daily topic
+    _sol_prefill = st.session_state.pop("sol_prefill", "")
+
+    st.markdown("### 🔧 Solutions Item Page Generator")
+
+    _sol_input = st.selectbox(
+        "Solution Name",
+        options=[""] + _SOL_LIST,
+        index=(_SOL_LIST.index(_sol_prefill) + 1) if _sol_prefill in _SOL_LIST else 0,
+        key="sol_select",
+    )
+    if not _sol_input and _sol_prefill:
+        _sol_input = _sol_prefill
+
+    _sol_custom = st.text_input(
+        "Or type a custom solution name",
+        value="" if _sol_input else _sol_prefill,
+        placeholder="e.g. Permit to Work Software",
+        key="sol_custom_input",
+    )
+    _sol_final = _sol_custom.strip() or _sol_input
+
+    if st.session_state.get("sol_prefill_banner"):
+        st.info(f"Pre-filled from Market Radar: **{st.session_state.pop('sol_prefill_banner', '')}**")
+
+    _sol_col1, _sol_col2 = st.columns([1, 3])
+    with _sol_col1:
+        _sol_run_tavily = st.checkbox("Live research (Tavily/RSS)", value=True, key="sol_tavily")
+
+    if st.button("⚙️ Generate Solutions Page", key="sol_gen_btn", type="primary", disabled=not _sol_final):
+        with st.spinner(f"Generating '{_sol_final}' (~45 seconds)..."):
+            try:
+                from agent8_solutions_page import generate_solutions_page as _gen_sol
+                _sol_result = _gen_sol(
+                    solution_name=_sol_final,
+                    run_tavily=_sol_run_tavily,
+                    progress_callback=lambda msg: None,
+                )
+                st.session_state["sol_result"] = _sol_result
+                st.rerun()
+            except Exception as _sol_err:
+                st.error(f"Generation failed: {_sol_err}")
+
+    if st.session_state.get("sol_result"):
+        _sol_result = st.session_state["sol_result"]
+        _sol_cms    = _sol_result.get("cms_fields", {})
+        _sol_meta   = _sol_result.get("generation_meta", {})
+        _sol_errors = _sol_result.get("quality_gate_errors", [])
+        _sol_name   = _sol_cms.get("solution_name", _sol_final)
+
+        st.markdown(_html(
+            f"<p style='color:#3fb950;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;'>"
+            f"✓ {_sol_name.upper()} — CONTENT GENERATED</p>"
+        ), unsafe_allow_html=True)
+
+        if _sol_errors:
+            st.warning(f"Quality gate: {'; '.join(_sol_errors)}")
+
+        # Push to Sheets button
+        if st.button("📤 Push to Google Sheets", key="sol_push_btn"):
+            with st.spinner("Pushing to Sheets..."):
+                try:
+                    from push_to_sheets import push_solutions_page as _push_sol
+                    _push_sol(result=_sol_result)
+                    st.success(f"✓ Pushed to Sheets: 'Sol — {_sol_name}'")
+                except Exception as _push_err:
+                    st.error(f"Push failed: {_push_err}")
+
+        if st.button("🔄 Generate Another", key="sol_reset_btn"):
+            st.session_state["sol_result"] = None
+            st.rerun()
+
+        # Preview tabs
+        _sol_t1, _sol_t2, _sol_t3, _sol_t4, _sol_t5, _sol_t6 = st.tabs([
+            "📝 Hero & Diff Section",
+            "⚡ Features & Metrics",
+            "💡 UVPs & Demo",
+            "🔍 SEO",
+            "❓ FAQs",
+            "🔧 Raw JSON",
+        ])
+
+        with _sol_t1:
+            st.text_input("Tagline", value=_sol_cms.get("tagline", ""), key="sol_tagline")
+            st.text_area("Short Description", value=_sol_cms.get("short_description", ""), height=80, key="sol_short_desc")
+            st.text_area("Testimonial Quote", value=_sol_cms.get("testimonial_quote", ""), height=70, key="sol_testimonial")
+            st.text_input("Attribution", value=_sol_cms.get("testimonial_attribution", ""), key="sol_attrib")
+            st.markdown("---")
+            _d1, _d2, _d3 = st.columns(3)
+            with _d1:
+                st.text_input("Trend Title", value=_sol_cms.get("trend_title", ""), key="sol_trend_t")
+                st.text_area("Trend Desc", value=_sol_cms.get("trend_description", ""), height=100, key="sol_trend_d")
+            with _d2:
+                st.text_input("Stats Title", value=_sol_cms.get("stats_title", ""), key="sol_stats_t")
+                st.text_area("Stats Desc", value=_sol_cms.get("stats_description", ""), height=100, key="sol_stats_d")
+            with _d3:
+                st.text_input("Outcome Title", value=_sol_cms.get("outcome_title", ""), key="sol_outcome_t")
+                st.text_area("Outcome Desc", value=_sol_cms.get("outcome_description", ""), height=100, key="sol_outcome_d")
+
+        with _sol_t2:
+            st.text_area("CTA Text", value=_sol_cms.get("cta_text", ""), height=80, key="sol_cta_text")
+            st.text_input("CTA Button", value=_sol_cms.get("cta_button", ""), key="sol_cta_btn")
+            st.markdown("**Feature Tabs**")
+            _ft1, _ft2 = st.columns(2)
+            for _fi in range(1, 6):
+                (_ft1 if _fi % 2 != 0 else _ft2).text_input(
+                    f"Tab {_fi}", value=_sol_cms.get(f"feature_tab_{_fi}", ""), key=f"sol_tab_{_fi}")
+            st.markdown("**Feature Bullets**")
+            for _bi in range(1, 15):
+                st.text_area(f"Bullet {_bi}", value=_sol_cms.get(f"bullet_{_bi}", ""),
+                             height=70, key=f"sol_bullet_{_bi}")
+            st.markdown("**Performance Metrics**")
+            _mc1, _mc2, _mc3 = st.columns(3)
+            for _mi, _mc in enumerate([_mc1, _mc2, _mc3], start=1):
+                with _mc:
+                    st.text_input(f"Metric {_mi} Value", value=_sol_cms.get(f"metric_{_mi}_value", ""), key=f"sol_m{_mi}v")
+                    st.text_area(f"Metric {_mi} Desc", value=_sol_cms.get(f"metric_{_mi}_desc", ""), height=80, key=f"sol_m{_mi}d")
+
+        with _sol_t3:
+            st.markdown("**Unique Value Propositions**")
+            for _ui in range(1, 6):
+                _uc1, _uc2 = st.columns([1, 2])
+                with _uc1:
+                    st.text_input(f"UVP {_ui} Title", value=_sol_cms.get(f"uvp_{_ui}_title", ""), key=f"sol_uvp{_ui}t")
+                with _uc2:
+                    st.text_area(f"UVP {_ui} Desc", value=_sol_cms.get(f"uvp_{_ui}_desc", ""), height=70, key=f"sol_uvp{_ui}d")
+            st.markdown("---")
+            st.text_input("Demo Title", value=_sol_cms.get("demo_title", ""), key="sol_demo_title")
+            st.text_area("Demo Description", value=_sol_cms.get("demo_description", ""), height=100, key="sol_demo_desc")
+            for _dbi in range(1, 7):
+                st.text_input(f"Demo Bullet {_dbi}", value=_sol_cms.get(f"demo_bullet_{_dbi}", ""), key=f"sol_db{_dbi}")
+
+        with _sol_t4:
+            st.text_input("Slug", value=_sol_cms.get("slug", ""), key="sol_slug")
+            st.text_input("SEO Meta Title", value=_sol_cms.get("seo_meta_title", ""), key="sol_seo_title")
+            st.text_area("SEO Meta Description", value=_sol_cms.get("seo_meta_description", ""), height=80, key="sol_seo_desc")
+            st.text_area("Keywords", value=_sol_cms.get("seo_keywords", ""), height=70, key="sol_keywords")
+
+        with _sol_t5:
+            for _qi in range(1, 11):
+                with st.expander(f"FAQ {_qi}: {_sol_cms.get(f'faq_{_qi}_q', '')[:60]}"):
+                    st.text_input(f"Q{_qi}", value=_sol_cms.get(f"faq_{_qi}_q", ""), key=f"sol_faq{_qi}q")
+                    st.text_area(f"A{_qi}", value=_sol_cms.get(f"faq_{_qi}_a", ""), height=120, key=f"sol_faq{_qi}a")
+
+        with _sol_t6:
+            st.json(_sol_result)
