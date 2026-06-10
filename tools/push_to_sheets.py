@@ -1928,8 +1928,9 @@ def push_solutions_page(result: dict, sheet_id: str = "") -> int:
 
     # CTA
     sec("CTA")
-    f("CTA Text",   cms.get("cta_text", ""))
-    f("CTA Button", cms.get("cta_button", ""))
+    f("CTA Text",    cms.get("cta_text", ""))
+    f("CTA Button",  cms.get("cta_button", ""))
+    f("New CTA Text (bottom page)", cms.get("new_cta_text", ""))
     blank()
 
     # FEATURES
@@ -1956,19 +1957,42 @@ def push_solutions_page(result: dict, sheet_id: str = "") -> int:
         f(f"UVP {i} Desc",  cms.get(f"uvp_{i}_desc", ""))
     blank()
 
-    # DEMO
-    sec("DEMO SECTION")
-    f("Demo Title",       cms.get("demo_title", ""))
-    f("Demo Description", cms.get("demo_description", ""))
-    for i in range(1, 7):
-        f(f"Demo Bullet {i}", cms.get(f"demo_bullet_{i}", ""))
+    # IMAGE ALT TEXTS
+    sec("IMAGE ALT TEXTS (SEO)")
+    f("hero image",         cms.get("hero_image_alt", ""))
+    f("Trends img",         cms.get("trends_image_alt", ""))
+    f("STATISTICS img",     cms.get("stats_image_alt", ""))
+    f("OUTCOME img",        cms.get("outcome_image_alt", ""))
+    f("dashboard img",      cms.get("dashboard_image_alt", ""))
+    f("Solution list image",cms.get("list_image_alt", ""))
+    for i in range(1, 6):
+        f(f"{i} Key features", cms.get(f"feature_{i}_img_alt", ""))
+    for i in range(1, 6):
+        f(f"{i} Unique Value", cms.get(f"uvp_{i}_img_alt", ""))
+    f("1 check",            cms.get("check_img_alt", ""))
     blank()
 
-    # FAQs
-    sec("FAQs")
+    # OUR TECHNOLOGIES (static, same across all solutions pages)
+    _OT = [
+        ("Computer Vision",   "Transforms video feeds into actionable safety insights by detecting unsafe behaviors, PPE violations, and environmental hazards in real-time."),
+        ("AI CCTV Cameras",   "Enhance traditional surveillance with AI-powered analytics to monitor compliance, detect intrusions, and automate safety alerts across dynamic jobsites."),
+        ("Edge Devices",      "Enable real-time data processing on-site, minimizing latency and ensuring faster safety responses without relying on constant cloud connectivity."),
+        ("IoT & Wearables",   "Integrates smart helmets, locks and sensors for seamless monitoring of workers' vitals, movement, equipment status, and environmental conditions."),
+        ("Drones",            "Deploy low-altitude drones for autonomous site surveillance, thermal scanning, and hazard detection in hard-to-reach or high-risk work zones."),
+        ("Co-pilot / AI Agents", "Acts as digital assistants offering voice/text-based safety guidance, process automation, and instant access to documentation for frontline teams."),
+    ]
+    sec("OUR TECHNOLOGIES (static)")
+    for ot_title, ot_desc in _OT:
+        f(f"ot: {ot_title}", ot_desc)
+    blank()
+
+    # FAQs — combined Q+A per field (Wix format: "Question?\n\nAnswer.")
+    sec("FAQs (Wix: Q+A combined per field)")
     for i in range(1, 11):
-        f(f"FAQ {i} Q", cms.get(f"faq_{i}_q", ""))
-        f(f"FAQ {i} A", cms.get(f"faq_{i}_a", ""))
+        q = cms.get(f"faq_{i}_q", "")
+        a = cms.get(f"faq_{i}_a", "")
+        if q or a:
+            f(f"faq{i}", f"{q}\n\n{a}" if q and a else (q or a))
     blank()
 
     service.spreadsheets().values().update(

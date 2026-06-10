@@ -143,8 +143,9 @@ _MAIN_SCHEMA = """{
   "stats_description": "Stats description with 2-3 specific numbers",
   "outcome_title": "Outcome headline (3-6 words)",
   "outcome_description": "Outcome description with measurable result",
-  "cta_text": "2-sentence CTA paragraph starting with bold headline",
+  "cta_text": "2-sentence CTA paragraph: bold headline + description (Transform How You...)",
   "cta_button": "Action phrase (3-6 words)",
+  "new_cta_text": "Action tagline for bottom of page (e.g. Transform [X] with AI—get insights, not just data)",
   "features_title": "Key features of [Solution Name]",
   "feature_tab_1": "Feature category name",
   "feature_tab_2": "Feature category name",
@@ -165,15 +166,27 @@ _MAIN_SCHEMA = """{
   "uvp_3_title": "...", "uvp_3_desc": "...",
   "uvp_4_title": "...", "uvp_4_desc": "...",
   "uvp_5_title": "Responsible AI", "uvp_5_desc": "GDPR-compliant data handling description",
-  "demo_title": "[Solution Name] Demo",
-  "demo_description": "2-3 sentence demo intro paragraph",
-  "demo_bullet_1": "● Feature demo point",
-  "demo_bullet_2": "● ...", "demo_bullet_3": "● ...",
-  "demo_bullet_4": "● ...", "demo_bullet_5": "● ...", "demo_bullet_6": "● ...",
   "slug": "/solutions/kebab-case-name",
   "seo_meta_title": "No.1 [Solution] | viAct (≤60 chars EXACTLY)",
   "seo_meta_description": "EXACTLY 130-165 chars — count every character",
-  "seo_keywords": "keyword 1, keyword 2, keyword 3, keyword 4, keyword 5"
+  "seo_keywords": "keyword 1, keyword 2, keyword 3, keyword 4, keyword 5",
+  "hero_image_alt": "AI [Solution Name] (4-7 words)",
+  "trends_image_alt": "[Solution] Trends (3-5 words)",
+  "stats_image_alt": "[Solution] Process (3-5 words)",
+  "outcome_image_alt": "[Solution] Outcomes (3-5 words)",
+  "dashboard_image_alt": "[Solution] Dashboard/Solutions (3-5 words)",
+  "feature_1_img_alt": "AI [Feature 1] keyword phrase",
+  "feature_2_img_alt": "[Solution Name] keyword phrase",
+  "feature_3_img_alt": "[Feature 3] keyword phrase",
+  "feature_4_img_alt": "[Feature 4] keyword phrase",
+  "feature_5_img_alt": "[Feature 5] keyword phrase",
+  "uvp_1_img_alt": "Best [Solution] (3-5 words, SEO keyword)",
+  "uvp_2_img_alt": "Top [Solution] (3-5 words, SEO keyword)",
+  "uvp_3_img_alt": "Best [Related Term] (3-5 words)",
+  "uvp_4_img_alt": "Top [Related Term] (3-5 words)",
+  "uvp_5_img_alt": "No #1 [Solution] (4-6 words)",
+  "check_img_alt": "[Solution Name] keyword phrase (4-6 words)",
+  "list_image_alt": "Best EHSQ Management Software for [primary industry]"
 }"""
 
 _FAQ_SCHEMA = """{
@@ -207,10 +220,13 @@ def _build_main_prompt(solution_name: str, research: str, style_ref: str) -> lis
         "- tagline: use em dash pattern 'Benefit – Context', ≤80 chars\n"
         "- trend/stats/outcome: each must include at least one specific % or number\n"
         "- 14 bullets: start each with a verb (Detect/Monitor/Identify/Generate/Automate/Track)\n"
-        "- 5 UVPs: Edge AI Integration, Scenario-based AI, IoT/Wearables, Generative AI Co-pilot, Responsible AI\n"
+        "- 5 UVPs: Exclusive Edge Advantage, Scenario-based Vision Intelligence, Seamless IoT Integration, Generative AI-based Workflow, Responsible AI\n"
+        "- new_cta_text: punchy 1-line action tagline for bottom of page CTA, e.g. 'Transform [X] with AI—get insights, not just data'\n"
         "- seo_meta_title: ≤60 chars including 'viAct'\n"
         "- seo_meta_description: EXACTLY 130-165 chars — count carefully\n"
-        "- slug: /solutions/[kebab-case-name]\n\n"
+        "- slug: /solutions/[kebab-case-name]\n"
+        "- image alt texts: short SEO keyword phrases (3-6 words), no generic words\n"
+        "- uvp_N_img_alt: keyword phrases like 'Best X Software', 'Top X Software', 'No #1 X'\n\n"
         f"JSON SCHEMA:\n{_MAIN_SCHEMA}"
     )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -251,7 +267,7 @@ def _validate(cms: dict) -> list:
     if not (130 <= len(meta_desc) <= 165):
         errors.append(f"seo_meta_description: {len(meta_desc)} chars (must be 130-165)")
 
-    for field in ["tagline", "short_description", "testimonial_quote", "cta_text", "seo_keywords"]:
+    for field in ["tagline", "short_description", "testimonial_quote", "cta_text", "new_cta_text", "seo_keywords"]:
         if not cms.get(field, "").strip():
             errors.append(f"{field}: empty")
 
