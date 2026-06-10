@@ -6,7 +6,7 @@
  *   1. Open your Google Sheet → Extensions → Apps Script
  *   2. Paste this entire file → Save (Ctrl+S)
  *   3. Select function: setupDailyTrigger → click Run → approve permissions
- *   4. Done — email + sheet report every day at 6:00 PM IST automatically
+ *   4. Done — email + sheet report every day at 10:00 AM IST automatically
  *
  * To test right now: select testSendNow → Run
  */
@@ -94,6 +94,7 @@ function sendDailyViActReport() {
   const webItems  = _scanWebpageContent(ss, today);
   const indItems  = _scanIndustryTabs(ss, today);
   const vaItems   = _scanVATabs(today);
+  const solItems  = _scanSolutionsTabs(today);
   const oppItems  = _scanOpportunities(today);
   const csItems   = _scanCaseStudies(today);
   const intelItem    = _scanCompetitorIntel(today);
@@ -106,15 +107,16 @@ function sendDailyViActReport() {
   const todayBlogs  = webItems.blogs.filter(b => b.isToday).length;
   const todayInd    = indItems.filter(i => i.isToday).length;
   const todayVA     = vaItems.filter(v => v.isToday).length;
+  const todaySol    = solItems.filter(s => s.isToday).length;
   const todayOpps   = oppItems.length;
   const todayCS     = csItems.filter(c => c.isToday).length;
-  const total       = todayPillar + todayBlogs + todayInd + todayVA + todayCS;
+  const total       = todayPillar + todayBlogs + todayInd + todayVA + todayCS + todaySol;
 
-  _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, total);
+  _writeReportToSheet(ss, today, webItems, indItems, vaItems, csItems, solItems, total);
 
   const subject  = `viAct AI Daily Report — ${dateLabel} — ${total} page${total !== 1 ? 's' : ''} generated today`;
-  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches, siteChanges);
-  const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, dateLabel, radarStatus, triggerTime);
+  const htmlBody = _buildEmailHtml(webItems, indItems, vaItems, solItems, oppItems, csItems, intelItem, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todaySol, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches, siteChanges);
+  const plain    = _buildPlainText(webItems, indItems, vaItems, csItems, solItems, dateLabel, radarStatus, triggerTime);
 
   const mailOptions = { htmlBody, name: 'viAct Content Agent' };
   if (CC.length) mailOptions.cc = CC.join(',');
@@ -287,19 +289,56 @@ function _scanVATabs(today) {
   return items;
 }
 
+// ─── SCAN "Sol — *" tabs — Solutions pages ────────────────────────────────────
+function _scanSolutionsTabs(today) {
+  const items  = [];
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SCAN_DAYS);
+
+  try {
+    const indSs = SpreadsheetApp.openById(INDUSTRY_SHEET_ID);
+    indSs.getSheets().forEach(sh => {
+      const name = sh.getName();
+      if (!name.startsWith('Sol — ')) return;
+
+      const rows = sh.getRange(1, 1, Math.min(sh.getLastRow(), 40), 2).getValues();
+      let dateVal = '', metaTitle = '', metaDesc = '', keyword = '', tagline = '', slug = '';
+
+      for (const r of rows) {
+        const a = String(r[0]).trim(), b = String(r[1]).trim();
+        if (a === 'Date')             dateVal   = b;
+        if (a === 'Slug')             slug      = b;
+        if (a === 'Meta Title')       metaTitle = b;
+        if (a === 'Meta Description') metaDesc  = b;
+        if (a === 'Keywords')         keyword   = b.split(',')[0].trim();
+        if (a === 'Tagline')          tagline   = b;
+      }
+
+      const solutionName = name.replace('Sol — ', '');
+      const d = dateVal ? new Date(dateVal) : null;
+      if (!d || isNaN(d) || d >= cutoff) {
+        items.push({ name, solutionName, date: dateVal || '—', isToday: dateVal === today, metaTitle, metaDesc, keyword, tagline, slug });
+      }
+    });
+  } catch(e) {
+    Logger.log('_scanSolutionsTabs error: ' + e.message);
+  }
+  return items;
+}
+
 // ─── WRITE TO "Daily Report" TAB ───────────────────────────────────────────────
-function _writeReportToSheet(ss, today, web, ind, va, cs, total) {
+function _writeReportToSheet(ss, today, web, ind, va, cs, sol, total) {
   let sh = ss.getSheetByName(REPORT_TAB);
   if (!sh) {
     sh = ss.insertSheet(REPORT_TAB);
     sh.appendRow(['Date', 'Total Pages', 'Pillar Pages', 'Blog Posts',
-                  'Industry Pages (today)', 'VA Pages (today)', 'Case Studies (today)', 'Topics Generated', 'Industry Tabs', 'VA Tabs', 'Case Study Tabs']);
-    sh.getRange(1, 1, 1, 11).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
+                  'Industry Pages (today)', 'VA Pages (today)', 'Case Studies (today)', 'Solutions Pages (today)', 'Topics Generated', 'Industry Tabs', 'VA Tabs', 'Case Study Tabs', 'Solutions Tabs']);
+    sh.getRange(1, 1, 1, 13).setBackground('#ff6a3d').setFontColor('#ffffff').setFontWeight('bold');
   }
   const topicsStr = [...web.pillar, ...web.blogs].filter(p => p.isToday).map(p => p.topic).join(' | ') || '—';
   const indTabs   = ind.filter(i => i.isToday).map(i => i.name).join(' | ') || '—';
   const vaTabs    = va.filter(v => v.isToday).map(v => v.name).join(' | ') || '—';
   const csTabs    = cs.filter(c => c.isToday).map(c => c.displayName).join(' | ') || '—';
+  const solTabs   = (sol || []).filter(s => s.isToday).map(s => s.solutionName).join(' | ') || '—';
 
   sh.appendRow([
     today, total,
@@ -308,7 +347,8 @@ function _writeReportToSheet(ss, today, web, ind, va, cs, total) {
     ind.filter(i => i.isToday).length,
     va.filter(v => v.isToday).length,
     cs.filter(c => c.isToday).length,
-    topicsStr, indTabs, vaTabs, csTabs,
+    (sol || []).filter(s => s.isToday).length,
+    topicsStr, indTabs, vaTabs, csTabs, solTabs,
   ]);
 }
 
@@ -323,6 +363,7 @@ function _scanDailyTopics(today) {
     const latest = data[data.length - 1];
     // Cols 0-11: Date|Industry Topic|Industry|Industry Why|CS Type|CS Ind|CS Loc|CS Detection|CS Why|VA Detection|VA Why|Urgency
     // Cols 12-17: Pillar Topic|Pillar Keyword|Pillar Why|Blog Topic|Blog Keyword|Blog Why
+    // Cols 18-19: Solutions Name|Solutions Why
     if (!latest[0]) return null;
     return {
       date:            String(latest[0]).trim(),
@@ -343,6 +384,8 @@ function _scanDailyTopics(today) {
       blogTopic:       String(latest[15] || '').trim(),
       blogKeyword:     String(latest[16] || '').trim(),
       blogWhy:         String(latest[17] || '').trim(),
+      solutionsName:   String(latest[18] || '').trim(),
+      solutionsWhy:    String(latest[19] || '').trim(),
       isToday:         String(latest[0]).trim() === today,
     };
   } catch(e) {
@@ -678,11 +721,12 @@ function _productLaunchesSection(launches) {
 }
 
 // ─── BUILD HTML EMAIL ──────────────────────────────────────────────────────────
-function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches, siteChanges) {
+function _buildEmailHtml(web, ind, va, sol, opp, cs, intel, dateLabel, todayPillar, todayBlogs, todayInd, todayVA, todaySol, todayOpps, todayCS, total, radarStatus, triggerTime, commits, topics, launches, siteChanges) {
   radarStatus = radarStatus || 'skipped';
   triggerTime = triggerTime || '';
   commits     = commits     || [];
   topics      = topics      || null;
+  sol         = sol         || [];
   const recentPillar = web.pillar.length;
   const recentBlogs  = web.blogs.length;
 
@@ -690,6 +734,7 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
   const blogHtml   = web.blogs.map(_blogCard).join('');
   const indHtml    = ind.map(_industryCard).join('');
   const vaHtml     = va.map(_vaCard).join('');
+  const solHtml    = sol.map(_solCard).join('');
   const oppHtml    = opp.map(_opportunityCard).join('');
   const csHtml     = cs.map(_caseStudyCard).join('');
 
@@ -699,6 +744,7 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
   if (todayInd > 0)                       activeAgents.push({ name: 'Agent 05 — Industry Pages', color: '#3fb950', count: `${todayInd} page${todayInd !== 1 ? 's' : ''}` });
   if (todayCS > 0)                        activeAgents.push({ name: 'Agent 06 — Case Studies', color: '#0097a7', count: `${todayCS} case stud${todayCS !== 1 ? 'ies' : 'y'}` });
   if (todayVA > 0)                        activeAgents.push({ name: 'Agent 07 — Video Analytics', color: '#7c3aed', count: `${todayVA} page${todayVA !== 1 ? 's' : ''}` });
+  if (todaySol > 0)                       activeAgents.push({ name: 'Agent 08 — Solutions Pages', color: '#0ea5e9', count: `${todaySol} page${todaySol !== 1 ? 's' : ''}` });
   if (intel && intel.isToday)             activeAgents.push({ name: 'Competitor Intel Monitor', color: '#f57c00', count: `${intel.newsCount || 0} news · ${intel.trendsCount || 0} trends` });
   if (todayOpps > 0)                      activeAgents.push({ name: 'Opportunity Scanner', color: '#9c27b0', count: `${todayOpps} gap${todayOpps !== 1 ? 's' : ''} found` });
 
@@ -748,6 +794,10 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
             <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Video Analytics</div>
           </td>
           <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
+            <div style="font-size:24px;font-weight:800;color:#0ea5e9;line-height:1;">${todaySol}</div>
+            <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Solutions</div>
+          </td>
+          <td align="center" style="padding:14px 6px;border-right:1px solid #eee;">
             <div style="font-size:24px;font-weight:800;color:#9c27b0;line-height:1;">${todayOpps}</div>
             <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Gaps Found</div>
           </td>
@@ -784,7 +834,7 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
           </td>
           <td style="padding:3px 0;font-size:12px;color:#555;">
             <span style="color:#888;margin-right:6px;">&#128197;</span>
-            Next report: Tomorrow at 6:00 PM IST
+            Next report: Tomorrow at 10:00 AM IST
           </td>
         </tr>
       </table>
@@ -859,6 +909,20 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
           </td>
         </tr>
       </table>
+      <!-- Row 3: Solutions -->
+      ${topics.solutionsName ? `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+        <tr>
+          <td width="50%" style="padding:4px 8px 4px 0;vertical-align:top;">
+            <div style="background:#e0f4ff;border:1px solid #b3e0ff;border-radius:6px;padding:8px 10px;">
+              <div style="font-size:10px;font-weight:700;color:#0ea5e9;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;">🔧 Solutions Page</div>
+              <div style="font-size:12px;font-weight:600;color:#1d3557;margin-bottom:2px;">${_esc(topics.solutionsName)}</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;font-style:italic;">${_esc(topics.solutionsWhy || '')}</div>
+            </div>
+          </td>
+          <td width="50%"></td>
+        </tr>
+      </table>` : ''}
     </div>` : ''}
 
     <!-- ══════════════════════════════════════════════════════
@@ -904,7 +968,12 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
               <div style="font-size:11px;color:#666;line-height:1.5;">Generates all Wix CMS fields for viAct's 27 detection-type item pages — hero copy, challenges, 4-step process, 5 use cases, case study snapshot, SEO, and 6 alt texts.</div>
             </div>
           </td>
-          <td width="50%" style="padding:4px 0 4px 4px;vertical-align:top;"></td>
+          <td width="50%" style="padding:4px 0 4px 4px;vertical-align:top;">
+            <div style="background:#e0f4ff;border:1px solid #b3e0ff;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:11px;font-weight:800;color:#0ea5e9;margin-bottom:4px;">🔧 Agent 08 — Solutions Pages</div>
+              <div style="font-size:11px;color:#666;line-height:1.5;">Generates all 50+ Wix CMS fields for viAct's 14 solution pages — hero, testimonial, Our Technologies, TRENDS/STATS/OUTCOME, 5 feature tabs × 3 bullets, UVPs, image alts, FAQs.</div>
+            </div>
+          </td>
         </tr>
       </table>
     </div>
@@ -918,7 +987,7 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
       </div>
       ${activeAgents.length > 0
         ? `<div style="padding:12px 16px;background:#f8f9fa;border-radius:8px;">${todayAgentBadges}</div>`
-        : `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:12px;color:#795548;text-align:center;">No agents ran today. GitHub Actions runs automatically at 9:30 AM IST.</div>`
+        : `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;font-size:12px;color:#795548;text-align:center;">No agents ran today. GitHub Actions runs automatically at 10:00 AM IST.</div>`
       }
     </div>
 
@@ -965,6 +1034,15 @@ function _buildEmailHtml(web, ind, va, opp, cs, intel, dateLabel, todayPillar, t
           🎬 Agent 07 — Video Analytics Output &mdash; ${va.length} Page${va.length !== 1 ? 's' : ''} in Sheet
         </div>
         ${vaHtml}
+      </div>` : ''}
+
+      <!-- Agent 08 Output: Solutions Pages -->
+      ${sol.length > 0 ? `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;color:#0ea5e9;margin-bottom:10px;padding:6px 10px;background:#e0f4ff;border-radius:6px;border-left:3px solid #0ea5e9;">
+          🔧 Agent 08 — Solutions Pages Output &mdash; ${sol.length} Page${sol.length !== 1 ? 's' : ''} in Sheet
+        </div>
+        ${solHtml}
       </div>` : ''}
 
       <!-- Competitor Intel Output -->
@@ -1162,8 +1240,24 @@ function _vaCard(item) {
   </div>`;
 }
 
+function _solCard(item) {
+  const badge = item.isToday
+    ? `<span style="background:#e0f4ff;color:#0369a1;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:8px;">NEW TODAY</span>`
+    : (item.date && item.date !== '—' ? `<span style="font-size:10px;color:#aaa;margin-left:8px;">${_esc(item.date)}</span>` : '');
+
+  return `
+  <div style="background:#e0f4ff;border:1px solid #b3e0ff;border-radius:10px;padding:14px;margin-bottom:10px;">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#aaa;margin-bottom:4px;">SOLUTIONS PAGE</div>
+    <div style="font-weight:700;color:#1a1a1a;font-size:15px;margin-bottom:6px;">${_esc(item.solutionName)}${badge}</div>
+    ${item.tagline   ? `<div style="font-size:12px;color:#0369a1;margin-bottom:4px;font-style:italic;">"${_esc(item.tagline)}"</div>` : ''}
+    ${item.keyword   ? `<div style="font-size:11px;color:#888;margin-bottom:2px;">Keyword: ${_esc(item.keyword)}</div>` : ''}
+    ${item.metaTitle ? `<div style="font-size:11px;color:#555;margin-bottom:2px;"><strong>Meta:</strong> ${_esc(item.metaTitle)}</div>` : ''}
+    ${item.slug      ? `<div style="font-size:11px;color:#888;margin-top:3px;"><strong>Slug:</strong> ${_esc(item.slug)}</div>` : ''}
+  </div>`;
+}
+
 // ─── PLAIN TEXT FALLBACK ───────────────────────────────────────────────────────
-function _buildPlainText(web, ind, va, cs, dateLabel, radarStatus, triggerTime) {
+function _buildPlainText(web, ind, va, cs, sol, dateLabel, radarStatus, triggerTime) {
   const lines = [`viAct AI Daily Content Report — ${dateLabel}`, '='.repeat(50), ''];
 
   lines.push('PIPELINE STATUS');
@@ -1211,6 +1305,13 @@ function _buildPlainText(web, ind, va, cs, dateLabel, radarStatus, triggerTime) 
     });
   }
 
+  if (sol && sol.length) {
+    lines.push(`SOLUTIONS PAGES (${sol.length} in sheet)`);
+    sol.forEach(s => lines.push(`  * ${s.solutionName}${s.isToday ? ' [NEW TODAY]' : ` (${s.date})`} — ${s.slug || ''}`));
+    lines.push('');
+  }
+
+  lines.push(`  Next report: Tomorrow at 10:00 AM IST`);
   lines.push(`Open Sheet: ${SHEET_URL}`);
   return lines.join('\n');
 }
