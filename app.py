@@ -54,298 +54,443 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── viAct Dark Theme ──────────────────────────────────────────────────────────
+# ── viAct Design System — Industrial Intelligence Dashboard ──────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700&family=Jost:wght@300;400;500;600;700;800&family=Caveat:wght@500;600&display=swap');
+
+/* ── viAct Design Token System ── */
+:root {
+  --bg-dark:     #0a0a0f;
+  --bg-dark-2:   #0d0d16;
+  --bg-card:     #12121c;
+  --bg-card-2:   #0e0e1a;
+  --orange:      #ff6a3d;
+  --orange-soft: rgba(255,106,61,0.10);
+  --orange-bdr:  rgba(255,106,61,0.22);
+  --t-white:  #ffffff;
+  --t-g1:     #E9ECF1;
+  --t-g2:     #C9D0D9;
+  --t-g3:     #A8B0BE;
+  --t-g4:     #818181;
+  --bdr-dark: rgba(255,255,255,0.07);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.18);
+  --shadow-or: 0 8px 32px rgba(255,106,61,0.14);
+}
 
 /* ── Global reset ── */
-html, body, .stApp { font-family: 'Jost', sans-serif !important; background: #0a0a0a !important; }
-.stMainBlockContainer, .main .block-container { max-width: 980px !important; padding: 0 2rem 6rem 2rem !important; }
+html, body, .stApp { font-family: 'Jost', sans-serif !important; background: var(--bg-dark) !important; }
+.stMainBlockContainer, .main .block-container { max-width: 1020px !important; padding: 0 2rem 6rem 2rem !important; }
 #MainMenu, footer, header { visibility: hidden !important; }
 
 /* ── Typography ── */
-h1, h2, h3, h4 { font-family: 'Jost', sans-serif !important; color: #e6edf3 !important; }
-p, li, span, label, div { color: #c9d1d9; }
-.stMarkdown p { color: #c9d1d9; }
+h1, h2, h3, h4 { font-family: 'Jost', sans-serif !important; color: var(--t-g1) !important; }
+p, li, span, label, div { color: var(--t-g2); }
+.stMarkdown p { color: var(--t-g2); }
 
 /* ── Sidebar ── */
-[data-testid="stSidebar"] { background-color: #0d0d0d !important; border-right: 1px solid #1a1a1a; }
+[data-testid="stSidebar"] { background-color: var(--bg-dark-2) !important; border-right: 1px solid rgba(255,255,255,0.05); }
 
-/* ── Input labels ── */
+/* ── Input labels — Oxanium precision style ── */
 .stTextInput label, .stTextArea label, .stFileUploader label, .stSelectbox label {
-    font-family: 'Jost', sans-serif !important;
-    font-size: 0.68rem !important; font-weight: 700 !important;
-    letter-spacing: 1.8px !important; text-transform: uppercase !important;
-    color: #4a4a4a !important;
+    font-family: 'Oxanium', sans-serif !important;
+    font-size: 0.62rem !important; font-weight: 600 !important;
+    letter-spacing: 2px !important; text-transform: uppercase !important;
+    color: #3a3a4a !important;
 }
 
 /* ── Text inputs ── */
 .stTextInput input {
-    background: #111 !important; border: 1.5px solid #1e1e1e !important;
-    border-radius: 8px !important; color: #eee !important;
+    background: var(--bg-card) !important; border: 1.5px solid rgba(255,255,255,0.06) !important;
+    border-radius: 8px !important; color: var(--t-g1) !important;
     font-family: 'Jost', sans-serif !important; font-size: 0.95rem !important;
     padding: 0.65rem 0.9rem !important;
 }
-.stTextInput input:focus { border-color: #ff6a3d !important; box-shadow: 0 0 0 3px rgba(255,106,61,0.1) !important; outline: none !important; }
-.stTextInput input::placeholder { color: #2e2e2e !important; }
+.stTextInput input:focus { border-color: var(--orange) !important; box-shadow: 0 0 0 3px var(--orange-soft) !important; outline: none !important; }
+.stTextInput input::placeholder { color: #252535 !important; }
 
 /* ── Text areas ── */
-div[data-baseweb="textarea"] > div { background: #111 !important; border: 1.5px solid #1e1e1e !important; border-radius: 8px !important; }
-.stTextArea textarea { background: transparent !important; border: none !important; color: #bbb !important; font-family: 'Jost', sans-serif !important; font-size: 0.85rem !important; padding: 0.65rem 0.9rem !important; line-height: 1.65 !important; }
+div[data-baseweb="textarea"] > div { background: var(--bg-card) !important; border: 1.5px solid rgba(255,255,255,0.06) !important; border-radius: 8px !important; }
+.stTextArea textarea { background: transparent !important; border: none !important; color: #aab0be !important; font-family: 'Jost', sans-serif !important; font-size: 0.85rem !important; padding: 0.65rem 0.9rem !important; line-height: 1.65 !important; }
 .stTextArea textarea:focus { outline: none !important; }
-div[data-baseweb="textarea"] > div:focus-within { border-color: #ff6a3d !important; box-shadow: 0 0 0 3px rgba(255,106,61,0.1) !important; }
-.stTextArea textarea::placeholder { color: #2a2a2a !important; }
+div[data-baseweb="textarea"] > div:focus-within { border-color: var(--orange) !important; box-shadow: 0 0 0 3px var(--orange-soft) !important; }
+.stTextArea textarea::placeholder { color: #1e1e2e !important; }
 
 /* ── Selectbox ── */
-div[data-baseweb="select"] > div { background: #111 !important; border: 1.5px solid #1e1e1e !important; border-radius: 8px !important; color: #eee !important; }
+div[data-baseweb="select"] > div { background: var(--bg-card) !important; border: 1.5px solid rgba(255,255,255,0.06) !important; border-radius: 8px !important; color: var(--t-g1) !important; }
 
 /* ── File uploader ── */
-[data-testid="stFileUploaderDropzone"] { background: #111 !important; border: 1.5px dashed #1e1e1e !important; border-radius: 8px !important; padding: 0.75rem 1.1rem !important; box-sizing: border-box !important; }
+[data-testid="stFileUploaderDropzone"] { background: var(--bg-card) !important; border: 1.5px dashed rgba(255,255,255,0.07) !important; border-radius: 8px !important; padding: 0.75rem 1.1rem !important; box-sizing: border-box !important; }
 [data-testid="stFileUploaderDropzone"] > div { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 1rem !important; flex-wrap: nowrap !important; }
-[data-testid="stFileUploaderDropzone"]:hover { border-color: #ff6a3d !important; }
-[data-testid="stFileUploaderDropzone"] span, [data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzone"] p { color: #333 !important; font-family: 'Jost', sans-serif !important; }
-[data-testid="stFileUploaderDropzone"] button, [data-testid="stFileUploader"] section button { border-radius: 6px !important; border: 1px solid #222 !important; color: #555 !important; background: #1a1a1a !important; font-size: 0.72rem !important; letter-spacing: 0.5px !important; padding: 0.35rem 0.9rem !important; text-transform: none !important; flex-shrink: 0 !important; white-space: nowrap !important; }
-[data-testid="stFileUploaderDropzone"] button:hover, [data-testid="stFileUploader"] section button:hover { border-color: #ff6a3d !important; color: #ff6a3d !important; background: #1a1a1a !important; box-shadow: none !important; }
+[data-testid="stFileUploaderDropzone"]:hover { border-color: var(--orange-bdr) !important; }
+[data-testid="stFileUploaderDropzone"] span, [data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzone"] p { color: #2e2e3e !important; font-family: 'Jost', sans-serif !important; }
+[data-testid="stFileUploaderDropzone"] button, [data-testid="stFileUploader"] section button { border-radius: 6px !important; border: 1px solid rgba(255,255,255,0.08) !important; color: #444 !important; background: var(--bg-dark-2) !important; font-size: 0.72rem !important; letter-spacing: 0.5px !important; padding: 0.35rem 0.9rem !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+[data-testid="stFileUploaderDropzone"] button:hover, [data-testid="stFileUploader"] section button:hover { border-color: var(--orange) !important; color: var(--orange) !important; background: var(--bg-dark-2) !important; box-shadow: none !important; }
 
-/* ── Primary button — flat orange ── */
+/* ── Primary button — solid orange ── */
 button[kind="primary"], button[data-testid="baseButton-primary"] {
-    font-family: 'Jost', sans-serif !important; font-weight: 700 !important;
-    font-size: 0.72rem !important; letter-spacing: 1.5px !important;
+    font-family: 'Oxanium', sans-serif !important; font-weight: 600 !important;
+    font-size: 0.7rem !important; letter-spacing: 2px !important;
     text-transform: uppercase !important; border-radius: 6px !important;
-    background: #ff6a3d !important; color: #fff !important;
-    border: 2px solid #ff6a3d !important; transition: all 0.18s ease !important;
+    background: var(--orange) !important; color: #fff !important;
+    border: 2px solid var(--orange) !important; transition: all 0.18s ease !important;
+    cursor: pointer !important;
 }
 button[kind="primary"]:hover, button[data-testid="baseButton-primary"]:hover {
     background: #e55a2e !important; border-color: #e55a2e !important;
-    box-shadow: 0 4px 20px rgba(255,106,61,0.28) !important; transform: none !important;
+    box-shadow: var(--shadow-or) !important; transform: translateY(-1px) !important;
+}
+button[kind="primary"]:focus-visible, button[data-testid="baseButton-primary"]:focus-visible {
+    outline: 2px solid var(--orange) !important; outline-offset: 3px !important;
 }
 
-/* ── Secondary button — ghost pill ── */
+/* ── Secondary button — ghost ── */
 button[kind="secondary"], button[data-testid="baseButton-secondary"] {
-    font-family: 'Jost', sans-serif !important; font-weight: 600 !important;
-    font-size: 0.68rem !important; letter-spacing: 1px !important;
+    font-family: 'Oxanium', sans-serif !important; font-weight: 600 !important;
+    font-size: 0.65rem !important; letter-spacing: 1.5px !important;
     text-transform: uppercase !important; border-radius: 20px !important;
-    background: transparent !important; color: #ff6a3d !important;
-    border: 1.5px solid rgba(255,106,61,0.3) !important; transition: all 0.18s ease !important;
+    background: transparent !important; color: var(--orange) !important;
+    border: 1.5px solid var(--orange-bdr) !important; transition: all 0.18s ease !important;
+    cursor: pointer !important;
 }
-button[kind="secondary"]:hover, button[data-testid="baseButton-secondary"]:hover { background: rgba(255,106,61,0.07) !important; border-color: #ff6a3d !important; }
+button[kind="secondary"]:hover, button[data-testid="baseButton-secondary"]:hover { background: var(--orange-soft) !important; border-color: var(--orange) !important; }
 
 /* ── Download button ── */
-[data-testid="stDownloadButton"] button { border-radius: 5px !important; border-color: #1c1c1c !important; color: #444 !important; font-size: 0.65rem !important; padding: 0.3rem 0.8rem !important; }
-[data-testid="stDownloadButton"] button:hover { border-color: #ff6a3d !important; color: #ff6a3d !important; background: transparent !important; }
+[data-testid="stDownloadButton"] button { border-radius: 5px !important; border-color: rgba(255,255,255,0.07) !important; color: #444 !important; font-size: 0.65rem !important; padding: 0.3rem 0.8rem !important; cursor: pointer !important; }
+[data-testid="stDownloadButton"] button:hover { border-color: var(--orange) !important; color: var(--orange) !important; background: transparent !important; }
 
-/* ── Tabs — prominent style ── */
-.stTabs [data-baseweb="tab-list"] { background: #0e0e0e !important; border: 1px solid #1a1a1a !important; border-radius: 10px !important; gap: 6px !important; padding: 6px !important; margin-bottom: 0 !important; }
-.stTabs [data-baseweb="tab"] { background: transparent !important; color: #3a3a3a !important; font-family: 'Jost', sans-serif !important; font-weight: 700 !important; font-size: 0.82rem !important; letter-spacing: 0.5px !important; padding: 0.7rem 1.6rem !important; border: none !important; border-radius: 7px !important; transition: all 0.15s ease !important; }
-.stTabs [data-baseweb="tab"]:hover { color: #888 !important; background: rgba(255,255,255,0.03) !important; }
-.stTabs [aria-selected="true"] { color: #fff !important; background: #ff6a3d !important; box-shadow: 0 2px 12px rgba(255,106,61,0.35) !important; }
-.stTabs [data-baseweb="tab-panel"] { background: #0a0a0a !important; border: 1px solid #1a1a1a !important; border-top: none !important; border-radius: 0 0 10px 10px !important; padding: 1.5rem !important; }
+/* ── Tabs — Oxanium nav bar style ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: var(--bg-dark-2) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-radius: 10px !important; gap: 4px !important;
+    padding: 5px !important; margin-bottom: 0 !important;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important; color: #2e2e3e !important;
+    font-family: 'Oxanium', sans-serif !important; font-weight: 600 !important;
+    font-size: 0.72rem !important; letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    padding: 0.65rem 1.2rem !important; border: none !important;
+    border-radius: 7px !important; transition: all 0.15s ease !important;
+    cursor: pointer !important;
+}
+.stTabs [data-baseweb="tab"]:hover { color: var(--t-g3) !important; background: rgba(255,255,255,0.03) !important; }
+.stTabs [aria-selected="true"] {
+    color: #fff !important; background: var(--orange) !important;
+    box-shadow: 0 2px 16px rgba(255,106,61,0.35) !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+    background: var(--bg-dark-2) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-top: none !important; border-radius: 0 0 10px 10px !important;
+    padding: 1.8rem !important;
+}
 
 /* ── Expanders ── */
-details[data-testid="stExpander"] { border: 1px solid #1a1a1a !important; border-radius: 8px !important; background: #0e0e0e !important; overflow: hidden !important; }
-details[data-testid="stExpander"] summary { font-family: 'Jost', sans-serif !important; color: #555 !important; font-size: 0.78rem !important; font-weight: 600 !important; letter-spacing: 0.3px !important; padding: 0.7rem 1rem !important; list-style: none !important; }
-details[data-testid="stExpander"] summary:hover { color: #ff6a3d !important; }
+details[data-testid="stExpander"] { border: 1px solid rgba(255,255,255,0.05) !important; border-radius: 8px !important; background: var(--bg-card-2) !important; overflow: hidden !important; }
+details[data-testid="stExpander"] summary { font-family: 'Oxanium', sans-serif !important; color: #444 !important; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 1px !important; text-transform: uppercase !important; padding: 0.7rem 1rem !important; list-style: none !important; cursor: pointer !important; }
+details[data-testid="stExpander"] summary:hover { color: var(--orange) !important; }
 details[data-testid="stExpander"] summary::-webkit-details-marker { display: none; }
-details[data-testid="stExpander"] > div { background: #0a0a0a !important; padding: 1rem !important; }
+details[data-testid="stExpander"] > div { background: var(--bg-dark) !important; padding: 1rem !important; }
 
 /* ── Code blocks ── */
-pre, .stCode { background: #080808 !important; border: 1px solid #1a1a1a !important; border-radius: 8px !important; }
-code { background: #0e0e0e !important; color: #ff6a3d !important; border: 1px solid #1a1a1a !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 0.8rem !important; }
-pre code { color: #c9d1d9 !important; }
+pre, .stCode { background: #05050a !important; border: 1px solid rgba(255,255,255,0.05) !important; border-radius: 8px !important; }
+code { background: var(--bg-card) !important; color: var(--orange) !important; border: 1px solid rgba(255,255,255,0.06) !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 0.8rem !important; }
+pre code { color: var(--t-g2) !important; }
 
 /* ── Alerts ── */
 .stAlert { border-radius: 8px !important; font-family: 'Jost', sans-serif !important; }
 div[data-testid="stAlert"] { border-radius: 8px !important; border-left-width: 3px !important; }
-.stSuccess { border-left-color: #ff6a3d !important; }
+.stSuccess { border-left-color: var(--orange) !important; }
 
 /* ── Divider ── */
-hr { border-color: #1a1a1a !important; }
+hr { border-color: rgba(255,255,255,0.05) !important; }
 
 /* ── Radio ── */
-div[data-testid="stRadio"] label { color: #c9d1d9 !important; }
+div[data-testid="stRadio"] label { color: var(--t-g2) !important; }
 
 /* ── Spinner ── */
-.stSpinner > div > div { border-top-color: #ff6a3d !important; }
+.stSpinner > div > div { border-top-color: var(--orange) !important; }
+
+/* ── Checkbox ── */
+div[data-testid="stCheckbox"] label { color: var(--t-g2) !important; }
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: #1e1e1e; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #ff6a3d; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--orange); }
 
 /* ══════════════════════ CUSTOM COMPONENT CLASSES ══════════════════════ */
 
+/* Eyebrow label — Oxanium precision tags */
+.eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Oxanium', sans-serif; font-weight: 300;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--t-g3); margin-bottom: 10px;
+}
+.eyebrow::before { content: ''; display: block; width: 16px; height: 2px; background: var(--orange); }
+
 /* Glass Card */
 .glass-card {
-    background: rgba(13,17,23,0.9); backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,106,61,0.12); border-radius: 12px;
-    padding: 25px; position: relative; overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3); transition: all 0.2s ease;
+    background: rgba(18,18,28,0.92); backdrop-filter: blur(12px);
+    border: 1px solid var(--orange-bdr); border-radius: 12px;
+    padding: 24px; position: relative; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4); transition: all 0.2s ease;
     margin-bottom: 16px;
 }
-.glass-card:hover { border-color: rgba(255,106,61,0.28); box-shadow: 0 8px 32px rgba(255,106,61,0.07); }
+.glass-card:hover { border-color: rgba(255,106,61,0.35); box-shadow: 0 8px 32px rgba(255,106,61,0.09); }
+
+/* Dashboard Stat Card */
+.stat-card {
+    background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+.stat-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--orange); opacity: 0.7;
+}
+.stat-card:hover { border-color: var(--orange-bdr); }
+.stat-card-label { font-family: 'Oxanium', sans-serif; font-size: 0.6rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #3a3a4a; margin-bottom: 8px; }
+.stat-card-value { font-family: 'Oxanium', sans-serif; font-size: 2rem; font-weight: 700; color: var(--orange); line-height: 1; margin-bottom: 4px; }
+.stat-card-sub { font-family: 'Jost', sans-serif; font-size: 0.72rem; color: #2e2e3e; }
 
 /* Metrics */
-.metric-title { color: #4a4a4a; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px; margin-bottom: 6px; }
-.metric-value { color: #ff6a3d; font-size: 2.4rem; font-weight: 800; line-height: 1.1; margin-bottom: 6px; }
+.metric-title { color: #3a3a4a; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+.metric-value { color: var(--orange); font-family: 'Oxanium', sans-serif; font-size: 2.2rem; font-weight: 700; line-height: 1.1; margin-bottom: 6px; }
 
 /* Status Badges */
-.badge-confirmed { background: #0d4429; color: #3fb950; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid #238636; display: inline-block; }
-.badge-high { background: rgba(255,106,61,0.1); color: #ff6a3d; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(255,106,61,0.3); display: inline-block; }
-.badge-medium { background: rgba(210,153,34,0.1); color: #d6a126; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(210,153,34,0.3); display: inline-block; }
-.badge-low { background: rgba(200,60,60,0.1); color: #f85149; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(200,60,60,0.3); display: inline-block; }
+.badge-confirmed { background: #0d4429; color: #3fb950; padding: 3px 10px; border-radius: 20px; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 1px; border: 1px solid #238636; display: inline-block; }
+.badge-high { background: var(--orange-soft); color: var(--orange); padding: 3px 10px; border-radius: 20px; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--orange-bdr); display: inline-block; }
+.badge-medium { background: rgba(210,153,34,0.1); color: #d6a126; padding: 3px 10px; border-radius: 20px; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(210,153,34,0.3); display: inline-block; }
+.badge-low { background: rgba(200,60,60,0.1); color: #f85149; padding: 3px 10px; border-radius: 20px; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 1px; border: 1px solid rgba(200,60,60,0.3); display: inline-block; }
 
 /* Step indicators */
-.step-active { background: #ff6a3d; color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.88rem; }
-.step-done { background: rgba(63,185,80,0.1); color: #3fb950; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #238636; }
-.step-idle { background: #0e0e0e; color: #333; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid #1a1a1a; }
+.step-active { background: var(--orange); color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.88rem; }
+.step-done { background: rgba(63,185,80,0.08); color: #3fb950; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid rgba(63,185,80,0.2); }
+.step-idle { background: var(--bg-card); color: #252535; padding: 10px 18px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.88rem; border: 1px solid rgba(255,255,255,0.04); }
 .step-wrap { text-align: center; }
-.step-num-active { background: #ff6a3d; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
-.step-num-done { background: rgba(63,185,80,0.12); color: #3fb950; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #238636; }
-.step-num-idle { background: #0e0e0e; color: #333; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid #1a1a1a; }
-.step-title-active { color: #e6edf3; font-weight: 700; font-size: 0.9rem; }
-.step-title-done { color: #3fb950; font-weight: 700; font-size: 0.9rem; }
-.step-title-idle { color: #333; font-weight: 600; font-size: 0.9rem; }
-.step-sub { color: #4a4a4a; font-size: 0.76rem; margin-top: 3px; }
-.step-connector { color: #1a1a1a; font-size: 1.2rem; align-self: flex-start; padding-top: 14px; }
+.step-num-active { background: var(--orange); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.step-num-done { background: rgba(63,185,80,0.1); color: #3fb950; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid rgba(63,185,80,0.25); }
+.step-num-idle { background: var(--bg-card); color: #252535; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.05); }
+.step-title-active { color: var(--t-g1); font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.5px; }
+.step-title-done { color: #3fb950; font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.5px; }
+.step-title-idle { color: #252535; font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.5px; }
+.step-sub { color: #2e2e3e; font-size: 0.72rem; margin-top: 3px; }
+.step-connector { color: rgba(255,255,255,0.06); font-size: 1.2rem; align-self: flex-start; padding-top: 14px; }
 
 /* Pipeline */
-.pipeline-box { background: #0e0e0e; border: 1px solid rgba(255,106,61,0.15); border-radius: 10px; padding: 18px 16px; flex: 1; min-width: 0; }
-.pipeline-arrow { color: #ff6a3d; font-size: 1.5rem; align-self: center; flex-shrink: 0; padding: 0 6px; opacity: 0.7; }
-.pipeline-tag { background: rgba(255,106,61,0.1); color: #ff6a3d; border: 1px solid rgba(255,106,61,0.25); border-radius: 4px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-bottom: 8px; }
-.pipeline-output { background: rgba(63,185,80,0.05); border: 1px solid rgba(63,185,80,0.15); border-radius: 4px; padding: 5px 10px; margin-top: 10px; font-size: 0.78rem; color: #3fb950; }
+.pipeline-box { background: var(--bg-card-2); border: 1px solid var(--orange-bdr); border-radius: 10px; padding: 18px 16px; flex: 1; min-width: 0; }
+.pipeline-arrow { color: var(--orange); font-size: 1.5rem; align-self: center; flex-shrink: 0; padding: 0 6px; opacity: 0.6; }
+.pipeline-tag { background: var(--orange-soft); color: var(--orange); border: 1px solid var(--orange-bdr); border-radius: 4px; padding: 2px 8px; font-family: 'Oxanium', sans-serif; font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; display: inline-block; margin-bottom: 8px; }
+.pipeline-output { background: rgba(63,185,80,0.04); border: 1px solid rgba(63,185,80,0.15); border-radius: 4px; padding: 5px 10px; margin-top: 10px; font-size: 0.78rem; color: #3fb950; }
 
 /* Output chips */
-.output-chip { background: #0e0e0e; border: 1px solid #1a1a1a; border-radius: 8px; padding: 12px 14px; }
+.output-chip { background: var(--bg-card); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px 14px; }
 .output-chip-icon { font-size: 1.3rem; margin-bottom: 5px; }
-.output-chip-title { color: #e6edf3; font-weight: 700; font-size: 0.85rem; margin-bottom: 3px; }
-.output-chip-desc { color: #4a4a4a; font-size: 0.76rem; line-height: 1.4; }
+.output-chip-title { color: var(--t-g1); font-weight: 700; font-size: 0.85rem; margin-bottom: 3px; }
+.output-chip-desc { color: #3a3a4a; font-size: 0.76rem; line-height: 1.4; }
 
-/* Log box */
-.log-box { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.78rem; color: #58a6ff; line-height: 1.6; max-height: 260px; overflow-y: auto; }
+/* Log box — terminal style */
+.log-box { background: #02020a; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 0.78rem; color: #58a6ff; line-height: 1.6; max-height: 260px; overflow-y: auto; }
 
 /* Caption */
-small, .caption { color: #4a4a4a !important; font-size: 0.82rem !important; }
+small, .caption { color: #2e2e3e !important; font-size: 0.82rem !important; }
+
+/* Status pulse dot */
+@keyframes pulse-dot {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; display: inline-block; animation: pulse-dot 2s ease-in-out infinite; box-shadow: 0 0 6px rgba(63,185,80,0.5); }
+.status-dot-or { background: var(--orange); box-shadow: 0 0 6px rgba(255,106,61,0.5); }
+
+/* Section header — eyebrow + title pattern */
+.section-eyebrow { font-family: 'Oxanium', sans-serif; font-size: 0.6rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--orange); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.section-eyebrow::before { content: ''; display: block; width: 14px; height: 2px; background: var(--orange); }
+.section-title { font-family: 'Jost', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--t-g1); margin: 0 0 14px 0; }
+
+/* Caveat accent */
+.caveat-accent { font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--orange); font-weight: 500; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Header ────────────────────────────────────────────────────────────────────
+# ── Dashboard Header ──────────────────────────────────────────────────────────
 st.markdown(_html("""
-<div style="padding:2rem 0 1.5rem 0;">
-  <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
-    <div style="width:4px; height:32px; background:#ff6a3d; border-radius:2px; flex-shrink:0;"></div>
-    <div>
-      <div style="font-size:0.6rem; font-weight:700; letter-spacing:3.5px; text-transform:uppercase; color:#ff6a3d; margin-bottom:4px;">viAct &middot; AI Content Platform</div>
-      <h1 style="margin:0; font-size:1.7rem; color:#fff; font-weight:800; line-height:1.15; letter-spacing:-0.3px;">Content Intelligence Suite</h1>
+<div style="padding:2rem 0 0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.04); margin-bottom:1.2rem;">
+
+  <!-- Top row: branding + status -->
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+
+    <!-- Left: logo + title -->
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="position:relative; width:42px; height:42px; flex-shrink:0;">
+        <div style="width:42px; height:42px; background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.25); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.9"/>
+            <rect x="14" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
+            <rect x="2" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
+            <rect x="14" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Oxanium',sans-serif; font-size:0.58rem; font-weight:600; letter-spacing:3.5px; text-transform:uppercase; color:#ff6a3d; margin-bottom:5px; display:flex; align-items:center; gap:8px;">
+          viAct &nbsp;&middot;&nbsp; AI Content Platform
+        </div>
+        <h1 style="margin:0; font-family:'Oxanium',sans-serif; font-size:1.55rem; color:#fff; font-weight:700; line-height:1.15; letter-spacing:-0.5px;">
+          Content Intelligence Suite
+        </h1>
+      </div>
     </div>
+
+    <!-- Right: system status strip -->
+    <div style="display:flex; align-items:center; gap:20px; padding:10px 18px; background:rgba(18,18,28,0.8); border:1px solid rgba(255,255,255,0.05); border-radius:8px; flex-shrink:0;">
+      <div style="text-align:center;">
+        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Agents</div>
+        <div style="font-family:'Oxanium',sans-serif; font-size:1.1rem; font-weight:700; color:#ff6a3d; line-height:1;">06</div>
+      </div>
+      <div style="width:1px; height:24px; background:rgba(255,255,255,0.05);"></div>
+      <div style="text-align:center;">
+        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Pages</div>
+        <div style="font-family:'Oxanium',sans-serif; font-size:1.1rem; font-weight:700; color:#ff6a3d; line-height:1;">14+</div>
+      </div>
+      <div style="width:1px; height:24px; background:rgba(255,255,255,0.05);"></div>
+      <div style="text-align:center;">
+        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Status</div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <span class="status-dot"></span>
+          <span style="font-family:'Oxanium',sans-serif; font-size:0.62rem; font-weight:600; color:#3fb950; letter-spacing:1px;">LIVE</span>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <p style="margin:10px 0 0 16px; color:#3a3a3a; font-size:0.88rem; line-height:1.5; padding-left:16px; border-left:1px solid #1a1a1a;">
-    5 specialized AI agents that automate viAct.ai&rsquo;s entire content pipeline &mdash; from daily market intel to ready-to-publish Wix CMS pages.
+
+  <!-- Subtitle -->
+  <p style="margin:12px 0 0 56px; font-family:'Jost',sans-serif; color:#252535; font-size:0.82rem; line-height:1.5;">
+    6 specialized AI agents &mdash; daily market intel, industry pages, case studies, product pages, video analytics, and solutions pages &mdash; all wired to Wix CMS.
   </p>
+
 </div>
 """), unsafe_allow_html=True)
 
-# ── Agent Picker — 5 agents in 3+2 grid ──────────────────────────────────────
+# ── Agent Overview — Dashboard Cards ─────────────────────────────────────────
 st.markdown(_html("""
-<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;">
 
   <!-- Agent 01 — Market Radar -->
-  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #ff6a3d; border-radius:10px; padding:18px 20px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:14px; right:14px; font-size:0.52rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 01</div>
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-      <div style="width:36px; height:36px; background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.2); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">📡</div>
-      <div>
-        <div style="color:#fff; font-weight:800; font-size:0.95rem; letter-spacing:-0.2px;">Market Radar</div>
-        <div style="color:#ff6a3d; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">Daily Intel + Topic Gen</div>
-      </div>
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default; transition:border-color 0.2s;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#ff6a3d; opacity:0.8;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#ff6a3d;">AGENT 01</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#ff6a3d;">25+</div>
     </div>
-    <p style="margin:0 0 12px 0; color:#555; font-size:0.78rem; line-height:1.6;">Competitors scan karo, content gaps dhundo, aur 3 daily topics auto-suggest karo &mdash; Industry, Case Study, Video Analytics.</p>
-    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Tavily</span>
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Firecrawl</span>
-      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Auto Daily</span>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Market Radar</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#ff6a3d; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">Daily Intel · Topic Gen</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">25 competitors monitor karo, daily content topics auto-suggest karo — Industry, Case Study, VA, Solutions.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px; letter-spacing:0.5px;">Tavily</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px; letter-spacing:0.5px;">RSS</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px; letter-spacing:0.5px;">Auto Daily</span>
     </div>
-    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a1a1a; font-size:0.68rem; color:#2a2a2a;">Tab 1 &nbsp;&middot;&nbsp; Google Sheet + Daily Email</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 1 · Sheet + Email</div>
   </div>
 
   <!-- Agent 02 — Industry Pages -->
-  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #3fb950; border-radius:10px; padding:18px 20px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:14px; right:14px; font-size:0.52rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 02</div>
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-      <div style="width:36px; height:36px; background:rgba(63,185,80,0.08); border:1px solid rgba(63,185,80,0.2); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🏭</div>
-      <div>
-        <div style="color:#fff; font-weight:800; font-size:0.95rem; letter-spacing:-0.2px;">Industry Pages</div>
-        <div style="color:#3fb950; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">Dynamic Landing Pages</div>
-      </div>
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#3fb950; opacity:0.8;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#3fb950;">AGENT 02</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#3fb950;">8</div>
     </div>
-    <p style="margin:0 0 12px 0; color:#555; font-size:0.78rem; line-height:1.6;">Industry choose karo, .docx upload karo &mdash; poora 8-section Wix CMS page ban jaata hai: Hero, Metrics, Use Cases, Testimonials, CTA.</p>
-    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Construction</span>
-      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Oil &amp; Gas</span>
-      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">+6 Industries</span>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Industry Pages</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#3fb950; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">Dynamic Landing Pages</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Industry + .docx upload &mdash; 8-section Wix CMS page: Hero, Metrics, Use Cases, Testimonials, CTA.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Construction</span>
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Oil &amp; Gas</span>
+      <span style="background:rgba(63,185,80,0.07); color:#3fb950; border:1px solid rgba(63,185,80,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">+6 more</span>
     </div>
-    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a1a1a; font-size:0.68rem; color:#2a2a2a;">Tab 2 &nbsp;&middot;&nbsp; viAct Dynamic Pages Sheet</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 2 · Dynamic Pages Sheet</div>
   </div>
 
   <!-- Agent 03 — Case Studies -->
-  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #58a6ff; border-radius:10px; padding:18px 20px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:14px; right:14px; font-size:0.52rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 03</div>
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-      <div style="width:36px; height:36px; background:rgba(88,166,255,0.08); border:1px solid rgba(88,166,255,0.2); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">📋</div>
-      <div>
-        <div style="color:#fff; font-weight:800; font-size:0.95rem; letter-spacing:-0.2px;">Case Studies</div>
-        <div style="color:#58a6ff; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">56-Field CMS Schema</div>
-      </div>
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#58a6ff; opacity:0.8;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#58a6ff;">AGENT 03</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#58a6ff;">56</div>
     </div>
-    <p style="margin:0 0 12px 0; color:#555; font-size:0.78rem; line-height:1.6;">Client project details do &mdash; AI poora case study banata hai: Problem, Solution, Impact, Testimonials, Metrics aur 56 Wix CMS fields.</p>
-    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Tavily</span>
-      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">.docx Upload</span>
-      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Image Briefs</span>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Case Studies</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#58a6ff; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">56-Field CMS Schema</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Project details do &mdash; AI banata hai: Problem, Solution, Impact, Testimonials, Metrics + 56 Wix fields.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Tavily</span>
+      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">.docx</span>
+      <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Image Briefs</span>
     </div>
-    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a1a1a; font-size:0.68rem; color:#2a2a2a;">Tab 3 &nbsp;&middot;&nbsp; viAct Dynamic Pages Sheet</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 3 · Dynamic Pages Sheet</div>
   </div>
 
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1.6rem;">
 
   <!-- Agent 04 — Product Pages -->
-  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #d6a126; border-radius:10px; padding:18px 20px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:14px; right:14px; font-size:0.52rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 04</div>
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-      <div style="width:36px; height:36px; background:rgba(214,161,38,0.08); border:1px solid rgba(214,161,38,0.2); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🖥️</div>
-      <div>
-        <div style="color:#fff; font-weight:800; font-size:0.95rem; letter-spacing:-0.2px;">Product Pages</div>
-        <div style="color:#d6a126; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">viAct Product CMS</div>
-      </div>
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#d6a126; opacity:0.8;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#d6a126;">AGENT 04</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#d6a126;">CMS</div>
     </div>
-    <p style="margin:0 0 12px 0; color:#555; font-size:0.78rem; line-height:1.6;">viAct ke product pages ke liye CMS content generate karo &mdash; features, specs, use cases aur SEO fields Wix ke liye ready.</p>
-    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-      <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">viAct Products</span>
-      <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Wix CMS Ready</span>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Product Pages</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#d6a126; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">viAct Product CMS</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">viAct product pages ke liye CMS content &mdash; features, specs, use cases, SEO — Wix ready.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">viAct Products</span>
+      <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Wix CMS</span>
     </div>
-    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a1a1a; font-size:0.68rem; color:#2a2a2a;">Tab 4 &nbsp;&middot;&nbsp; viAct Dynamic Pages Sheet</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 4 · Dynamic Pages Sheet</div>
   </div>
 
   <!-- Agent 07 — Video Analytics -->
-  <div style="background:#0e0e0e; border:1px solid #1e1e1e; border-top:3px solid #bc8cff; border-radius:10px; padding:18px 20px; position:relative; overflow:hidden;">
-    <div style="position:absolute; top:14px; right:14px; font-size:0.52rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1e1e1e;">AGENT 07</div>
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-      <div style="width:36px; height:36px; background:rgba(188,140,255,0.08); border:1px solid rgba(188,140,255,0.2); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🎯</div>
-      <div>
-        <div style="color:#fff; font-weight:800; font-size:0.95rem; letter-spacing:-0.2px;">Video Analytics</div>
-        <div style="color:#bc8cff; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:1px;">27 Detection Pages</div>
-      </div>
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#bc8cff; opacity:0.8;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#bc8cff;">AGENT 07</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#bc8cff;">27</div>
     </div>
-    <p style="margin:0 0 12px 0; color:#555; font-size:0.78rem; line-height:1.6;">Detection type type karo (Fall Detection, PPE, Intrusion…) &mdash; AI poora item page banata hai: Hero, Challenges, How It Works, Use Cases, SEO.</p>
-    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">27 Detection Types</span>
-      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Tavily Research</span>
-      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-size:0.6rem; font-weight:600; padding:2px 8px;">Alt Texts</span>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Video Analytics</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#bc8cff; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">27 Detection Pages</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Detection type likho (PPE, Intrusion, Fall…) &mdash; full page: Hero, Challenges, How It Works, SEO.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">27 Types</span>
+      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Tavily</span>
+      <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Alt Texts</span>
     </div>
-    <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1a1a1a; font-size:0.68rem; color:#2a2a2a;">Tab 5 &nbsp;&middot;&nbsp; viAct Dynamic Pages Sheet</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 5 · Dynamic Pages Sheet</div>
+  </div>
+
+  <!-- Agent 08 — Solutions Pages -->
+  <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:#ff6a3d; opacity:0.5;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#ff6a3d;">AGENT 08</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#ff6a3d;">14</div>
+    </div>
+    <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Solutions Pages</div>
+    <div style="font-family:'Oxanium',sans-serif; color:#ff6a3d; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">14 Solution Verticals</div>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">14 viAct solutions ke liye full CMS page — Hero, Dashboard, 5 Features, FAQs, SEO + image prompts.</p>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Nano Banana</span>
+      <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">7 Img Prompts</span>
+    </div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 6 · Dynamic Pages Sheet</div>
   </div>
 
 </div>
@@ -355,12 +500,12 @@ st.markdown(_html("""
 # TABS — Market Radar  |  Industry Pages
 # =============================================================================
 tab_radar, tab_industry, tab_casestudy, tab_product, tab_va, tab_solutions = st.tabs([
-    "📡  Agent 01 — Market Radar",
-    "🏭  Agent 02 — Industry Pages",
-    "📋  Agent 03 — Case Studies",
-    "🖥️  Agent 04 — Product Pages",
-    "🎯  Agent 07 — Video Analytics",
-    "🔧  Agent 08 — Solutions Pages",
+    "01 · Market Radar",
+    "02 · Industry Pages",
+    "03 · Case Studies",
+    "04 · Product Pages",
+    "07 · Video Analytics",
+    "08 · Solutions Pages",
 ])
 
 with tab_radar:
@@ -375,22 +520,22 @@ with tab_radar:
     if step == 0:
         st.markdown(_html("""
         <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">📡</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Daily Scan Chalao</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Run Daily Intel Scan" click karo. Competitors scan hoga, trends milenge, aur 3 new content topics suggest honge (Industry + Case Study + Video Analytics).</div>
+          <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
+            <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 01</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Daily Scan Chalao</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">"Run Daily Intel Scan" click karo. 25 competitors scan hoga, trends milenge, aur 4 new content topics suggest honge.</div>
           </div>
-          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">💡</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Topics Use Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Scan ke baad 3 suggested topics neeche dikhenge. "Use This" click karo — Industry / Case Study / VA tab mein topic auto-fill ho jayega.</div>
+          <div style="color:#1e1e2e;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
+          <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
+            <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 02</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Topics Use Karo</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">Scan ke baad suggested topics neeche dikhenge. "Use This" click karo — tab mein topic auto-fill ho jayega.</div>
           </div>
-          <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
-          <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
-            <div style="font-size:1.1rem;margin-bottom:6px;">📄</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Ya Pillar Page Banao</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Run Deep Market Radar" se ek specific SEO topic dhundh ke uska full pillar page + 3 supporting blogs generate karo.</div>
+          <div style="color:#1e1e2e;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
+          <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
+            <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 03</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Ya Pillar Page Banao</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">"Run Deep Market Radar" se ek specific SEO topic ke liye full pillar page + 3 supporting blogs generate karo.</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -438,7 +583,7 @@ with tab_radar:
     if step == 0:
         # ── Pipeline flow diagram ──────────────────────────────────────────────────
         st.markdown(
-            "<p style='color:#8b949e; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; margin-bottom:12px;'>HOW IT WORKS &mdash; 3 AI AGENTS IN SEQUENCE</p>",
+            "<p style='font-family:\"Oxanium\",sans-serif; color:#2e2e3e; font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:3px; margin-bottom:12px; display:flex; align-items:center; gap:8px;'><span style='display:inline-block;width:14px;height:2px;background:#ff6a3d;'></span>HOW IT WORKS &mdash; 3 AI AGENTS IN SEQUENCE</p>",
             unsafe_allow_html=True,
         )
         st.markdown(_html("""
