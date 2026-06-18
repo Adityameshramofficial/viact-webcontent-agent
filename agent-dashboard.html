@@ -351,24 +351,61 @@ body { background:var(--bg-dark); font-family:'Jost',sans-serif; min-height:100v
 </div>
 
 <!-- SHEETS LINK BANNER -->
-<div style="background:var(--bg-dark-2);border-top:1px solid var(--bdr-dark);border-bottom:1px solid var(--bdr-dark);padding:16px 32px;">
-  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="width:36px;height:36px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;">
-        <svg width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+<div style="background:var(--bg-dark-2);border-top:1px solid var(--bdr-dark);border-bottom:1px solid var(--bdr-dark);padding:20px 32px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <p style="font-family:'Oxanium',sans-serif;font-size:11px;color:var(--t-g4);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:14px;">Output — Google Sheets (2 workbooks)</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+      <!-- Sheet 1 -->
+      <div style="background:var(--bg-card);border:1px solid var(--bdr-dark);border-radius:10px;padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+            <span style="font-family:'Jost',sans-serif;font-weight:700;font-size:14px;color:#fff;">Main Content Hub</span>
+          </div>
+          <div style="font-size:12px;color:var(--t-g3);line-height:1.7;">
+            Webpage Content &nbsp;·&nbsp; Competitor Intel &nbsp;·&nbsp; Daily Topics<br>
+            Product Launches &nbsp;·&nbsp; Case Studies &nbsp;·&nbsp; VA Pages &nbsp;·&nbsp; Solutions<br>
+            Reference Library &nbsp;·&nbsp; Dedup Log &nbsp;·&nbsp; Opportunities
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--t-g4);">Agents 01 02 03 05 06 07 08 push here daily</div>
+        </div>
+        <a href="https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit?gid=1446578565#gid=1446578565"
+           target="_blank"
+           style="display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;
+                  font-family:'Jost',sans-serif;font-weight:700;font-size:12px;padding:9px 16px;
+                  border-radius:6px;text-decoration:none;white-space:nowrap;flex-shrink:0;align-self:center;">
+          <svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Sheet 1
+        </a>
       </div>
-      <div>
-        <div style="font-family:'Jost',sans-serif;font-weight:700;font-size:14px;color:#fff;">All Generated Content — Google Sheets</div>
-        <div style="font-size:12px;color:var(--t-g4);margin-top:2px;">Every page auto-pushed here after generation. <span id="sheet-page-count" style="color:var(--green);font-weight:700;"></span></div>
+
+      <!-- Sheet 2 -->
+      <div style="background:var(--bg-card);border:1px solid var(--bdr-dark);border-radius:10px;padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
+            <span style="font-family:'Jost',sans-serif;font-weight:700;font-size:14px;color:#fff;">Extended Outputs</span>
+          </div>
+          <div style="font-size:12px;color:var(--t-g3);line-height:1.7;">
+            Case Studies (Gammon India, Singapore firms) &nbsp;·&nbsp; VA Pages<br>
+            Solutions (Working at Height, Scaffolding, Incident Mgmt)<br>
+            Industry Pages &nbsp;·&nbsp; Opportunities &nbsp;·&nbsp; Competitor Intel
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--t-g4);">Industry Scanner + overflow content pushed here</div>
+        </div>
+        <a href="https://docs.google.com/spreadsheets/d/14Y16ikpkAfnVFXm38Ot6CG4PIPTbrQ89jUPCiCjXjf4/edit?gid=1128925130#gid=1128925130"
+           target="_blank"
+           style="display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;
+                  font-family:'Jost',sans-serif;font-weight:700;font-size:12px;padding:9px 16px;
+                  border-radius:6px;text-decoration:none;white-space:nowrap;flex-shrink:0;align-self:center;">
+          <svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Sheet 2
+        </a>
       </div>
+
     </div>
-    <a id="sheets-link" href="https://docs.google.com/spreadsheets" target="_blank"
-       style="display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;
-              font-family:'Jost',sans-serif;font-weight:700;font-size:13px;padding:10px 20px;
-              border-radius:7px;text-decoration:none;transition:opacity 0.2s;white-space:nowrap;">
-      <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      Open Google Sheets
-    </a>
+    <div style="margin-top:10px;font-size:12px;color:var(--t-g4);">Total pages generated across both sheets: <span id="sheet-page-count" style="color:var(--green);font-weight:700;"></span></div>
   </div>
 </div>
 
@@ -593,16 +630,10 @@ fetch('dashboard-data.json?v=' + Date.now())
       emailSubject.textContent = `viAct Automation Daily Report — ${dd} ${mo} ${yr}`;
     }
 
-    /* ── Sheets link ── */
-    if (data.sheet_url) {
-      const sheetsBtn = document.getElementById('sheets-link');
-      if (sheetsBtn) sheetsBtn.href = data.sheet_url;
-      const footerLink = document.querySelector('.footer-link[href*="spreadsheets"]');
-      if (footerLink) footerLink.href = data.sheet_url;
-    }
+    /* ── Sheet page count ── */
     const sheetCount = document.getElementById('sheet-page-count');
     if (sheetCount && data.total_pages) {
-      sheetCount.textContent = `${data.total_pages.toLocaleString()} pages generated so far.`;
+      sheetCount.textContent = `${data.total_pages.toLocaleString()} pages (Sheet 1) — updating daily`;
     }
 
     /* ── Real output cards ── */
