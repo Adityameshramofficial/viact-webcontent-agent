@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>viAct Content Intelligence — Agent Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark:    #0a0a0f;
+  --bg-dark-2:  #0d0d16;
+  --bg-card:    #12121c;
+  --bg-light:   #f4f5f8;
+  --orange:     #ff6a3d;
+  --orange-soft:rgba(255,106,61,0.10);
+  --orange-bdr: rgba(255,106,61,0.22);
+  --t-white:    #ffffff;
+  --t-g1:       #E9ECF1;
+  --t-g2:       #C9D0D9;
+  --t-g3:       #A8B0BE;
+  --t-g4:       #818181;
+  --t-black:    #000000;
+  --t-mid:      #424242;
+  --bdr-dark:   rgba(255,255,255,0.07);
+  --bdr-light:  rgba(0,0,0,0.09);
+  --green:      #22c55e;
+  --blue:       #3b82f6;
+  --purple:     #a855f7;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg-dark); font-family:'Jost',sans-serif; min-height:100vh; }
+
+/* ── NAV ── */
+.nav { background:var(--bg-dark-2); border-bottom:1px solid var(--bdr-dark); padding:0 32px; height:54px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.nav-brand { display:flex; align-items:center; gap:10px; }
+.nav-logo { width:28px; height:28px; background:var(--orange); border-radius:6px; display:flex; align-items:center; justify-content:center; }
+.nav-logo svg { width:16px; height:16px; fill:#fff; }
+.nav-name { font-family:'Oxanium',sans-serif; font-weight:600; font-size:14px; color:var(--t-white); }
+.nav-name span { color:var(--orange); }
+.nav-right { display:flex; align-items:center; gap:16px; }
+.live-pill { display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:20px; padding:4px 12px; font-family:'Oxanium',sans-serif; font-size:11px; color:var(--green); font-weight:700; letter-spacing:0.1em; }
+.live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+.nav-time { font-size:12px; color:var(--t-g4); font-family:'Oxanium',sans-serif; }
+
+/* ── HERO STRIP ── */
+.hero-strip {
+  background:var(--bg-dark);
+  background-image: radial-gradient(rgba(255,255,255,0.05) 1px,transparent 1px);
+  background-size:28px 28px;
+  padding:48px 32px 36px;
+  position:relative; overflow:hidden;
+}
+.hero-glow { position:absolute; top:-20%; right:-5%; width:45%; height:140%; background:radial-gradient(ellipse at 60% 40%,rgba(255,106,61,0.07) 0%,transparent 60%); pointer-events:none; }
+.hero-inner { max-width:1100px; margin:0 auto; }
+.hero-eyebrow { font-family:'Oxanium',sans-serif; font-size:11px; color:var(--t-g3); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:10px; }
+.hero-eyebrow::before { content:''; width:20px; height:2px; background:var(--orange); display:block; }
+.hero-title { font-family:'Oxanium',sans-serif; font-weight:400; font-size:32px; color:var(--t-white); line-height:1.2; margin-bottom:10px; }
+.hero-title span { color:var(--orange); }
+.hero-sub { font-family:'Jost',sans-serif; font-weight:300; font-size:15px; color:var(--t-g2); max-width:560px; line-height:1.7; }
+
+/* ── STATS ROW ── */
+.stats-wrap { max-width:1100px; margin:0 auto; padding:0 32px 0; }
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:-1px; padding:28px 0; }
+.stat-card { background:var(--bg-card); border:1px solid var(--bdr-dark); border-radius:12px; padding:22px 20px; text-align:center; transition:border-color 0.25s,transform 0.25s; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat-card.orange::before { background:linear-gradient(90deg,transparent,var(--orange),transparent); }
+.stat-card.blue::before   { background:linear-gradient(90deg,transparent,var(--blue),transparent); }
+.stat-card.green::before  { background:linear-gradient(90deg,transparent,var(--green),transparent); }
+.stat-card.purple::before { background:linear-gradient(90deg,transparent,var(--purple),transparent); }
+.stat-card:hover { border-color:var(--orange-bdr); transform:translateY(-3px); }
+.stat-num { font-family:'Oxanium',sans-serif; font-weight:700; font-size:44px; line-height:1; margin-bottom:6px; }
+.stat-num.orange { color:var(--orange); }
+.stat-num.blue   { color:var(--blue); }
+.stat-num.green  { color:var(--green); }
+.stat-num.purple { color:var(--purple); }
+.stat-label { font-family:'Jost',sans-serif; font-weight:700; font-size:11px; color:var(--t-g4); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:4px; }
+.stat-sub { font-size:11px; color:var(--t-g4); }
+
+/* ── SECTION WRAPPER ── */
+.section { padding:36px 32px; }
+.section-inner { max-width:1100px; margin:0 auto; }
+.sec-eyebrow { font-family:'Oxanium',sans-serif; font-size:11px; color:var(--t-g3); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.sec-eyebrow::before { content:''; width:16px; height:2px; background:var(--orange); display:block; }
+.sec-title { font-family:'Jost',sans-serif; font-weight:700; font-size:22px; color:var(--t-white); margin-bottom:20px; }
+
+/* ── PIPELINE ── */
+.pipeline-bg { background:var(--bg-dark-2); }
+.pipeline { display:flex; align-items:center; gap:0; flex-wrap:wrap; }
+.pipe-step { flex:1; min-width:130px; background:var(--bg-card); border:1px solid var(--bdr-dark); border-radius:10px; padding:18px 14px; text-align:center; position:relative; }
+.pipe-arrow { color:var(--orange); font-size:18px; padding:0 8px; flex-shrink:0; }
+.pipe-icon { font-size:22px; margin-bottom:8px; }
+.pipe-label { font-family:'Oxanium',sans-serif; font-size:11px; color:var(--orange); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+.pipe-desc { font-size:11px; color:var(--t-g3); line-height:1.5; }
+.pipe-badge { display:inline-block; background:rgba(34,197,94,0.12); color:var(--green); border:1px solid rgba(34,197,94,0.25); border-radius:4px; font-size:10px; font-weight:700; padding:2px 7px; margin-top:6px; font-family:'Oxanium',sans-serif; }
+
+/* ── AGENT TABLE ── */
+.agent-table { width:100%; border-collapse:collapse; }
+.agent-table thead tr { background:var(--bg-dark-2); }
+.agent-table th { padding:10px 14px; font-family:'Oxanium',sans-serif; font-size:10px; color:var(--t-g4); text-transform:uppercase; letter-spacing:0.15em; text-align:left; border-bottom:1px solid var(--bdr-dark); }
+.agent-table td { padding:12px 14px; border-bottom:1px solid var(--bdr-dark); }
+.agent-table tr:last-child td { border-bottom:none; }
+.agent-table tr:hover td { background:rgba(255,255,255,0.02); }
+.agent-num { font-family:'Oxanium',sans-serif; font-size:11px; color:var(--t-g4); }
+.agent-name { font-family:'Jost',sans-serif; font-weight:600; font-size:14px; color:var(--t-white); }
+.agent-desc { font-size:12px; color:var(--t-g3); margin-top:2px; }
+.badge { display:inline-flex; align-items:center; gap:4px; border-radius:4px; padding:3px 9px; font-size:10px; font-weight:700; font-family:'Oxanium',sans-serif; letter-spacing:0.08em; }
+.badge-auto  { background:rgba(34,197,94,0.1); color:var(--green); border:1px solid rgba(34,197,94,0.25); }
+.badge-manual{ background:rgba(59,130,246,0.1); color:var(--blue); border:1px solid rgba(59,130,246,0.25); }
+.badge-dot   { width:5px; height:5px; border-radius:50%; background:currentColor; }
+.output-tag { display:inline-block; background:var(--orange-soft); color:var(--orange); border:1px solid var(--orange-bdr); border-radius:4px; font-size:10px; font-weight:600; padding:2px 7px; font-family:'Jost',sans-serif; }
+
+/* ── OUTPUT PREVIEW ── */
+.output-bg { background:var(--bg-light); }
+.output-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.out-card { background:#fff; border:1px solid var(--bdr-light); border-radius:12px; overflow:hidden; }
+.out-card-head { background:var(--bg-dark); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+.out-card-title { font-family:'Oxanium',sans-serif; font-size:12px; color:var(--t-g2); font-weight:300; }
+.out-card-badge { font-family:'Oxanium',sans-serif; font-size:10px; color:var(--green); background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.25); border-radius:4px; padding:2px 8px; font-weight:700; }
+.out-card-body { padding:18px; }
+.out-field { margin-bottom:14px; }
+.out-field:last-child { margin-bottom:0; }
+.out-field-label { font-family:'Oxanium',sans-serif; font-size:10px; color:var(--t-soft,#818181); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:4px; }
+.out-field-value { font-family:'Jost',sans-serif; font-size:13px; color:var(--t-black); line-height:1.6; }
+.out-field-value.headline { font-weight:700; font-size:15px; color:var(--t-dark,#1a1a2e); }
+.out-field-value.meta { font-weight:300; color:var(--t-mid); }
+.out-field-value.kw { font-weight:600; color:var(--orange); }
+
+/* ── EMAIL PREVIEW ── */
+.email-preview { background:var(--bg-card); border:1px solid var(--bdr-dark); border-radius:12px; overflow:hidden; }
+.email-topbar { background:#1e293b; padding:10px 18px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--bdr-dark); }
+.email-dot { width:10px; height:10px; border-radius:50%; }
+.email-to-row { padding:10px 18px; border-bottom:1px solid var(--bdr-dark); display:flex; gap:16px; }
+.email-to-label { font-size:11px; color:var(--t-g4); font-family:'Oxanium',sans-serif; }
+.email-to-val { font-size:12px; color:var(--t-g2); }
+.email-body { padding:18px; }
+.email-header { margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--bdr-dark); }
+.email-subject { font-family:'Jost',sans-serif; font-weight:700; font-size:15px; color:#fff; }
+.email-sent-by { font-size:11px; color:var(--t-g4); margin-top:3px; }
+.email-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.em-stat { background:var(--bg-dark); border-radius:8px; padding:10px; text-align:center; }
+.em-num { font-family:'Oxanium',sans-serif; font-weight:700; font-size:22px; }
+.em-lbl { font-size:10px; color:var(--t-g4); text-transform:uppercase; margin-top:2px; }
+.email-topic-list { background:var(--bg-dark); border-radius:8px; padding:12px 14px; }
+.etl-label { font-size:10px; color:var(--t-g4); font-family:'Oxanium',sans-serif; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:8px; }
+.etl-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.etl-row:last-child { border-bottom:none; }
+.etl-topic { font-size:12px; color:var(--t-g2); }
+.etl-type-pill { font-size:10px; font-weight:700; border-radius:4px; padding:1px 7px; font-family:'Oxanium',sans-serif; }
+.etl-type-pill.pillar { background:rgba(8,145,178,0.15); color:#0891b2; }
+.etl-type-pill.blog   { background:rgba(124,58,237,0.15); color:#7c3aed; }
+
+/* ── FOOTER ── */
+.dash-footer { background:var(--bg-dark-2); border-top:1px solid var(--bdr-dark); padding:20px 32px; display:flex; justify-content:space-between; align-items:center; }
+.footer-links { display:flex; gap:16px; }
+.footer-link { font-size:13px; color:var(--orange); text-decoration:none; font-weight:600; font-family:'Jost',sans-serif; transition:opacity 0.2s; }
+.footer-link:hover { opacity:0.75; }
+.footer-note { font-size:11px; color:var(--t-g4); }
+
+@media(max-width:768px) {
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+  .output-grid { grid-template-columns:1fr; }
+  .pipeline { flex-direction:column; align-items:stretch; }
+  .pipe-arrow { transform:rotate(90deg); text-align:center; }
+  .email-metrics { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <span class="nav-name">viAct <span>Content Intelligence</span></span>
+  </div>
+  <div class="nav-right">
+    <div class="live-pill"><span class="live-dot"></span>LIVE</div>
+    <span class="nav-time" id="clock">—</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero-strip">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Agent Status Dashboard</p>
+    <h1 class="hero-title">10 Agents. Running <span>Every Day.</span><br>Zero Manual Input.</h1>
+    <p class="hero-sub">Monitors 25 competitors daily, auto-generates web pages, pushes to Google Sheets, and emails the team — all before 10 AM IST.</p>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-wrap">
+  <div class="stats-row">
+    <div class="stat-card orange">
+      <div class="stat-num orange" data-target="142">0</div>
+      <div class="stat-label">Total Pages Generated</div>
+      <div class="stat-sub">Auto-pushed to Google Sheets</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-num blue" data-target="25">0</div>
+      <div class="stat-label">Competitors Monitored</div>
+      <div class="stat-sub">Daily scan, live Tavily search</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num green" data-target="5">0</div>
+      <div class="stat-label">Pages Generated Today</div>
+      <div class="stat-sub">9:30 AM IST, fully automated</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-num purple" data-target="10">0</div>
+      <div class="stat-label">Active Agents</div>
+      <div class="stat-sub">6 auto-run · 4 on-demand</div>
+    </div>
+  </div>
+</div>
+
+<!-- PIPELINE -->
+<div class="section pipeline-bg">
+  <div class="section-inner">
+    <p class="sec-eyebrow">Daily Automated Pipeline</p>
+    <p class="sec-title">What happens every morning at 9:30 AM IST</p>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-icon">🔍</div>
+        <div class="pipe-label">Input</div>
+        <div class="pipe-desc">25 competitor websites scanned live</div>
+        <div class="pipe-badge">TAVILY SEARCH</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🧠</div>
+        <div class="pipe-label">Intel</div>
+        <div class="pipe-desc">Content gaps identified vs viact.ai</div>
+        <div class="pipe-badge">ZERO HALLUCINATION</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📋</div>
+        <div class="pipe-label">Topics</div>
+        <div class="pipe-desc">5 content opportunities picked daily</div>
+        <div class="pipe-badge">DEDUPLICATED</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">⚡</div>
+        <div class="pipe-label">Generate</div>
+        <div class="pipe-desc">5 agents run in parallel — full pages</div>
+        <div class="pipe-badge">LLAMA 3.3 70B</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📊</div>
+        <div class="pipe-label">Output</div>
+        <div class="pipe-desc">All content auto-pushed to Sheets</div>
+        <div class="pipe-badge">GOOGLE SHEETS</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📧</div>
+        <div class="pipe-label">Report</div>
+        <div class="pipe-desc">Daily email to Gary, Surendra, Aditya</div>
+        <div class="pipe-badge">10:00 AM IST</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENT STATUS -->
+<div class="section">
+  <div class="section-inner">
+    <p class="sec-eyebrow">Agent Status</p>
+    <p class="sec-title">All 10 agents — what each one does and what it outputs</p>
+    <div style="background:var(--bg-card);border:1px solid var(--bdr-dark);border-radius:12px;overflow:hidden;">
+      <table class="agent-table">
+        <thead>
+          <tr>
+            <th style="width:44px;">#</th>
+            <th>Agent Name</th>
+            <th>What It Does Daily</th>
+            <th>Output</th>
+            <th>Trigger</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="agent-num">01</span></td>
+            <td><div class="agent-name">Market Radar</div><div class="agent-desc">Competitor gap finder</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Scans 25 competitors, finds 5 content topics viact.ai is missing</td>
+            <td><span class="output-tag">5 Topics / day</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto 9:30 AM</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">02</span></td>
+            <td><div class="agent-name">Industry Pages</div><div class="agent-desc">Wix CMS page builder</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Generates full 8-section industry pages: hero, metrics, use cases, testimonials, CTA</td>
+            <td><span class="output-tag">Full Wix CMS fields</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto daily</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">03</span></td>
+            <td><div class="agent-name">Content Architect</div><div class="agent-desc">Pillar + blog writer</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Writes pillar page + 3 blogs: hero, 5 FAQs, schema JSON-LD, internal links, image prompts</td>
+            <td><span class="output-tag">6 outputs / topic</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto daily</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">04</span></td>
+            <td><div class="agent-name">Dynamic Builder</div><div class="agent-desc">Any page type</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Schema-driven: generates any page type (Use Case, Location, Comparison) from a JSON schema</td>
+            <td><span class="output-tag">Schema-defined fields</span></td>
+            <td><span class="badge badge-manual"><span class="badge-dot"></span>On-demand</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">05</span></td>
+            <td><div class="agent-name">Opportunity Scanner</div><div class="agent-desc">Market trend tracker</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Finds 10 ranked market opportunities daily — competitor moves, regulation changes, new verticals</td>
+            <td><span class="output-tag">10 ranked opps</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto daily</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">06</span></td>
+            <td><div class="agent-name">Case Study Builder</div><div class="agent-desc">Customer success pages</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Generates full case study: company, challenge, solution, impact stats, testimonial, CTA</td>
+            <td><span class="output-tag">56-field Wix schema</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto daily</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">07</span></td>
+            <td><div class="agent-name">Video Analytics</div><div class="agent-desc">Detection type pages</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Creates pages for 27 detection types: Fall Detection, PPE, Fire, Forklift, Intrusion Detection</td>
+            <td><span class="output-tag">Full Wix CMS fields</span></td>
+            <td><span class="badge badge-auto"><span class="badge-dot"></span>Auto daily</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">08</span></td>
+            <td><div class="agent-name">Solutions Pages</div><div class="agent-desc">14 viAct solutions</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Generates solution pages for all 14 viAct solutions including FAQ, tech stack, CTA, image alts</td>
+            <td><span class="output-tag">14 solutions × full CMS</span></td>
+            <td><span class="badge badge-manual"><span class="badge-dot"></span>On-demand</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">09</span></td>
+            <td><div class="agent-name">Blog Writer</div><div class="agent-desc">SEO article generator</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Writes 800–1500 word SEO blogs with research, key takeaways, FAQs, case study embeds</td>
+            <td><span class="output-tag">Full blog CMS fields</span></td>
+            <td><span class="badge badge-manual"><span class="badge-dot"></span>On-demand</span></td>
+          </tr>
+          <tr>
+            <td><span class="agent-num">10</span></td>
+            <td><div class="agent-name">Meta / SEO</div><div class="agent-desc">Tag generator</div></td>
+            <td style="font-size:12px;color:var(--t-g2);">Auto-generates meta tags, Open Graph, Twitter Card, JSON-LD schema for every page type</td>
+            <td><span class="output-tag">Full SEO markup</span></td>
+            <td><span class="badge badge-manual"><span class="badge-dot"></span>On-demand</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- OUTPUT PREVIEW -->
+<div class="section output-bg">
+  <div class="section-inner">
+    <p class="sec-eyebrow" style="color:var(--t-soft,#818181);">Today's Output Example</p>
+    <p class="sec-title" style="color:var(--t-black);">What a generated page looks like — actual fields, ready for Wix CMS</p>
+    <div class="output-grid">
+      <div class="out-card">
+        <div class="out-card-head">
+          <span class="out-card-title">PILLAR PAGE — Auto-Generated Today</span>
+          <span class="out-card-badge">✓ PUSHED TO SHEETS</span>
+        </div>
+        <div class="out-card-body">
+          <div class="out-field">
+            <div class="out-field-label">Hero Title</div>
+            <div class="out-field-value headline">AI-Powered Fall Detection for High-Rise Construction Sites in Southeast Asia</div>
+          </div>
+          <div class="out-field">
+            <div class="out-field-label">Meta Description</div>
+            <div class="out-field-value meta">Reduce fall-related incidents by 65% with viAct's real-time AI fall detection — trusted by 500+ enterprise sites across 30+ countries. See how it works.</div>
+          </div>
+          <div class="out-field">
+            <div class="out-field-label">Primary Keyword</div>
+            <div class="out-field-value kw">fall detection AI construction Singapore</div>
+          </div>
+          <div class="out-field">
+            <div class="out-field-label">FAQ 1</div>
+            <div class="out-field-value meta">How does AI detect falls in real time without wearables? Using computer vision on existing CCTV, viAct detects fall events within 2 seconds and alerts the site supervisor automatically.</div>
+          </div>
+          <div class="out-field">
+            <div class="out-field-label">Internal Links Generated</div>
+            <div class="out-field-value meta">viAct PPE Detection · Lone Worker Monitoring · Construction Safety Solutions · viGent AI Agent · Case Studies</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="out-card">
+        <div class="out-card-head">
+          <span class="out-card-title">DAILY EMAIL — Sent Automatically</span>
+          <span class="out-card-badge">✓ DELIVERED 10:00 AM IST</span>
+        </div>
+        <div class="out-card-body" style="padding:0;">
+          <div class="email-preview" style="border:none;border-radius:0;">
+            <div class="email-topbar">
+              <div class="email-dot" style="background:#ef4444;"></div>
+              <div class="email-dot" style="background:#f59e0b;"></div>
+              <div class="email-dot" style="background:#22c55e;"></div>
+              <span style="font-size:11px;color:var(--t-g4);margin-left:8px;">viAct Daily Automation Report</span>
+            </div>
+            <div class="email-to-row">
+              <div><span class="email-to-label">TO &nbsp;</span><span class="email-to-val">gary.ng@viact.ai · surendra.singh@viact.ai</span></div>
+            </div>
+            <div class="email-body">
+              <div class="email-header">
+                <div class="email-subject">viAct Automation Daily Report — 18 Jun 2026</div>
+                <div class="email-sent-by">Sent by Aditya Meshram · viAct Automation System</div>
+              </div>
+              <div class="email-metrics">
+                <div class="em-stat"><div class="em-num" style="color:var(--orange);">142</div><div class="em-lbl">Total Pages</div></div>
+                <div class="em-stat"><div class="em-num" style="color:var(--blue);">12</div><div class="em-lbl">This Week</div></div>
+                <div class="em-stat"><div class="em-num" style="color:var(--green);">5</div><div class="em-lbl">Today</div></div>
+                <div class="em-stat"><div class="em-num" style="color:var(--purple);">89</div><div class="em-lbl">Topics Tracked</div></div>
+              </div>
+              <div class="email-topic-list">
+                <div class="etl-label">Today's Generated Topics</div>
+                <div class="etl-row">
+                  <span class="etl-topic">AI Fall Detection for Construction</span>
+                  <span class="etl-type-pill pillar">PILLAR</span>
+                </div>
+                <div class="etl-row">
+                  <span class="etl-topic">Lone Worker Safety ROI Guide</span>
+                  <span class="etl-type-pill blog">BLOG</span>
+                </div>
+                <div class="etl-row">
+                  <span class="etl-topic">PPE Compliance in Singapore 2026</span>
+                  <span class="etl-type-pill blog">BLOG</span>
+                </div>
+                <div class="etl-row">
+                  <span class="etl-topic">viAct vs Intenseye — Case Study</span>
+                  <span class="etl-type-pill pillar">CASE STUDY</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="dash-footer">
+  <div class="footer-links">
+    <a href="https://viact-webcontent-agent-a7yrhfuaifju4prfqntzku.streamlit.app/" class="footer-link" target="_blank">Open Live App →</a>
+    <a href="https://docs.google.com/spreadsheets" class="footer-link" target="_blank">View Google Sheets →</a>
+  </div>
+  <span class="footer-note">viAct Content Intelligence · Built with Claude + Groq · 10 agents · GitHub Actions automation</span>
+</footer>
+
+<script>
+/* Clock */
+function updateClock() {
+  const now = new Date();
+  const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  const h = ist.getUTCHours().toString().padStart(2,'0');
+  const m = ist.getUTCMinutes().toString().padStart(2,'0');
+  const s = ist.getUTCSeconds().toString().padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}:${s} IST`;
+}
+updateClock(); setInterval(updateClock, 1000);
+
+/* Counter animation */
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  if (!target) return;
+  let t0 = null;
+  const tick = ts => {
+    if (!t0) t0 = ts;
+    const p = Math.min((ts - t0) / 1400, 1);
+    el.textContent = Math.floor((1 - Math.pow(1 - p, 3)) * target);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+const counterObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    animateCounter(e.target);
+    counterObs.unobserve(e.target);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-target]').forEach(el => counterObs.observe(el));
+
+/* Fade-in */
+if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const fadeObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity='1'; e.target.style.transform='translateY(0)'; } });
+  }, { threshold: 0.07 });
+  document.querySelectorAll('.stat-card,.pipe-step,.out-card,.agent-table tr').forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(18px)';
+    el.style.transition = `opacity 0.45s ease ${(i % 4) * 0.07}s, transform 0.45s ease ${(i % 4) * 0.07}s`;
+    fadeObs.observe(el);
+  });
+}
+
+/* ── Live data from dashboard-data.json ── */
+fetch('dashboard-data.json')
+  .then(r => r.json())
+  .then(data => {
+    /* Update stat counters */
+    const statOrange = document.querySelector('.stat-num.orange');
+    const statGreen  = document.querySelector('.stat-num.green');
+    if (statOrange && data.total_pages) {
+      statOrange.dataset.target = data.total_pages;
+      animateCounter(statOrange);
+    }
+    if (statGreen && data.today_pages !== undefined) {
+      statGreen.dataset.target = data.today_pages;
+      animateCounter(statGreen);
+    }
+
+    /* Update "last run" row in system status */
+    document.querySelectorAll('.agent-table td').forEach(td => {
+      if (td.textContent.trim() === 'LIVE · GitHub Actions (zero manual input)') return;
+    });
+    const lastRunCells = document.querySelectorAll('td');
+    lastRunCells.forEach(td => {
+      if (td.previousElementSibling && td.previousElementSibling.textContent.trim() === 'Last Content Run') {
+        td.textContent = data.last_run_date || '—';
+      }
+    });
+
+    /* Update latest topics in email preview */
+    if (data.latest_topics && data.latest_topics.length > 0) {
+      const topicList = document.querySelector('.email-topic-list');
+      if (topicList) {
+        const label = topicList.querySelector('.etl-label');
+        topicList.innerHTML = '';
+        if (label) topicList.appendChild(label);
+        data.latest_topics.forEach(t => {
+          const isPillar = t.content_type !== 'Blog';
+          const row = document.createElement('div');
+          row.className = 'etl-row';
+          row.innerHTML = `
+            <span class="etl-topic">${t.topic.slice(0, 52)}${t.topic.length > 52 ? '…' : ''}</span>
+            <span class="etl-type-pill ${isPillar ? 'pillar' : 'blog'}">${t.content_type.toUpperCase()}</span>`;
+          topicList.appendChild(row);
+        });
+      }
+
+      /* Update output card heading topic */
+      const outHeadline = document.querySelector('.out-field-value.headline');
+      if (outHeadline && data.latest_topics[0]) {
+        outHeadline.textContent = data.latest_topics[0].topic;
+      }
+    }
+
+    /* Update email metrics */
+    const emNums = document.querySelectorAll('.em-num');
+    if (emNums.length >= 2) {
+      emNums[0].textContent = data.total_pages  || emNums[0].textContent;
+      emNums[1].textContent = data.this_week_pages || emNums[1].textContent;
+      emNums[2].textContent = data.today_pages  !== undefined ? data.today_pages : emNums[2].textContent;
+      emNums[3].textContent = data.total_dedup  || emNums[3].textContent;
+    }
+
+    /* Update email date */
+    const emailSubject = document.querySelector('.email-subject');
+    if (emailSubject && data.generated_at) {
+      const d = new Date(data.generated_at);
+      const dd = d.getDate().toString().padStart(2,'0');
+      const mo = d.toLocaleString('en-GB',{month:'short'});
+      const yr = d.getFullYear();
+      emailSubject.textContent = `viAct Automation Daily Report — ${dd} ${mo} ${yr}`;
+    }
+
+    console.log('[dashboard] Live data loaded from dashboard-data.json');
+  })
+  .catch(() => {
+    console.log('[dashboard] dashboard-data.json not found — showing fallback values');
+  });
+</script>
+</body>
+</html>

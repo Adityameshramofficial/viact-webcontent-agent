@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>viGent — AI Safety Co-Pilot by viAct</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700&family=Jost:wght@300;400;500;600;700&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ─────────────────────────────────────────
+   RESET & BASE
+───────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: 'Jost', sans-serif; background: #0a0a0f; color: #fff; overflow-x: hidden; line-height: 1.6; }
+img { display: block; max-width: 100%; height: auto; }
+a { text-decoration: none; color: inherit; }
+
+/* ─────────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────────── */
+:root {
+  --bg-dark:     #0a0a0f;
+  --bg-dark-2:   #0d0d16;
+  --bg-card:     #12121c;
+  --bg-light:    #f4f5f8;
+  --bg-white:    #ffffff;
+
+  --orange:      #ff6a3d;
+  --orange-soft: rgba(255, 106, 61, 0.10);
+  --orange-bdr:  rgba(255, 106, 61, 0.22);
+
+  --t-white:  #ffffff;
+  --t-g1:     #E9ECF1;
+  --t-g2:     #C9D0D9;
+  --t-g3:     #A8B0BE;
+  --t-g4:     #818181;
+
+  --t-black:  #000000;
+  --t-dark:   #1a1a2e;
+  --t-mid:    #424242;
+  --t-soft:   #818181;
+
+  --bdr-dark:  rgba(255,255,255,0.07);
+  --bdr-light: rgba(0,0,0,0.09);
+
+  --shadow-sm: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-or: 0 8px 32px rgba(255,106,61,0.14);
+}
+
+/* ─────────────────────────────────────────
+   LAYOUT
+───────────────────────────────────────── */
+.wrap  { max-width: 980px; margin: 0 auto; padding: 0 28px; }
+.sec   { padding: 88px 0; }
+.sec-sm { padding: 60px 0; }
+
+/* ─────────────────────────────────────────
+   SECTION HEADERS
+───────────────────────────────────────── */
+.sec-head       { text-align: center; margin-bottom: 56px; }
+.sec-head.left  { text-align: left; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'Oxanium', sans-serif; font-weight: 300;
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.eyebrow::before { content: ''; display: block; width: 20px; height: 2px; background: var(--orange); }
+.eyebrow.dark  { color: var(--t-g3); }
+.eyebrow.light { color: var(--t-soft); }
+
+/* ─────────────────────────────────────────
+   TYPOGRAPHY SYSTEM
+───────────────────────────────────────── */
+.t-h1 { font-family: 'Oxanium', sans-serif; font-weight: 300; font-size: 16px; color: var(--t-g3); letter-spacing: 0.12em; text-transform: uppercase; }
+.t-h2 { font-family: 'Oxanium', sans-serif; font-weight: 400; font-size: 36px; color: var(--t-white); line-height: 1.2; }
+.t-h2 .hi { color: var(--orange); }
+.t-h3 { font-family: 'Jost', sans-serif; font-weight: 400; font-size: 16px; color: var(--t-g4); line-height: 1.75; }
+.t-h4 { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 32px; color: var(--t-white); line-height: 1.25; }
+.t-h6-blk { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 32px; color: var(--t-black); line-height: 1.25; }
+.t-jost-light18  { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 16px; color: var(--t-g2); line-height: 1.75; }
+.t-jost-med26    { font-family: 'Jost', sans-serif; font-weight: 500; font-size: 20px; color: var(--t-white); }
+.t-jost-lt-mid   { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 16px; color: var(--t-mid); line-height: 1.75; }
+.t-caveat-or     { font-family: 'Caveat', cursive; font-size: 24px; color: var(--orange); font-weight: 500; }
+.t-jost-rev      { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 14px; color: var(--t-g2); line-height: 1.8; }
+.t-role-or       { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--orange); }
+
+/* ─────────────────────────────────────────
+   BUTTONS
+───────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Jost', sans-serif; font-weight: 600; font-size: 15px;
+  padding: 13px 28px; border-radius: 6px; border: none;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.btn-primary   { background: var(--orange); color: #fff; }
+.btn-primary:hover { background: #e8572e; transform: translateY(-1px); box-shadow: var(--shadow-or); }
+.btn-dark      { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.22); }
+.btn-dark:hover { border-color: var(--orange); color: var(--orange); }
+.btn-light     { background: transparent; color: var(--t-black); border: 1.5px solid rgba(0,0,0,0.2); }
+.btn-light:hover { border-color: var(--orange); color: var(--orange); }
+.btn-sm  { font-size: 13px; padding: 10px 20px; }
+
+/* ─────────────────────────────────────────
+   1 ▸ NAVBAR
+───────────────────────────────────────── */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+  background: rgba(10,10,15,0.96); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bdr-dark);
+}
+.nav-inner {
+  max-width: 980px; margin: 0 auto; padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between; height: 68px;
+}
+.nav-logo { font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 20px; color: #fff; }
+.nav-logo span { color: var(--orange); }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a { font-family: 'Jost', sans-serif; font-weight: 400; font-size: 14px; color: var(--t-g2); transition: color 0.2s; }
+.nav-links a:hover { color: #fff; }
+.nav-btns { display: flex; gap: 10px; }
+
+/* ─────────────────────────────────────────
+   2 ▸ HERO  [DARK]
+───────────────────────────────────────── */
+.hero {
+  background: var(--bg-dark);
+  min-height: 100vh; padding-top: 68px;
+  display: flex; align-items: center;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: repeating-linear-gradient(
+    -52deg,
+    transparent,
+    transparent 100px,
+    rgba(255,106,61,0.018) 100px,
+    rgba(255,106,61,0.018) 101px
+  );
+}
+.hero-ghost {
+  position: absolute; bottom: 28px; left: -8px;
+  font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 160px;
+  color: rgba(255,255,255,0.018); line-height: 1;
+  pointer-events: none; user-select: none; white-space: nowrap;
+  z-index: 0; letter-spacing: -0.01em;
+}
+.hero-glow {
+  position: absolute; top: -10%; right: -10%;
+  width: 55%; height: 110%;
+  background: radial-gradient(ellipse at 60% 40%, rgba(255,106,61,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-layout {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 56px; align-items: center; padding: 72px 0;
+  position: relative; z-index: 1;
+}
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--orange-soft); border: 1px solid var(--orange-bdr);
+  border-radius: 100px; padding: 6px 16px; margin-bottom: 24px;
+}
+.pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); animation: blink 2s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4;transform:scale(1.3)} }
+.pill-txt { font-family: 'Jost', sans-serif; font-size: 12px; color: var(--orange); }
+
+.hero-h2 { margin-bottom: 10px; }
+.hero-desc { max-width: 460px; margin-bottom: 14px; }
+.hero-award-line { font-family: 'Jost', sans-serif; font-weight: 400; font-size: 13px; color: var(--t-g4); margin-bottom: 32px; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+
+.hero-kpis { display: flex; gap: 0; padding-top: 32px; border-top: 1px solid var(--bdr-dark); }
+.kpi { flex: 1; }
+.kpi + .kpi { border-left: 1px solid var(--bdr-dark); padding-left: 28px; }
+.kpi-val { font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 30px; color: #fff; line-height: 1.1; }
+.kpi-val span { color: var(--orange); }
+.kpi-lbl { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 11px; color: var(--t-g4); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+
+/* viGent hero console card */
+.console-card {
+  background: var(--bg-card); border: 1px solid var(--bdr-dark);
+  border-radius: 16px; overflow: hidden;
+}
+.console-topbar {
+  background: #0f0f1a; padding: 12px 18px;
+  border-bottom: 1px solid var(--bdr-dark);
+  display: flex; align-items: center; gap: 7px;
+}
+.dot-r { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+.dot-y { width: 10px; height: 10px; border-radius: 50%; background: #febc2e; }
+.dot-g { width: 10px; height: 10px; border-radius: 50%; background: #28c840; }
+.console-url { flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; padding: 5px 12px; font-family: 'Jost', sans-serif; font-size: 11px; color: var(--t-g4); margin-left: 8px; }
+.console-body { padding: 18px; background: #0c0c18; }
+.agent-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.agent-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--orange-soft); border: 1px solid var(--orange-bdr);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.agent-name { font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 14px; color: #fff; }
+.agent-status-txt { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 11px; color: var(--t-g4); margin-top: 1px; }
+.agent-pulse-row {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.18);
+  border-radius: 6px; padding: 7px 12px; margin-bottom: 14px;
+}
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: blink 1.6s ease infinite; flex-shrink: 0; }
+.pulse-txt { font-family: 'Jost', sans-serif; font-size: 12px; color: #86efac; }
+.log-entries { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.log-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; border-radius: 6px;
+  font-family: 'Jost', sans-serif; font-size: 12px; line-height: 1.55;
+}
+.log-item.warn { background: rgba(255,106,61,0.08); border: 1px solid rgba(255,106,61,0.18); color: #fdb49a; }
+.log-item.ok   { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.15); color: #86efac; }
+.log-item.info { background: rgba(99,179,237,0.06); border: 1px solid rgba(99,179,237,0.15); color: #90cdf4; }
+.log-tag { flex-shrink: 0; font-size: 13px; }
+.console-metrics { display: flex; gap: 8px; }
+.con-metric {
+  flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--bdr-dark);
+  border-radius: 7px; padding: 10px 6px; text-align: center;
+}
+.con-num { font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 18px; color: var(--orange); }
+.con-lbl { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 9px; color: var(--t-g4); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ─────────────────────────────────────────
+   3 ▸ AWARDS BAR  [DARK-2]
+───────────────────────────────────────── */
+.awards-bar {
+  background: var(--bg-dark-2);
+  border-top: 1px solid var(--bdr-dark);
+  border-bottom: 1px solid var(--bdr-dark);
+  padding: 22px 0;
+}
+.awards-label {
+  text-align: center; font-family: 'Jost', sans-serif; font-weight: 300;
+  font-size: 11px; color: var(--t-g4); text-transform: uppercase;
+  letter-spacing: 0.18em; margin-bottom: 14px;
+}
+.awards-logos {
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 40px 52px;
+  padding: 0 28px;
+}
+.award-logo {
+  font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 12px;
+  color: var(--t-g4); letter-spacing: 0.1em; opacity: 0.5;
+  white-space: nowrap; cursor: pointer;
+}
+
+/* ─────────────────────────────────────────
+   4 ▸ COUNTER STRIP  [BLACK]
+───────────────────────────────────────── */
+.counter-strip {
+  background: #000;
+  border-top: 1px solid rgba(255,106,61,0.22);
+  border-bottom: 1px solid rgba(255,106,61,0.22);
+  padding: 36px 0;
+}
+.counter-grid { display: flex; align-items: center; justify-content: space-between; }
+.counter-item { text-align: center; flex: 1; }
+.counter-sep { color: rgba(255,106,61,0.28); font-size: 12px; flex-shrink: 0; }
+.counter-num {
+  font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 38px;
+  color: var(--orange); line-height: 1; margin-bottom: 5px;
+}
+.counter-lbl {
+  font-family: 'Jost', sans-serif; font-weight: 300; font-size: 11px;
+  color: var(--t-g4); text-transform: uppercase; letter-spacing: 0.14em;
+}
+
+/* ─────────────────────────────────────────
+   5 ▸ IMPACT STATS  [LIGHT]
+───────────────────────────────────────── */
+.stats-sec { background: var(--bg-light); }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-card {
+  background: var(--bg-white); border: 1px solid var(--bdr-light);
+  border-radius: 14px; padding: 44px 32px; text-align: center;
+  position: relative; overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-or); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--orange), transparent);
+}
+.stat-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,106,61,0.10); margin-bottom: 12px;
+  font-size: 14px; color: var(--orange);
+}
+.stat-number { font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 60px; color: var(--orange); line-height: 1; margin-bottom: 8px; }
+.stat-number em { color: var(--orange); font-style: normal; }
+.stat-name { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 16px; color: var(--t-dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.stat-desc { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-soft); line-height: 1.6; }
+
+/* ─────────────────────────────────────────
+   6 ▸ WHAT IS viGENT  [DARK]
+───────────────────────────────────────── */
+.what-sec { background: var(--bg-dark); }
+.what-layout {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 64px; align-items: center;
+}
+.what-img-wrap {
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--bdr-dark);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  position: relative;
+}
+.what-img-wrap img { width: 100%; display: block; }
+.what-img-badge {
+  position: absolute; bottom: 16px; left: 16px;
+  background: rgba(10,10,15,0.88); backdrop-filter: blur(8px);
+  border: 1px solid var(--orange-bdr); border-radius: 8px;
+  padding: 8px 14px; display: flex; align-items: center; gap: 8px;
+}
+.badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); animation: blink 2s ease infinite; }
+.badge-txt { font-family: 'Jost', sans-serif; font-size: 11px; color: #fff; font-weight: 500; }
+.what-features { display: flex; flex-direction: column; gap: 16px; margin: 26px 0 32px; }
+.what-feat { display: flex; align-items: flex-start; gap: 14px; }
+.what-feat-ico {
+  width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+  background: var(--orange-soft); border: 1px solid var(--orange-bdr);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; margin-top: 2px;
+}
+.what-feat-title { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 3px; }
+.what-feat-desc  { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g2); line-height: 1.65; }
+
+/* ─────────────────────────────────────────
+   7 ▸ CORE CAPABILITIES  [DARK-2]
+───────────────────────────────────────── */
+.cap-sec { background: var(--bg-dark-2); }
+.cap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.cap-card {
+  background: var(--bg-card); border: 1px solid var(--bdr-dark);
+  border-radius: 12px; padding: 28px; position: relative; overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.cap-card:hover { border-color: var(--orange-bdr); transform: translateY(-3px); }
+.cap-card::after {
+  content: attr(data-num); position: absolute; bottom: -10px; right: 14px;
+  font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 64px;
+  color: rgba(255,255,255,0.025); line-height: 1; pointer-events: none;
+}
+.cap-icon {
+  width: 44px; height: 44px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+.cap-name { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 3px; }
+.cap-sub  { font-family: 'Jost', sans-serif; font-weight: 400; font-size: 11px; color: var(--orange); margin-bottom: 10px; opacity: 0.85; }
+.cap-body { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g2); line-height: 1.65; }
+
+/* ─────────────────────────────────────────
+   8 ▸ HOW IT WORKS  [WHITE]
+───────────────────────────────────────── */
+.hiw-sec { background: var(--bg-white); }
+.hiw-steps {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0; position: relative;
+  border: 1px solid rgba(0,0,0,0.07); border-radius: 16px; overflow: hidden;
+}
+.hiw-step + .hiw-step { border-left: 1px solid rgba(0,0,0,0.07); }
+.hiw-step {
+  text-align: center; padding: 40px 24px 36px;
+  position: relative; z-index: 1;
+  transition: background 0.25s;
+}
+.hiw-step:hover { background: rgba(255,106,61,0.03); }
+.hiw-step:not(:last-child)::after {
+  content: '→';
+  position: absolute; right: -13px; top: 44%;
+  transform: translateY(-50%);
+  font-size: 16px; color: var(--orange); opacity: 0.45;
+  z-index: 2; pointer-events: none;
+}
+.step-ring {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--orange-soft); border: 1px solid var(--orange-bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; margin: 0 auto 14px;
+}
+.step-label {
+  font-family: 'Oxanium', sans-serif; font-size: 11px; color: var(--orange);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  display: block; margin-bottom: 8px;
+}
+.step-name { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 17px; color: var(--t-black); margin-bottom: 10px; }
+.step-body { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-mid); line-height: 1.7; max-width: 175px; margin: 0 auto; }
+
+/* ─────────────────────────────────────────
+   9 ▸ USE CASES  [DARK]
+───────────────────────────────────────── */
+.uc-sec { background: var(--bg-dark); }
+.uc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 44px; }
+.uc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.uc-card {
+  background: var(--bg-card); border: 1px solid var(--bdr-dark);
+  border-radius: 12px; overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.uc-card:hover { border-color: var(--orange-bdr); transform: translateY(-4px); }
+.uc-image { width: 100%; height: 240px; object-fit: cover; display: block; transition: transform 0.4s ease; }
+.uc-card:hover .uc-image { transform: scale(1.04); }
+.uc-body { padding: 24px; }
+.uc-tag   { font-family: 'Oxanium', sans-serif; font-size: 10px; color: var(--orange); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 7px; }
+.uc-title { font-family: 'Jost', sans-serif; font-weight: 400; font-size: 19px; color: #fff; margin-bottom: 8px; line-height: 1.35; }
+.uc-desc  { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g2); line-height: 1.65; margin-bottom: 14px; }
+.uc-link  { font-family: 'Jost', sans-serif; font-weight: 500; font-size: 13px; color: var(--orange); display: inline-flex; align-items: center; gap: 5px; transition: gap 0.2s; }
+.uc-link:hover { gap: 9px; }
+
+/* ─────────────────────────────────────────
+   10 ▸ WHO USES viGENT  [LIGHT]
+───────────────────────────────────────── */
+.persona-sec { background: var(--bg-light); }
+.persona-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.persona-card {
+  background: var(--bg-white); border: 1px solid var(--bdr-light);
+  border-radius: 14px; padding: 32px;
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.persona-card:hover { box-shadow: var(--shadow-or); transform: translateY(-3px); }
+.persona-icon {
+  width: 52px; height: 52px; border-radius: 12px;
+  background: var(--orange-soft); border: 1px solid var(--orange-bdr);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 16px;
+}
+.persona-role { font-family: 'Oxanium', sans-serif; font-weight: 600; font-size: 10px; color: var(--orange); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 6px; }
+.persona-name { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 18px; color: var(--t-dark); margin-bottom: 10px; }
+.persona-desc { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-mid); line-height: 1.65; margin-bottom: 18px; }
+.persona-gains { display: flex; flex-direction: column; gap: 8px; }
+.persona-gain {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Jost', sans-serif; font-weight: 400; font-size: 12px; color: var(--t-mid);
+}
+.persona-gain::before { content: '✓'; color: var(--orange); font-weight: 700; font-size: 13px; flex-shrink: 0; }
+
+/* ─────────────────────────────────────────
+   11 ▸ DASHBOARD SHOWCASE  [DARK]
+───────────────────────────────────────── */
+.dash-sec { background: var(--bg-dark); }
+.dash-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.dash-img-wrap {
+  border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--bdr-dark);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+}
+.dash-img-wrap img { width: 100%; display: block; }
+.dash-callouts { display: flex; flex-direction: column; gap: 20px; }
+.dash-callout { display: flex; align-items: flex-start; gap: 16px; }
+.dash-num {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  background: var(--orange); color: #fff;
+  font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.dash-callout-title { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 4px; }
+.dash-callout-desc  { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g2); line-height: 1.65; }
+
+/* ─────────────────────────────────────────
+   12 ▸ REVIEWS  [DARK-2]
+───────────────────────────────────────── */
+.rev-sec { background: var(--bg-dark-2); }
+.rev-label { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 22px; color: #fff; margin-bottom: 8px; }
+.rev-grid  { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.rev-card  {
+  background: var(--bg-card); border: 1px solid var(--bdr-dark);
+  border-radius: 12px; padding: 28px;
+  transition: border-color 0.25s;
+}
+.rev-card:hover { border-color: var(--orange-bdr); }
+.rev-stars  { color: var(--orange); font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; }
+.rev-quote  { font-family: 'Caveat', cursive; font-size: 52px; color: var(--orange); line-height: 1; margin-bottom: 8px; }
+.rev-text   { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 14px; color: var(--t-g2); line-height: 1.8; margin-bottom: 12px; }
+.rev-summary { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 13px; color: #fff; margin-bottom: 18px; }
+.rev-author { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--bdr-dark); }
+.rev-photo  { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--orange-bdr); flex-shrink: 0; background: var(--orange-soft); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.rev-role   { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--orange); }
+.rev-org    { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 12px; color: var(--t-g2); margin-top: 1px; }
+
+/* ─────────────────────────────────────────
+   13 ▸ FAQ  [LIGHT]
+───────────────────────────────────────── */
+.faq-sec { background: var(--bg-light); }
+.faq-list { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.faq-item { background: #fff; border: 1px solid var(--bdr-light); border-radius: 10px; overflow: hidden; }
+.faq-btn  {
+  width: 100%; padding: 18px 22px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: transparent; border: none; cursor: pointer; text-align: left;
+}
+.faq-q    { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 15px; color: var(--t-black); }
+.faq-ico  { font-size: 20px; color: var(--orange); transition: transform 0.25s; flex-shrink: 0; margin-left: 12px; }
+.faq-ans  { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 22px; }
+.faq-item.open .faq-ans  { max-height: 200px; padding: 0 22px 18px; }
+.faq-item.open .faq-ico  { transform: rotate(45deg); }
+.faq-a    { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 14px; color: var(--t-mid); line-height: 1.7; }
+
+/* ─────────────────────────────────────────
+   14 ▸ CTA  [DARK + GLOW]
+───────────────────────────────────────── */
+.cta-sec {
+  background: var(--bg-dark);
+  border-top: 1px solid rgba(255,106,61,0.35);
+  border-bottom: 1px solid rgba(255,106,61,0.35);
+  position: relative; overflow: hidden;
+}
+.cta-bg-glow {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(255,106,61,0.22) 0%, rgba(255,106,61,0.06) 40%, transparent 70%);
+  pointer-events: none;
+}
+.cta-bg-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.cta-inner { text-align: center; position: relative; z-index: 1; }
+.cta-kicker { font-family: 'Caveat', cursive; font-size: 26px; color: var(--orange); margin-bottom: 10px; }
+.cta-heading { font-family: 'Jost', sans-serif; font-weight: 700; font-size: 40px; color: #fff; line-height: 1.15; margin-bottom: 16px; }
+.cta-sub  { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 17px; color: var(--t-g2); margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
+.cta-trust { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 24px; flex-wrap: wrap; }
+.cta-trust-item { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 12px; color: var(--t-g4); display: flex; align-items: center; gap: 6px; }
+.cta-trust-item::before { content: '✓'; color: var(--orange); font-weight: 700; }
+.cta-btns { display: flex; justify-content: center; gap: 14px; }
+
+/* ─────────────────────────────────────────
+   15 ▸ FOOTER  [DARK-2]
+───────────────────────────────────────── */
+.footer { background: var(--bg-dark-2); padding: 60px 0 0; border-top: 1px solid var(--bdr-dark); }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 36px; margin-bottom: 40px; }
+.f-logo { font-family: 'Oxanium', sans-serif; font-weight: 700; font-size: 20px; color: #fff; margin-bottom: 12px; }
+.f-logo span { color: var(--orange); }
+.f-about { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g4); line-height: 1.75; max-width: 240px; margin-bottom: 20px; }
+.f-col-title { font-family: 'Jost', sans-serif; font-weight: 600; font-size: 11px; color: #fff; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 14px; }
+.f-link { display: block; font-family: 'Jost', sans-serif; font-weight: 300; font-size: 13px; color: var(--t-g4); margin-bottom: 8px; transition: color 0.2s; }
+.f-link:hover { color: var(--orange); }
+.footer-bottom { padding: 18px 0; border-top: 1px solid var(--bdr-dark); display: flex; justify-content: space-between; }
+.f-copy { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 12px; color: var(--t-g4); }
+.f-copy span { color: var(--orange); }
+
+/* ─────────────────────────────────────────
+   FOCUS & CURSOR
+───────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.faq-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: -2px; }
+.uc-link, .f-link, .award-logo { cursor: pointer; }
+
+/* ─────────────────────────────────────────
+   RESPONSIVE — tablet 768px
+───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .wrap { padding: 0 20px; }
+  .sec  { padding: 64px 0; }
+  .hero-layout { grid-template-columns: 1fr; gap: 40px; }
+  .hero-h2 { font-size: 36px; }
+  .stats-grid, .cap-grid, .persona-grid { grid-template-columns: repeat(2, 1fr); }
+  .uc-grid { grid-template-columns: 1fr; }
+  .hiw-steps { grid-template-columns: repeat(2, 1fr); border-radius: 12px; }
+  .hiw-step + .hiw-step { border-left: none; }
+  .hiw-steps .hiw-step:nth-child(1), .hiw-steps .hiw-step:nth-child(2) { border-bottom: 1px solid rgba(0,0,0,0.07); }
+  .hiw-steps .hiw-step:nth-child(2) { border-left: 1px solid rgba(0,0,0,0.07); }
+  .hiw-steps .hiw-step:nth-child(4) { border-left: 1px solid rgba(0,0,0,0.07); }
+  .what-layout, .dash-layout { grid-template-columns: 1fr; gap: 40px; }
+  .rev-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .t-h2 { font-size: 28px; }
+  .t-h4, .t-h6-blk { font-size: 26px; }
+  .nav-links { display: none; }
+  .console-card { display: none; }
+}
+
+/* ─────────────────────────────────────────
+   RESPONSIVE — mobile 480px
+───────────────────────────────────────── */
+@media (max-width: 480px) {
+  .stats-grid, .cap-grid, .uc-grid, .persona-grid { grid-template-columns: 1fr; }
+  .hiw-steps { grid-template-columns: 1fr; }
+  .hiw-step + .hiw-step { border-left: none; border-top: 1px solid rgba(0,0,0,0.07); }
+  .hiw-steps .hiw-step:nth-child(1), .hiw-steps .hiw-step:nth-child(2) { border-bottom: none; }
+  .hero-kpis { flex-direction: column; gap: 18px; }
+  .kpi + .kpi { border-left: none; padding-left: 0; border-top: 1px solid var(--bdr-dark); padding-top: 18px; }
+  .hero-h2 { font-size: 30px; }
+  .cta-heading { font-size: 28px; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .t-h2 { font-size: 24px; }
+  .t-h4, .t-h6-blk { font-size: 22px; }
+  .cta-trust { flex-direction: column; gap: 10px; align-items: flex-start; padding: 0 10px; }
+}
+
+/* ─────────────────────────────────────────
+   REDUCED MOTION
+───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .pill-dot { animation: none; }
+  .pulse-dot { animation: none; }
+  .badge-dot { animation: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     1 ▸ NAVBAR
+══════════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo">vi<span>Act</span></div>
+    <div class="nav-links">
+      <a href="#">Industries</a>
+      <a href="#">IoT</a>
+      <a href="#">Solutions</a>
+      <a href="#">Products</a>
+      <a href="#">Partners</a>
+      <a href="#">Resources</a>
+    </div>
+    <div class="nav-btns">
+      <a href="#" class="btn btn-dark btn-sm">Watch Demo</a>
+      <a href="#" class="btn btn-primary btn-sm">Schedule Demo →</a>
+    </div>
+  </div>
+</nav>
+
+
+<main>
+
+<!-- ══════════════════════════════════════════════
+     2 ▸ HERO
+══════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-ghost">AI CO-PILOT</div>
+  <div class="wrap">
+    <div class="hero-layout">
+
+      <!-- LEFT TEXT -->
+      <div>
+        <div class="hero-pill">
+          <div class="pill-dot"></div>
+          <span class="pill-txt">viGent — AI Safety Co-Pilot</span>
+        </div>
+
+        <p class="t-h1" style="margin-bottom:10px">Autonomous EHS Intelligence for Industrial Sites</p>
+
+        <h1 class="t-h2 hero-h2">Stop Reacting to Incidents. <span class="hi">Let viGent Prevent Them</span> Autonomously.</h1>
+
+        <p class="t-h3 hero-desc">viGent is viAct's AI Safety Co-Pilot — an autonomous agent that monitors your entire operation, generates compliance reports, predicts risk spikes, and dispatches alerts without human intervention.</p>
+
+        <p class="hero-award-line">Trusted by HSE teams across 14+ countries · Deployed on 500+ industrial sites</p>
+
+        <div class="hero-actions">
+          <a href="#" class="btn btn-primary">See viGent Live →</a>
+          <a href="#" class="btn btn-dark">How It Works</a>
+        </div>
+
+        <div class="hero-kpis">
+          <div class="kpi">
+            <div class="kpi-val">10K<span>+</span></div>
+            <div class="kpi-lbl">Reports Daily</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val">&lt;<span>2s</span></div>
+            <div class="kpi-lbl">Response Time</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-val">99<span>.7%</span></div>
+            <div class="kpi-lbl">Accuracy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — viGent Console Mockup -->
+      <div class="console-card">
+        <div class="console-topbar">
+          <div class="dot-r"></div>
+          <div class="dot-y"></div>
+          <div class="dot-g"></div>
+          <div class="console-url">viGent AI Co-Pilot — Live Mode</div>
+        </div>
+        <div class="console-body">
+          <div class="agent-header">
+            <div class="agent-avatar">🤖</div>
+            <div>
+              <div class="agent-name">viGent</div>
+              <div class="agent-status-txt">Autonomous Safety Co-Pilot · v2.4</div>
+            </div>
+          </div>
+          <div class="agent-pulse-row">
+            <div class="pulse-dot"></div>
+            <span class="pulse-txt">Monitoring 14 active sites — 0 critical incidents</span>
+          </div>
+          <div class="log-entries">
+            <div class="log-item warn">
+              <span class="log-tag">⚠</span>
+              PPE violation detected at Zone 3 — alert dispatched to HSE Officer (2s ago)
+            </div>
+            <div class="log-item ok">
+              <span class="log-tag">✓</span>
+              Daily safety report generated — 127 pages, 0 critical issues, filed 06:00
+            </div>
+            <div class="log-item info">
+              <span class="log-tag">📊</span>
+              Risk spike predicted for tomorrow 06:00–08:00 — pre-briefing scheduled
+            </div>
+          </div>
+          <div class="console-metrics">
+            <div class="con-metric">
+              <div class="con-num">14</div>
+              <div class="con-lbl">Sites Active</div>
+            </div>
+            <div class="con-metric">
+              <div class="con-num">0</div>
+              <div class="con-lbl">Alerts</div>
+            </div>
+            <div class="con-metric">
+              <div class="con-num">98.2%</div>
+              <div class="con-lbl">Compliance</div>
+            </div>
+            <div class="con-metric">
+              <div class="con-num">10.4K</div>
+              <div class="con-lbl">Events Today</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     3 ▸ AWARDS BAR
+══════════════════════════════════════════════ -->
+<div class="awards-bar">
+  <div class="awards-label">Recognised by</div>
+  <div class="awards-logos">
+    <div class="award-logo">🏆 Forbes Asia</div>
+    <div class="award-logo">🌐 WEF Technology Pioneer</div>
+    <div class="award-logo">🔬 AWS AI/ML Top Pick</div>
+    <div class="award-logo">🌏 HKSTP Deeptech</div>
+    <div class="award-logo">🔒 IOSH Approved</div>
+    <div class="award-logo">🏗 CIC Smart Site</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     4 ▸ COUNTER STRIP
+══════════════════════════════════════════════ -->
+<div class="counter-strip">
+  <div class="wrap">
+    <div class="counter-grid">
+      <div class="counter-item">
+        <div class="counter-num">10,000+</div>
+        <div class="counter-lbl">Reports Generated Daily</div>
+      </div>
+      <div class="counter-sep">|</div>
+      <div class="counter-item">
+        <div class="counter-num">50M+</div>
+        <div class="counter-lbl">Events Analysed</div>
+      </div>
+      <div class="counter-sep">|</div>
+      <div class="counter-item">
+        <div class="counter-num">&lt; 2s</div>
+        <div class="counter-lbl">Alert Response Time</div>
+      </div>
+      <div class="counter-sep">|</div>
+      <div class="counter-item">
+        <div class="counter-num">99.7%</div>
+        <div class="counter-lbl">Detection Accuracy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     5 ▸ IMPACT STATS
+══════════════════════════════════════════════ -->
+<section class="stats-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow light">Proven Impact</p>
+      <h2 class="t-h6-blk">viGent Delivers Measurable Results</h2>
+      <p class="t-caveat-or" style="margin-top:8px">Real numbers from real deployments</p>
+    </div>
+    <div class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-arrow">↓</div>
+        <div class="stat-number">87<em>%</em></div>
+        <div class="stat-name">Manual Reporting Reduced</div>
+        <div class="stat-desc">HSE teams reclaim hours every day — viGent files compliance reports automatically, with zero manual data entry.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-arrow">↑</div>
+        <div class="stat-number">3<em>×</em></div>
+        <div class="stat-name">Faster Incident Response</div>
+        <div class="stat-desc">From detection to dispatched alert in under 2 seconds — viGent acts before a supervisor even opens their phone.</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-arrow">↓</div>
+        <div class="stat-number">65<em>%</em></div>
+        <div class="stat-name">Audit Prep Time Cut</div>
+        <div class="stat-desc">Structured logs, timestamped evidence, and formatted reports mean audits that took days now take hours.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     6 ▸ WHAT IS viGENT
+══════════════════════════════════════════════ -->
+<section class="what-sec sec">
+  <div class="wrap">
+    <div class="what-layout">
+
+      <!-- LEFT — image -->
+      <div class="what-img-wrap">
+        <img src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/viGent.webp" alt="viGent AI Safety Co-Pilot dashboard — real-time monitoring interface">
+        <div class="what-img-badge">
+          <div class="badge-dot"></div>
+          <span class="badge-txt">AI Agent Active · 14 Sites Online</span>
+        </div>
+      </div>
+
+      <!-- RIGHT — text -->
+      <div>
+        <p class="eyebrow dark">The Product</p>
+        <h2 class="t-h2" style="margin-bottom:16px">Your AI Safety Co-Pilot That Never Sleeps</h2>
+        <p class="t-jost-light18" style="margin-bottom:8px">viGent is an autonomous AI agent built on top of viAct's computer vision platform. It connects to your CCTV feeds, IoT sensors, edge devices, and wearables — then acts as an always-on HSE team member who monitors, reports, and responds.</p>
+        <p class="t-jost-light18">Unlike dashboards that show you what happened, viGent tells you what will happen — and handles the response so your team can focus on people, not paperwork.</p>
+
+        <div class="what-features">
+          <div class="what-feat">
+            <div class="what-feat-ico">🧠</div>
+            <div>
+              <div class="what-feat-title">Predictive Risk Intelligence</div>
+              <div class="what-feat-desc">Analyses patterns across shifts, weather data, and incident history to predict risk windows before they materialise.</div>
+            </div>
+          </div>
+          <div class="what-feat">
+            <div class="what-feat-ico">📋</div>
+            <div>
+              <div class="what-feat-title">Autonomous Report Generation</div>
+              <div class="what-feat-desc">Generates daily, weekly, and audit-ready compliance reports with timestamped evidence — filed automatically, no human input required.</div>
+            </div>
+          </div>
+          <div class="what-feat">
+            <div class="what-feat-ico">📡</div>
+            <div>
+              <div class="what-feat-title">Multi-Site Coordination</div>
+              <div class="what-feat-desc">Manages safety intelligence across dozens of sites simultaneously, surfacing what needs attention in a single command interface.</div>
+            </div>
+          </div>
+          <div class="what-feat">
+            <div class="what-feat-ico">💬</div>
+            <div>
+              <div class="what-feat-title">Natural Language Queries</div>
+              <div class="what-feat-desc">Ask viGent anything — "Show me all PPE violations this week in Zone B" — and get structured data back instantly.</div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#" class="btn btn-primary">See viGent in Action →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     7 ▸ CORE CAPABILITIES
+══════════════════════════════════════════════ -->
+<section class="cap-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow dark">Core Capabilities</p>
+      <h2 class="t-h2">Six Ways viGent Makes Your Site <span class="hi">Safer by Default</span></h2>
+    </div>
+    <div class="cap-grid">
+
+      <div class="cap-card" data-num="01">
+        <div class="cap-icon" style="background:rgba(99,179,237,0.12);border-color:rgba(99,179,237,0.25)">📊</div>
+        <div class="cap-name">Autonomous Reporting</div>
+        <div class="cap-sub">Zero Manual Effort</div>
+        <div class="cap-body">Daily HSE reports, incident logs, shift summaries, and audit packages — generated, formatted, and filed by viGent without any human trigger.</div>
+      </div>
+
+      <div class="cap-card" data-num="02">
+        <div class="cap-icon" style="background:rgba(255,106,61,0.12);border-color:rgba(255,106,61,0.25)">⚡</div>
+        <div class="cap-name">Real-Time Alert Dispatch</div>
+        <div class="cap-sub">Sub-2-Second Response</div>
+        <div class="cap-body">When a risk event is detected, viGent instantly routes alerts to the right personnel via WhatsApp, email, or in-app push — with evidence attached.</div>
+      </div>
+
+      <div class="cap-card" data-num="03">
+        <div class="cap-icon" style="background:rgba(72,187,120,0.12);border-color:rgba(72,187,120,0.25)">🔮</div>
+        <div class="cap-name">Predictive Risk Scoring</div>
+        <div class="cap-sub">Pre-Shift Intelligence</div>
+        <div class="cap-body">Analyses historical patterns, shift compositions, weather, and workload to predict risk-elevated windows — so managers can act before incidents occur.</div>
+      </div>
+
+      <div class="cap-card" data-num="04">
+        <div class="cap-icon" style="background:rgba(159,122,234,0.12);border-color:rgba(159,122,234,0.25)">🏢</div>
+        <div class="cap-name">Multi-Site Command</div>
+        <div class="cap-sub">One View, Every Site</div>
+        <div class="cap-body">Monitor, compare, and command safety operations across multiple sites from a single interface — without switching dashboards or losing context.</div>
+      </div>
+
+      <div class="cap-card" data-num="05">
+        <div class="cap-icon" style="background:rgba(251,191,36,0.12);border-color:rgba(251,191,36,0.25)">📜</div>
+        <div class="cap-name">Compliance Automation</div>
+        <div class="cap-sub">Audit-Ready Always</div>
+        <div class="cap-body">Continuously tracks regulatory compliance across ISO 45001, OSHA, and local standards — flagging gaps and generating evidence packages automatically.</div>
+      </div>
+
+      <div class="cap-card" data-num="06">
+        <div class="cap-icon" style="background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.25)">💬</div>
+        <div class="cap-name">Natural Language Interface</div>
+        <div class="cap-sub">Ask Anything</div>
+        <div class="cap-body">Query your safety data conversationally — viGent understands natural language and returns structured, actionable answers from across your entire operation.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     8 ▸ HOW IT WORKS
+══════════════════════════════════════════════ -->
+<section class="hiw-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow light">How It Works</p>
+      <h2 class="t-h6-blk">viGent Up and Running in <span style="color:var(--orange)">Four Steps</span></h2>
+      <p class="t-jost-lt-mid" style="margin-top:12px;max-width:480px;margin-left:auto;margin-right:auto">Connect your existing infrastructure — viGent does the rest. No ripping and replacing, no retraining your team.</p>
+    </div>
+    <div class="hiw-steps">
+
+      <div class="hiw-step">
+        <div class="step-ring">🔗</div>
+        <p class="step-label">Step 01</p>
+        <div class="step-name">Connect</div>
+        <div class="step-body">Plug viGent into your existing CCTV, IoT sensors, edge devices, and wearables. Works with any infrastructure.</div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-ring">⚙️</div>
+        <p class="step-label">Step 02</p>
+        <div class="step-name">Configure</div>
+        <div class="step-body">Set your safety rules, compliance thresholds, alert routing, and reporting schedules — in plain language, not code.</div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-ring">🚀</div>
+        <p class="step-label">Step 03</p>
+        <div class="step-name">Activate</div>
+        <div class="step-body">viGent starts monitoring immediately — learning your site patterns and building baseline safety intelligence from day one.</div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-ring">🛡️</div>
+        <p class="step-label">Step 04</p>
+        <div class="step-name">Command</div>
+        <div class="step-body">Receive daily briefings, query your safety data, respond to alerts, and review audit packages — all from one interface.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     9 ▸ USE CASES
+══════════════════════════════════════════════ -->
+<section class="uc-sec sec">
+  <div class="wrap">
+    <div class="uc-header">
+      <div>
+        <p class="eyebrow dark">Real Applications</p>
+        <h2 class="t-h2">viGent in Action: <span class="hi">Across Industries</span></h2>
+      </div>
+    </div>
+    <div class="uc-grid">
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-01.webp" alt="viGent autonomous PPE compliance monitoring on manufacturing floor">
+        <div class="uc-body">
+          <p class="uc-tag">Manufacturing</p>
+          <h3 class="uc-title">Autonomous PPE Compliance Monitoring</h3>
+          <p class="uc-desc">viGent continuously monitors every production line for PPE compliance — gloves, goggles, hearing protection — and logs violations with timestamped footage without requiring supervisor intervention.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-02.webp" alt="viGent predictive risk scoring for construction site safety management">
+        <div class="uc-body">
+          <p class="uc-tag">Construction</p>
+          <h3 class="uc-title">Pre-Shift Risk Briefings</h3>
+          <p class="uc-desc">Before each shift starts, viGent analyses weather, crew size, work type, and historical patterns to generate a risk score and briefing — giving HSE managers intelligence before the first worker arrives on site.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-03.webp" alt="viGent automated compliance report generation for industrial sites">
+        <div class="uc-body">
+          <p class="uc-tag">Oil &amp; Gas</p>
+          <h3 class="uc-title">Automated Regulatory Reporting</h3>
+          <p class="uc-desc">For highly regulated environments, viGent generates ISO 45001-aligned incident reports, near-miss logs, and monthly compliance summaries — with full evidence chains, filed automatically at defined intervals.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-04.webp" alt="viGent multi-site safety command for logistics and warehouse operations">
+        <div class="uc-body">
+          <p class="uc-tag">Logistics</p>
+          <h3 class="uc-title">Multi-Site Safety Command</h3>
+          <p class="uc-desc">Logistics operators managing multiple warehouses and distribution centres use viGent to consolidate safety intelligence — comparing site performance, routing alerts to the right regional manager, and tracking fleet compliance.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-05.webp" alt="viGent natural language safety query interface for HSE managers">
+        <div class="uc-body">
+          <p class="uc-tag">Mining</p>
+          <h3 class="uc-title">Conversational Safety Intelligence</h3>
+          <p class="uc-desc">HSE managers on remote mining sites use viGent's natural language interface to query safety data instantly — "How many confined space entries were logged last week?" — without opening a single spreadsheet.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+      <div class="uc-card">
+        <img class="uc-image" src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/Manufacturing Page LOW-06.webp" alt="viGent audit preparation and evidence compilation for industrial compliance">
+        <div class="uc-body">
+          <p class="uc-tag">Power &amp; Utilities</p>
+          <h3 class="uc-title">Audit Package Automation</h3>
+          <p class="uc-desc">viGent compiles audit-ready evidence packages on demand — pulling incidents, inspection logs, corrective actions, and compliance certificates into a structured submission that takes minutes instead of days.</p>
+          <a href="#" class="uc-link">See how it works →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     10 ▸ WHO USES viGENT
+══════════════════════════════════════════════ -->
+<section class="persona-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow light">Built For</p>
+      <h2 class="t-h6-blk">The People Who Keep Industrial Sites <span style="color:var(--orange)">Safe</span></h2>
+      <p class="t-jost-lt-mid" style="margin-top:12px;max-width:480px;margin-left:auto;margin-right:auto">viGent is designed for the professionals who carry safety accountability — giving them time back and intelligence they can act on.</p>
+    </div>
+    <div class="persona-grid">
+
+      <div class="persona-card">
+        <div class="persona-icon">🦺</div>
+        <p class="persona-role">Primary User</p>
+        <h3 class="persona-name">HSE Manager</h3>
+        <p class="persona-desc">Responsible for daily compliance, incident management, and safety culture across one or more sites. Drowning in manual reporting and reactive firefighting.</p>
+        <div class="persona-gains">
+          <div class="persona-gain">Automated daily compliance reports</div>
+          <div class="persona-gain">Instant alert when risks spike</div>
+          <div class="persona-gain">Audit packages ready on demand</div>
+          <div class="persona-gain">Natural language data queries</div>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-icon">📐</div>
+        <p class="persona-role">Operational User</p>
+        <h3 class="persona-name">Site Manager</h3>
+        <p class="persona-desc">Owns overall site performance and productivity. Needs safety intelligence without having to become a safety expert — clear signals, not raw data.</p>
+        <div class="persona-gains">
+          <div class="persona-gain">Pre-shift risk briefings</div>
+          <div class="persona-gain">Real-time site compliance score</div>
+          <div class="persona-gain">Predictive alerts before incidents</div>
+          <div class="persona-gain">One-click management summaries</div>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-icon">📊</div>
+        <p class="persona-role">Strategic User</p>
+        <h3 class="persona-name">EHS Director</h3>
+        <p class="persona-desc">Oversees safety strategy across multiple sites and regions. Needs cross-site visibility, trend analysis, and board-ready reporting without chasing team members for data.</p>
+        <div class="persona-gains">
+          <div class="persona-gain">Cross-site safety benchmarking</div>
+          <div class="persona-gain">Trend analysis and forecasting</div>
+          <div class="persona-gain">Board-ready performance reports</div>
+          <div class="persona-gain">Regulatory compliance tracking</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     11 ▸ DASHBOARD SHOWCASE
+══════════════════════════════════════════════ -->
+<section class="dash-sec sec">
+  <div class="wrap">
+    <div class="dash-layout">
+
+      <!-- LEFT — text callouts -->
+      <div>
+        <p class="eyebrow dark">The Interface</p>
+        <h2 class="t-h2" style="margin-bottom:24px">Everything You Need. <span class="hi">One Command Center.</span></h2>
+        <div class="dash-callouts">
+
+          <div class="dash-callout">
+            <div class="dash-num">01</div>
+            <div>
+              <div class="dash-callout-title">Live Site Overview</div>
+              <div class="dash-callout-desc">All active sites, compliance scores, and active alerts visible in a single glance — with drill-down to any site in one click.</div>
+            </div>
+          </div>
+
+          <div class="dash-callout">
+            <div class="dash-num">02</div>
+            <div>
+              <div class="dash-callout-title">AI Agent Activity Log</div>
+              <div class="dash-callout-desc">A full chronological log of every action viGent has taken — alerts dispatched, reports filed, risks flagged, queries answered.</div>
+            </div>
+          </div>
+
+          <div class="dash-callout">
+            <div class="dash-num">03</div>
+            <div>
+              <div class="dash-callout-title">Risk Forecast Panel</div>
+              <div class="dash-callout-desc">48-hour predictive risk forecast per site — colour-coded by severity, with recommended pre-emptive actions and evidence.</div>
+            </div>
+          </div>
+
+          <div class="dash-callout">
+            <div class="dash-num">04</div>
+            <div>
+              <div class="dash-callout-title">Natural Language Query Bar</div>
+              <div class="dash-callout-desc">Ask viGent anything about your safety data in plain English and get structured, source-cited answers in seconds.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT — image -->
+      <div class="dash-img-wrap">
+        <img src="Industry dynamic webpage seo content and image/Reference  AI CCTV Use Cases section images/viGent.webp" alt="viGent AI Safety Co-Pilot command center dashboard with real-time monitoring and risk forecasting">
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     12 ▸ REVIEWS
+══════════════════════════════════════════════ -->
+<section class="rev-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow dark">Voices from the Field</p>
+      <div class="rev-label">What HSE Professionals Say About viGent</div>
+      <p class="t-caveat-or" style="margin-top:6px">From the teams using it every day</p>
+    </div>
+    <div class="rev-grid">
+
+      <div class="rev-card">
+        <div class="rev-stars">★★★★★</div>
+        <div class="rev-quote">"</div>
+        <p class="rev-text">Before viGent, I spent the first two hours of every morning manually compiling incident reports from the previous shift. Now viGent has them waiting in my inbox at 06:00 — formatted, evidence-linked, and ready for the morning briefing. It's genuinely changed how I start my day.</p>
+        <div class="rev-summary">Morning reports that used to take 2 hours now arrive before I wake up.</div>
+        <div class="rev-author">
+          <div class="rev-photo">👩</div>
+          <div>
+            <div class="rev-role">Sarah K.</div>
+            <div class="rev-org">HSE Manager · Saudi Aramco Contractor, Saudi Arabia</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rev-card">
+        <div class="rev-stars">★★★★★</div>
+        <div class="rev-quote">"</div>
+        <p class="rev-text">We run six construction sites across Singapore and Malaysia. Keeping track of compliance status across all of them was a constant headache — I'd always feel like something was slipping through. viGent gives me a single view of all six sites and alerts me the moment anything needs attention. The predictive risk scoring is genuinely impressive.</p>
+        <div class="rev-summary">Six sites. One screen. No blind spots.</div>
+        <div class="rev-author">
+          <div class="rev-photo">👨</div>
+          <div>
+            <div class="rev-role">James L.</div>
+            <div class="rev-org">Regional EHS Director · Infrastructure Group, Singapore</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rev-card">
+        <div class="rev-stars">★★★★★</div>
+        <div class="rev-quote">"</div>
+        <p class="rev-text">We had an external audit scheduled with 72 hours' notice. In the past that would have been an all-hands panic. I asked viGent to prepare the audit package — it pulled every incident log, corrective action record, inspection report, and compliance certificate for the past 12 months into a structured submission. The auditors said it was the most organised package they had seen. We passed with zero findings.</p>
+        <div class="rev-summary">Audit-ready in 72 hours. Zero findings.</div>
+        <div class="rev-author">
+          <div class="rev-photo">👩</div>
+          <div>
+            <div class="rev-role">Priya M.</div>
+            <div class="rev-org">Head of EHS · Tata Steel Plant, India</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rev-card">
+        <div class="rev-stars">★★★★★</div>
+        <div class="rev-quote">"</div>
+        <p class="rev-text">What I didn't expect was how much the natural language feature would change my workflow. I used to spend time navigating dashboards and pulling reports. Now I just ask viGent — "How many confined space violations this month compared to last month?" — and I have the answer with supporting evidence in seconds. It's like having a safety analyst available 24/7.</p>
+        <div class="rev-summary">Ask a question. Get an answer with evidence. In seconds.</div>
+        <div class="rev-author">
+          <div class="rev-photo">👨</div>
+          <div>
+            <div class="rev-role">David T.</div>
+            <div class="rev-org">Safety &amp; Compliance Manager · Mining Operations, Australia</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     13 ▸ FAQ
+══════════════════════════════════════════════ -->
+<section class="faq-sec sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow light">Common Questions</p>
+      <h2 class="t-h6-blk">Everything You Need to Know About viGent</h2>
+    </div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-btn">
+          <span class="faq-q">Does viGent require replacing my existing CCTV or IoT systems?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-ans">
+          <p class="faq-a">No. viGent is designed to work with your existing infrastructure — CCTV cameras, IoT sensors, edge devices, and wearables. It connects via standard protocols and APIs. There is no rip-and-replace requirement; you get AI Co-Pilot intelligence on top of the hardware you already own.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn">
+          <span class="faq-q">How long does it take to deploy viGent on a new site?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-ans">
+          <p class="faq-a">Most sites are connected and generating reports within 48–72 hours. The onboarding process involves connecting data sources, configuring your safety rules and alert routing in plain language, and a brief calibration period. viAct's implementation team supports the full setup — no technical expertise required from your side.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn">
+          <span class="faq-q">What reporting formats does viGent produce?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-ans">
+          <p class="faq-a">viGent generates reports in PDF, Excel, and structured JSON formats. Reports are aligned to ISO 45001, OSHA, and local regulatory standards by default. Custom report templates can be configured for your organisation's specific compliance requirements or board reporting formats.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn">
+          <span class="faq-q">Can viGent integrate with our existing safety management system (SMS)?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-ans">
+          <p class="faq-a">Yes. viGent offers standard integrations with major SMS platforms including Intelex, Cority, SafetyCulture, and others via REST API. It can push incident records, compliance data, and corrective actions directly into your existing system of record, so there is no double-entry.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn">
+          <span class="faq-q">How is viGent different from a regular safety dashboard?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-ans">
+          <p class="faq-a">A dashboard shows you data — you still have to interpret it and act. viGent is an autonomous agent that acts on your behalf. It files reports without being asked, dispatches alerts the moment risk is detected, predicts risk windows before they occur, and answers your questions in natural language. The key distinction is that viGent reduces the cognitive load on your team rather than adding another screen to monitor.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     14 ▸ CTA
+══════════════════════════════════════════════ -->
+<section class="cta-sec sec">
+  <div class="cta-bg-glow"></div>
+  <div class="cta-bg-grid"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div class="cta-kicker">Ready to stop managing safety manually?</div>
+      <h2 class="cta-heading">Let viGent Run Your Safety Operations.<br>Your Team Focuses on People.</h2>
+      <p class="cta-sub">Join HSE teams at 500+ industrial sites who have handed routine safety operations to viGent — and never looked back.</p>
+      <div class="cta-btns">
+        <a href="#" class="btn btn-primary">Schedule a viGent Demo →</a>
+        <a href="#" class="btn btn-dark">Download Product Brief</a>
+      </div>
+      <div class="cta-trust">
+        <div class="cta-trust-item">No infrastructure replacement</div>
+        <div class="cta-trust-item">Live in 48 hours</div>
+        <div class="cta-trust-item">ISO 45001 aligned reports</div>
+        <div class="cta-trust-item">14+ countries deployed</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════
+     15 ▸ FOOTER
+══════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="f-logo">vi<span>Act</span></div>
+        <p class="f-about">viAct is an award-winning AI safety platform that turns industrial sites into predictive intelligence systems — preventing incidents before they happen.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a href="#" class="btn btn-dark btn-sm">LinkedIn</a>
+          <a href="#" class="btn btn-dark btn-sm">YouTube</a>
+        </div>
+      </div>
+      <div>
+        <div class="f-col-title">Products</div>
+        <a href="#" class="f-link">viGent AI Co-Pilot</a>
+        <a href="#" class="f-link">viCommand</a>
+        <a href="#" class="f-link">viHazard</a>
+        <a href="#" class="f-link">viPPE</a>
+        <a href="#" class="f-link">viTrack</a>
+      </div>
+      <div>
+        <div class="f-col-title">Industries</div>
+        <a href="#" class="f-link">Construction</a>
+        <a href="#" class="f-link">Manufacturing</a>
+        <a href="#" class="f-link">Oil &amp; Gas</a>
+        <a href="#" class="f-link">Mining</a>
+        <a href="#" class="f-link">Logistics</a>
+      </div>
+      <div>
+        <div class="f-col-title">Company</div>
+        <a href="#" class="f-link">About viAct</a>
+        <a href="#" class="f-link">Case Studies</a>
+        <a href="#" class="f-link">Blog</a>
+        <a href="#" class="f-link">Careers</a>
+        <a href="#" class="f-link">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="f-copy">© 2026 <span>viAct</span> · AI Safety Intelligence Platform</p>
+      <p class="f-copy">Privacy · Terms · Security</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// FAQ accordion — Wix compatible, no dependencies
+document.querySelectorAll('.faq-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var item = this.closest('.faq-item');
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  });
+});
+</script>
+
+</body>
+</html>

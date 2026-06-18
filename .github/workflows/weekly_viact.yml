@@ -8,6 +8,8 @@ on:
 jobs:
   run-research:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -75,3 +77,19 @@ jobs:
           INDUSTRY_SHEET_ID: ${{ secrets.INDUSTRY_SHEET_ID }}
           DEV_MODE: "false"
         run: python daily_full_pipeline.py
+
+      - name: Generate Dashboard Data
+        continue-on-error: true
+        env:
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+        run: python generate_dashboard.py
+
+      - name: Commit Dashboard Data
+        continue-on-error: true
+        run: |
+          git config user.name "viAct Bot"
+          git config user.email "bot@viact.ai"
+          git add dashboard-data.json
+          git diff --staged --quiet || git commit -m "chore: update dashboard data [skip ci]"
+          git push

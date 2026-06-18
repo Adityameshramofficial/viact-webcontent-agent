@@ -1,0 +1,35 @@
+{
+  "total_pages": 3689,
+  "this_week_pages": 3029,
+  "today_pages": 0,
+  "total_dedup": 48,
+  "last_run_date": "Decision Logic",
+  "latest_topics": [
+    {
+      "date": "Decision Logic",
+      "topic": "",
+      "content_type": "Pillar"
+    },
+    {
+      "date": "DECISION LOGIC (for email to Gary / Surendra)",
+      "topic": "",
+      "content_type": "Pillar"
+    },
+    {
+      "date": "Link 1 Context",
+      "topic": "",
+      "content_type": "Pillar"
+    },
+    {
+      "date": "Link 1 URL",
+      "topic": "",
+      "content_type": "Pillar"
+    },
+    {
+      "date": "Link 1 Anchor",
+      "topic": "",
+      "content_type": "Pillar"
+    }
+  ],
+  "generated_at": "2026-06-18T10:38:09.129583+05:30"
+}
