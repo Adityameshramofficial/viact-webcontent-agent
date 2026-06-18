@@ -316,72 +316,78 @@ small, .caption { color: #2e2e3e !important; font-size: 0.82rem !important; }
 
 /* Caveat accent */
 .caveat-accent { font-family: 'Caveat', cursive; font-size: 1.1rem; color: var(--orange); font-weight: 500; }
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] { background: var(--bg-dark-2) !important; border-right: 1px solid rgba(255,255,255,0.04) !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Dashboard Header ──────────────────────────────────────────────────────────
+# ── Dashboard Header ─────────────────────────────────────────────────────────
 st.markdown(_html("""
-<div style="padding:2rem 0 0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.04); margin-bottom:1.2rem;">
-
-  <!-- Top row: branding + status -->
-  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-
-    <!-- Left: logo + title -->
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div style="position:relative; width:42px; height:42px; flex-shrink:0;">
-        <div style="width:42px; height:42px; background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.25); border-radius:10px; display:flex; align-items:center; justify-content:center;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.9"/>
-            <rect x="14" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
-            <rect x="2" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
-            <rect x="14" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.7"/>
-          </svg>
-        </div>
-      </div>
-      <div>
-        <div style="font-family:'Oxanium',sans-serif; font-size:0.58rem; font-weight:600; letter-spacing:3.5px; text-transform:uppercase; color:#ff6a3d; margin-bottom:5px; display:flex; align-items:center; gap:8px;">
-          viAct &nbsp;&middot;&nbsp; AI Content Platform
-        </div>
-        <h1 style="margin:0; font-family:'Oxanium',sans-serif; font-size:1.55rem; color:#fff; font-weight:700; line-height:1.15; letter-spacing:-0.5px;">
-          Content Intelligence Suite
-        </h1>
-      </div>
-    </div>
-
-    <!-- Right: system status strip -->
-    <div style="display:flex; align-items:center; gap:20px; padding:10px 18px; background:rgba(18,18,28,0.8); border:1px solid rgba(255,255,255,0.05); border-radius:8px; flex-shrink:0;">
-      <div style="text-align:center;">
-        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Agents</div>
-        <div style="font-family:'Oxanium',sans-serif; font-size:1.1rem; font-weight:700; color:#ff6a3d; line-height:1;">06</div>
-      </div>
-      <div style="width:1px; height:24px; background:rgba(255,255,255,0.05);"></div>
-      <div style="text-align:center;">
-        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Pages</div>
-        <div style="font-family:'Oxanium',sans-serif; font-size:1.1rem; font-weight:700; color:#ff6a3d; line-height:1;">14+</div>
-      </div>
-      <div style="width:1px; height:24px; background:rgba(255,255,255,0.05);"></div>
-      <div style="text-align:center;">
-        <div style="font-family:'Oxanium',sans-serif; font-size:0.55rem; letter-spacing:2px; text-transform:uppercase; color:#2e2e3e; margin-bottom:3px;">Status</div>
-        <div style="display:flex; align-items:center; gap:5px;">
-          <span class="status-dot"></span>
-          <span style="font-family:'Oxanium',sans-serif; font-size:0.62rem; font-weight:600; color:#3fb950; letter-spacing:1px;">LIVE</span>
-        </div>
-      </div>
-    </div>
-
+<div style="padding:1.4rem 0 1rem 0; display:flex; align-items:center; gap:14px; border-bottom:1px solid rgba(255,255,255,0.04); margin-bottom:1.2rem;">
+  <div style="width:36px; height:36px; background:rgba(255,106,61,0.1); border:1px solid rgba(255,106,61,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <rect x="2" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.9"/>
+      <rect x="14" y="3" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
+      <rect x="2" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.4"/>
+      <rect x="14" y="13" width="8" height="8" rx="1.5" fill="#ff6a3d" opacity="0.7"/>
+    </svg>
   </div>
-
-  <!-- Subtitle -->
-  <p style="margin:12px 0 0 56px; font-family:'Jost',sans-serif; color:#252535; font-size:0.82rem; line-height:1.5;">
-    6 specialized AI agents &mdash; daily market intel, industry pages, case studies, product pages, video analytics, and solutions pages &mdash; all wired to Wix CMS.
-  </p>
-
+  <div style="flex:1;">
+    <div style="font-family:'Oxanium',sans-serif; font-size:0.48rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#ff6a3d; margin-bottom:3px;">viAct · AI Content Platform</div>
+    <div style="font-family:'Oxanium',sans-serif; font-size:1.1rem; font-weight:700; color:#fff; letter-spacing:-0.3px; line-height:1;">Content Intelligence Suite</div>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px; padding:8px 16px; background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:7px;">
+    <div style="text-align:center;">
+      <div style="font-family:'Oxanium',sans-serif; font-size:0.48rem; letter-spacing:2px; text-transform:uppercase; color:#2a2a3a;">Agents</div>
+      <div style="font-family:'Oxanium',sans-serif; font-size:1rem; font-weight:700; color:#ff6a3d; line-height:1.2;">08</div>
+    </div>
+    <div style="width:1px; height:20px; background:rgba(255,255,255,0.05);"></div>
+    <div style="display:flex; align-items:center; gap:5px;">
+      <span class="status-dot"></span>
+      <span style="font-family:'Oxanium',sans-serif; font-size:0.52rem; font-weight:600; color:#3fb950; letter-spacing:1px; text-transform:uppercase;">Live</span>
+    </div>
+  </div>
 </div>
 """), unsafe_allow_html=True)
 
-# ── Agent Overview — Dashboard Cards ─────────────────────────────────────────
-st.markdown(_html("""
-<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px;">
+# ── Agent navigation — horizontal nav bar ────────────────────────────────────
+_AGENT_NAV = [
+    ("market_radar", "01", "Market Radar",    "#ff6a3d"),
+    ("industry",     "02", "Industry Pages",  "#3fb950"),
+    ("casestudy",    "03", "Case Studies",    "#58a6ff"),
+    ("product",      "04", "Product Pages",   "#d6a126"),
+    ("va",           "07", "Video Analytics", "#bc8cff"),
+    ("solutions",    "08", "Solutions Pages", "#ff6a3d"),
+    ("blog",         "09", "Blog Writer",     "#e879f9"),
+    ("meta_seo",     "10", "Meta / SEO",      "#38bdf8"),
+]
+if "agent_nav" not in st.session_state:
+    st.session_state["agent_nav"] = "market_radar"
+_sel = st.session_state["agent_nav"]
+
+_nav_cols = st.columns(8, gap="small")
+for (_key, _num, _name, _color), _col in zip(_AGENT_NAV, _nav_cols):
+    _active = _sel == _key
+    with _col:
+        _btn_style = (
+            f"background:{_color} !important; color:#fff !important; border-color:{_color} !important;"
+            if _active else
+            "background:#12121c !important; color:#3a3a4a !important; border-color:rgba(255,255,255,0.06) !important;"
+        )
+        st.markdown(
+            f"<style>.nav-btn-{_key} button {{ {_btn_style} font-family:'Oxanium',sans-serif !important; font-size:0.6rem !important; letter-spacing:1.2px !important; border-radius:7px !important; padding:8px 4px !important; line-height:1.3 !important; }}</style>",
+            unsafe_allow_html=True,
+        )
+        if st.button(f"{_num}\n{_name.upper()}", key=f"nav_{_key}", use_container_width=True):
+            st.session_state["agent_nav"] = _key
+            st.rerun()
+
+st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+# ── Agent content routing ─────────────────────────────────────────────────────
+# (old agent overview cards — replaced by nav bar above)
+_DEAD_CODE_CARDS_START = """SKIP_START
 
   <!-- Agent 01 — Market Radar -->
   <div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; cursor:default; transition:border-color 0.2s;">
@@ -392,7 +398,7 @@ st.markdown(_html("""
     </div>
     <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Market Radar</div>
     <div style="font-family:'Oxanium',sans-serif; color:#ff6a3d; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">Daily Intel · Topic Gen</div>
-    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">25 competitors monitor karo, daily content topics auto-suggest karo — Industry, Case Study, VA, Solutions.</p>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Monitor 25 competitors and auto-suggest daily content topics — Industry, Case Study, VA, Solutions.</p>
     <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
       <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px; letter-spacing:0.5px;">Tavily</span>
       <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px; letter-spacing:0.5px;">RSS</span>
@@ -428,7 +434,7 @@ st.markdown(_html("""
     </div>
     <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Case Studies</div>
     <div style="font-family:'Oxanium',sans-serif; color:#58a6ff; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">56-Field CMS Schema</div>
-    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Project details do &mdash; AI banata hai: Problem, Solution, Impact, Testimonials, Metrics + 56 Wix fields.</p>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Enter project details &mdash; AI generates: Problem, Solution, Impact, Testimonials, Metrics + 56 Wix fields.</p>
     <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
       <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Tavily</span>
       <span style="background:rgba(88,166,255,0.07); color:#58a6ff; border:1px solid rgba(88,166,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">.docx</span>
@@ -450,7 +456,7 @@ st.markdown(_html("""
     </div>
     <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Product Pages</div>
     <div style="font-family:'Oxanium',sans-serif; color:#d6a126; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">viAct Product CMS</div>
-    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">viAct product pages ke liye CMS content &mdash; features, specs, use cases, SEO — Wix ready.</p>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">CMS content for viAct product pages &mdash; features, specs, use cases, SEO — Wix ready.</p>
     <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
       <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">viAct Products</span>
       <span style="background:rgba(214,161,38,0.07); color:#d6a126; border:1px solid rgba(214,161,38,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Wix CMS</span>
@@ -467,7 +473,7 @@ st.markdown(_html("""
     </div>
     <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Video Analytics</div>
     <div style="font-family:'Oxanium',sans-serif; color:#bc8cff; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">27 Detection Pages</div>
-    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Detection type likho (PPE, Intrusion, Fall…) &mdash; full page: Hero, Challenges, How It Works, SEO.</p>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Enter a detection type (PPE, Intrusion, Fall…) &mdash; full page: Hero, Challenges, How It Works, SEO.</p>
     <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
       <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">27 Types</span>
       <span style="background:rgba(188,140,255,0.07); color:#bc8cff; border:1px solid rgba(188,140,255,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Tavily</span>
@@ -485,7 +491,7 @@ st.markdown(_html("""
     </div>
     <div style="font-family:'Jost',sans-serif; color:#E9ECF1; font-weight:700; font-size:0.9rem; margin-bottom:3px;">Solutions Pages</div>
     <div style="font-family:'Oxanium',sans-serif; color:#ff6a3d; font-size:0.55rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;">14 Solution Verticals</div>
-    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">14 viAct solutions ke liye full CMS page — Hero, Dashboard, 5 Features, FAQs, SEO + image prompts.</p>
+    <p style="margin:0 0 10px 0; color:#2e2e3e; font-size:0.75rem; line-height:1.55;">Full CMS page for 14 viAct solutions — Hero, Dashboard, 5 Features, FAQs, SEO + image prompts.</p>
     <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
       <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">Nano Banana</span>
       <span style="background:rgba(255,106,61,0.08); color:#ff6a3d; border:1px solid rgba(255,106,61,0.18); border-radius:20px; font-family:'Oxanium',sans-serif; font-size:0.55rem; font-weight:600; padding:2px 7px;">7 Img Prompts</span>
@@ -493,22 +499,12 @@ st.markdown(_html("""
     <div style="font-family:'Oxanium',sans-serif; font-size:0.52rem; letter-spacing:1.5px; color:#1e1e2e; text-transform:uppercase;">Tab 6 · Dynamic Pages Sheet</div>
   </div>
 
-</div>
-"""), unsafe_allow_html=True)
+SKIP_END"""
 
 # =============================================================================
-# TABS — Market Radar  |  Industry Pages
+# AGENT CONTENT — routed via sidebar navigation
 # =============================================================================
-tab_radar, tab_industry, tab_casestudy, tab_product, tab_va, tab_solutions = st.tabs([
-    "01 · Market Radar",
-    "02 · Industry Pages",
-    "03 · Case Studies",
-    "04 · Product Pages",
-    "07 · Video Analytics",
-    "08 · Solutions Pages",
-])
-
-with tab_radar:
+if _sel == "market_radar":
     # 3-AGENT MARKET RADAR → WEBPAGE PIPELINE (Tavily + Firecrawl + Groq)
     # =============================================================================
 
@@ -522,20 +518,20 @@ with tab_radar:
         <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
           <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
             <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 01</div>
-            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Daily Scan Chalao</div>
-            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">"Run Daily Intel Scan" click karo. 25 competitors scan hoga, trends milenge, aur 4 new content topics suggest honge.</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Run Daily Scan</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">Click "Run Daily Intel Scan" to scan 25 competitors, surface trends, and auto-suggest 4 new content topics.</div>
           </div>
           <div style="color:#1e1e2e;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
           <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
             <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 02</div>
-            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Topics Use Karo</div>
-            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">Scan ke baad suggested topics neeche dikhenge. "Use This" click karo — tab mein topic auto-fill ho jayega.</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Use a Suggested Topic</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">After the scan, suggested topics appear below. Click "Use This" — the topic auto-fills in the target agent tab.</div>
           </div>
           <div style="color:#1e1e2e;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
           <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #ff6a3d;border-radius:8px;padding:14px 16px;">
             <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#ff6a3d;margin-bottom:8px;">STEP 03</div>
-            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Ya Pillar Page Banao</div>
-            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">"Run Deep Market Radar" se ek specific SEO topic ke liye full pillar page + 3 supporting blogs generate karo.</div>
+            <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Or Build a Pillar Page</div>
+            <div style="color:#2e2e3e;font-size:0.74rem;line-height:1.55;">Use "Run Deep Market Radar" to research a specific SEO gap and generate a full pillar page + 3 supporting blogs.</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -1683,7 +1679,7 @@ with tab_radar:
             st.json(content)
 
 
-with tab_industry:
+elif _sel == "industry":
     # ── Session state ─────────────────────────────────────────────────────────
     if "ip_step" not in st.session_state:
         st.session_state["ip_step"] = 0
@@ -1696,19 +1692,19 @@ with tab_industry:
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #3fb950;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🏭</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Industry &amp; File</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Industry dropdown se select karo (Construction, Oil &amp; Gas, Mining…). Optional: approved .docx reference file upload karo jisme real stats ya client data ho.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Select an industry from the dropdown (Construction, Oil &amp; Gas, Mining…). Optionally upload an approved .docx reference file with real stats or client data.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #3fb950;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">⚙️</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Industry Page" click karo. AI viAct + competitor pages scrape karke poora 8-section Wix CMS landing page banata hai — Hero, Metrics, Use Cases, Testimonials, CTA.</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Click "Generate Industry Page". The AI scrapes viAct + competitor pages and builds a full 8-section Wix CMS landing page — Hero, Metrics, Use Cases, Testimonials, CTA.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #3fb950;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review &amp; Save</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Tabs mein content review karo — CMS Fields, SEO, FAQs, Image Briefs. Sab sahi lage to "Save to Google Sheets" click karo.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review content across tabs — CMS Fields, SEO, FAQs, Image Briefs. When ready, click "Save to Google Sheets".</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -2203,7 +2199,7 @@ with tab_industry:
 # TAB — CASE STUDIES (Agent 06)
 # Session state prefix: cs_
 # =============================================================================
-with tab_casestudy:
+elif _sel == "casestudy":
     if "cs_step" not in st.session_state:
         st.session_state["cs_step"] = 0
 
@@ -2215,19 +2211,19 @@ with tab_casestudy:
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #58a6ff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">📋</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Client Details</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Company type, industry, location, aur viAct products used bharo. .docx reference upload karo jisme project data, metrics ya approved copy ho.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Fill in company type, industry, location, and viAct products used. Upload a .docx reference file with project data, metrics, or approved copy.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #58a6ff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">⚙️</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Case Study" click karo. AI 56 Wix CMS fields banata hai — Problem, Solution, Impact, Metrics, Testimonials, Image Briefs, SEO sab.</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Click "Generate Case Study". The AI builds all 56 Wix CMS fields — Problem, Solution, Impact, Metrics, Testimonials, Image Briefs, and SEO.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #58a6ff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review &amp; Save</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">CMS Fields, SEO, Alt Texts, Image Prompts tabs mein review karo. "Save to Google Sheets" click karo — tab name client ke naam pe hoga.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review across tabs — CMS Fields, SEO, Alt Texts, Image Prompts. Click "Save to Google Sheets" — the tab will be named after the client.</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -2560,7 +2556,7 @@ with tab_casestudy:
 # Session state prefix: va_
 # One detection type → all ~45 Wix CMS text fields → Google Sheet tab
 # =============================================================================
-with tab_va:
+elif _sel == "va":
     if "va_result" not in st.session_state:
         st.session_state["va_result"] = None
 
@@ -2570,19 +2566,19 @@ with tab_va:
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #bc8cff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🎯</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Detection Type</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Detection type type karo — jaise "Fall Detection", "PPE Detection", "Fire &amp; Smoke Detection". Ya Market Radar tab se suggested topic use karo.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Enter a detection type — e.g. "Fall Detection", "PPE Detection", "Fire &amp; Smoke Detection". Or use a suggested topic from the Market Radar tab.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #bc8cff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">⚙️</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Page" click karo. AI live research + viAct style scrape karke poora item page banata hai — Hero, Challenges, How It Works, Use Cases, Case Study, SEO.</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Click "Generate Page". The AI runs live research + viAct style scraping to build the full item page — Hero, Challenges, How It Works, Use Cases, Case Study, SEO.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #bc8cff;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review &amp; Save</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">4 tabs mein review karo — Webpage Content, SEO, Image Alt Texts, Raw JSON. "Save to Google Sheets" click karo — tab "VA — {Detection}" naam se save hoga.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review across 4 tabs — Webpage Content, SEO, Image Alt Texts, Raw JSON. Click "Save to Google Sheets" — saved as tab "VA — {Detection}".</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -2726,7 +2722,7 @@ with tab_va:
 # Session state prefix: pp_
 # Gary's approach: viact.ai reference pages → LLM content → Claude HTML design
 # =============================================================================
-with tab_product:
+elif _sel == "product":
     if "pp_step" not in st.session_state:
         st.session_state["pp_step"] = 0
 
@@ -2737,20 +2733,20 @@ with tab_product:
         <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #d6a126;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🖥️</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Product Select Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Dropdown se viAct product select karo (viGent, viLID, viHUB…) ya custom product name type karo. .docx specs upload karo aur competitor URLs add karo (optional).</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Select Product</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Select a viAct product from the dropdown (viGent, viLID, viHUB…) or type a custom product name. Optionally upload .docx specs and add competitor URLs.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #d6a126;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">⚙️</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Product Page" click karo. AI Hero, Features, How It Works, Use Cases, Testimonials, FAQs, SEO aur 6 Image Briefs banata hai.</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Click "Generate Product Page". The AI builds Hero, Features, How It Works, Use Cases, Testimonials, FAQs, SEO, and 6 Image Briefs.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #d6a126;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🎨</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — HTML Design</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Content review karo. "Generate HTML Page" click karo — Claude AI poora styled HTML page design karta hai jo directly download ho sakta hai.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review the content. Click "Generate HTML Page" — Claude AI designs a fully styled HTML page that can be downloaded directly.</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -3033,7 +3029,7 @@ with tab_product:
 # TAB — SOLUTIONS PAGES (Agent 08)
 # Session state prefix: sol_
 # =============================================================================
-with tab_solutions:
+elif _sel == "solutions":
     import sys as _sys
     _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
     from agent8_solutions_page import SOLUTIONS_LIST as _SOL_LIST
@@ -3049,19 +3045,19 @@ with tab_solutions:
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🔧</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 1 — Solution Name</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Solution ka naam type karo — jaise "Job Hazard Analysis Software", "Working at Height Safety Software". Ya Market Radar se suggested topic use karo.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Type the solution name — e.g. "Job Hazard Analysis Software", "Working at Height Safety Software". Or use a suggested topic from Market Radar.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">🤖</div>
-            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate Karo</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">"Generate Solutions Page" click karo. AI tagline, features (14 bullets), metrics, UVPs, 10 FAQs, image alt texts — sab Wix CMS fields ek shot mein banata hai.</div>
+            <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 2 — Generate</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Click "Generate Solutions Page". The AI builds all Wix CMS fields in one shot — tagline, features (14 bullets), metrics, UVPs, 10 FAQs, and image alt texts.</div>
           </div>
           <div style="color:#1e1e1e;font-size:1.1rem;align-self:center;padding:0 2px;">→</div>
           <div style="flex:1;background:#0e0e0e;border:1px solid #1a1a1a;border-top:2px solid #f9c74f;border-radius:8px;padding:14px 16px;">
             <div style="font-size:1.1rem;margin-bottom:6px;">📊</div>
             <div style="color:#e6edf3;font-weight:700;font-size:0.8rem;margin-bottom:4px;">Step 3 — Review &amp; Save</div>
-            <div style="color:#444;font-size:0.74rem;line-height:1.5;">3 tabs mein review karo — Webpage Content, SEO, Image Alts. "Save to Google Sheets" click karo — tab "Sol — {Solution}" naam se save hoga.</div>
+            <div style="color:#444;font-size:0.74rem;line-height:1.5;">Review across 3 tabs — Webpage Content, SEO, Image Alts. Click "Save to Google Sheets" — saved as tab "Sol — {Solution}".</div>
           </div>
         </div>
         """), unsafe_allow_html=True)
@@ -3098,7 +3094,7 @@ with tab_solutions:
         st.markdown(_html(
             '<div class="glass-card" style="margin-bottom:18px;">'
             '<div style="color:#8b949e; font-size:0.82rem; line-height:1.7;">'
-            "Solution ka naam enter karo. System will:<br>"
+            "Enter the solution name. System will:<br>"
             "&nbsp;1. Live research — Tavily / Google News RSS fallback<br>"
             "&nbsp;2. Generate complete Wix CMS page: Hero, Features (14 bullets in 5 tabs), Metrics, UVPs, FAQs, SEO, Image Alt Texts"
             "</div></div>"
@@ -3372,3 +3368,355 @@ with tab_solutions:
                             f"<strong style='color:#e6edf3;'>Alt text:</strong> {_t(_alt)}</div>",
                             unsafe_allow_html=True,
                         )
+
+# =============================================================================
+# TAB — BLOG WRITER (Agent 09)
+# Session state prefix: blog_
+# =============================================================================
+elif _sel == "blog":
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+
+    st.markdown(_html(
+        '<div style="margin-bottom:18px;">'
+        '<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#e879f9; margin-bottom:4px;">AGENT 09</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.3rem; color:#fff; margin-bottom:4px;">Blog / SEO Article Writer</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:300; font-size:0.88rem; color:#8b949e;">Generate a full, CMS-ready SEO blog post — introduction, body sections, conclusion, CTA, meta tags, and image prompts. All from a topic + keyword.</div>'
+        '</div>'
+    ), unsafe_allow_html=True)
+
+    st.markdown(_html("""
+    <div style="display:flex;gap:8px;margin-bottom:20px;align-items:stretch;">
+      <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #e879f9;border-radius:8px;padding:14px 16px;">
+        <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#e879f9;margin-bottom:8px;">STEP 01</div>
+        <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Enter Topic &amp; Keyword</div>
+        <div style="color:#8b949e;font-size:0.74rem;line-height:1.55;">Type your blog topic and primary SEO keyword. Optionally use a suggested topic from the Market Radar scan.</div>
+      </div>
+      <div style="color:#3a3a4a;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
+      <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #e879f9;border-radius:8px;padding:14px 16px;">
+        <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#e879f9;margin-bottom:8px;">STEP 02</div>
+        <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Generate</div>
+        <div style="color:#8b949e;font-size:0.74rem;line-height:1.55;">Click "Generate Blog Post". AI researches the topic via Tavily/RSS and writes a full CMS-ready blog with all sections, meta tags, and image prompts.</div>
+      </div>
+      <div style="color:#3a3a4a;font-size:1.1rem;align-self:center;padding:0 4px;">&#8594;</div>
+      <div style="flex:1;background:#12121c;border:1px solid rgba(255,255,255,0.05);border-top:2px solid #e879f9;border-radius:8px;padding:14px 16px;">
+        <div style="font-family:'Oxanium',sans-serif;font-size:0.55rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#e879f9;margin-bottom:8px;">STEP 03</div>
+        <div style="color:#E9ECF1;font-family:'Jost',sans-serif;font-weight:700;font-size:0.82rem;margin-bottom:6px;">Review &amp; Save</div>
+        <div style="color:#8b949e;font-size:0.74rem;line-height:1.55;">Review across 4 tabs — Blog Content, SEO &amp; Meta, Image Prompts, Raw JSON. Click "Save to Google Sheets" — saved as tab "Blog — {Title}".</div>
+      </div>
+    </div>
+    """), unsafe_allow_html=True)
+
+    # ── "Use This →" banner from Market Radar suggested topics ───────────────
+    _sug_blog = (
+        st.session_state.get("suggested_va_topic")
+        or st.session_state.get("suggested_solutions_topic")
+        or st.session_state.get("suggested_industry_topic")
+    )
+    if _sug_blog and "blog_result" not in st.session_state:
+        _sug_name = (
+            _sug_blog.get("detection_type")
+            or _sug_blog.get("solution_name")
+            or _sug_blog.get("topic", "")
+        )
+        _sug_why  = _sug_blog.get("why", "")
+        _sb_col, _sb_btn = st.columns([5, 1])
+        with _sb_col:
+            st.info(f"💡 **Suggested blog topic:** {_sug_name} — _{_sug_why}_")
+        with _sb_btn:
+            st.write("")
+            if st.button("Use This →", key="blog_use_suggested", use_container_width=True):
+                st.session_state["blog_topic_in"] = _sug_name
+                st.rerun()
+
+    _bc1, _bc2 = st.columns([3, 2], gap="medium")
+    with _bc1:
+        _blog_topic   = st.text_input("Blog Topic", placeholder="e.g. PPE Detection in Oil & Gas Industry", key="blog_topic_in")
+        _blog_keyword = st.text_input("Target Keyword", placeholder="e.g. PPE detection software", key="blog_kw_in")
+        _blog_industry = st.text_input("Industry (optional)", placeholder="e.g. Oil & Gas, Construction, Manufacturing", key="blog_industry_in", value="Industrial")
+    with _bc2:
+        _blog_words = st.selectbox("Target Word Count", [800, 1200, 1500, 2000, 2500, 3000], index=1, key="blog_words_in")
+        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+        _blog_go = st.button("Generate Blog Post", type="primary", use_container_width=True, key="blog_go_btn")
+
+    if _blog_go:
+        if not _blog_topic or not _blog_keyword:
+            st.warning("Please enter a topic and target keyword.")
+        else:
+            _blog_bar = st.progress(0, text="Starting...")
+            _blog_status = st.empty()
+            def _blog_prog(msg):
+                _blog_status.markdown(f"<div style='color:#e879f9; font-size:0.85rem;'>{msg}</div>", unsafe_allow_html=True)
+
+            try:
+                from agent9_blog_writer import generate_blog_post as _gen_blog
+                _blog_bar.progress(10, text="Researching...")
+                _blog_result = _gen_blog(
+                    topic=_blog_topic,
+                    target_keyword=_blog_keyword,
+                    industry=_blog_industry or "Industrial",
+                    word_count=_blog_words,
+                    progress_callback=_blog_prog,
+                )
+                _blog_bar.progress(100, text="Done!")
+                _blog_status.empty()
+                st.session_state["blog_result"] = _blog_result
+                st.success("Blog post generated!")
+            except Exception as _blog_err:
+                _blog_bar.progress(0)
+                st.error(f"Error: {_blog_err}")
+
+    if "blog_result" in st.session_state:
+        _br = st.session_state["blog_result"]
+        _bc = _br.get("cms_fields", {})
+        _bs = _br.get("seo", {})
+
+        st.markdown("<hr/>", unsafe_allow_html=True)
+
+        _bt1, _bt2, _bt3, _bt4 = st.tabs(["📝 Blog Content", "🔍 SEO & Meta", "🎨 Image Prompts", "🔧 Raw JSON"])
+
+        with _bt1:
+            st.markdown("<div style='color:#ff6a3d; font-weight:700; font-size:0.9rem; margin-bottom:8px; text-transform:uppercase; letter-spacing:1.2px;'>CMS Fields</div>", unsafe_allow_html=True)
+            st.text_input("Blog Title (H1)", value=_bc.get("blog_title", ""), key="blog_out_title")
+            st.text_input("Slug", value=_bc.get("slug", ""), key="blog_out_slug")
+            _bcat, _btag = st.columns(2)
+            with _bcat:
+                st.text_input("Category", value=_bc.get("category", ""), key="blog_out_cat")
+            with _btag:
+                st.text_input("Tags", value=", ".join(_bc.get("tags", [])), key="blog_out_tags")
+            st.text_input("Reading Time", value=_bc.get("reading_time", ""), key="blog_out_rt")
+            st.text_area("Excerpt (blog card summary)", value=_bc.get("excerpt", ""), height=70, key="blog_out_excerpt")
+            st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>Body</div>", unsafe_allow_html=True)
+            st.text_area("Introduction", value=_bc.get("introduction", ""), height=120, key="blog_out_intro")
+            if _bc.get("tldr"):
+                st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>TLDR</div>", unsafe_allow_html=True)
+                _tldr_text = "\n".join([f"{i}. {p}" for i, p in enumerate(_bc["tldr"], 1)])
+                st.text_area("TLDR (top summary block)", value=_tldr_text, height=100, key="blog_out_tldr")
+            if _bc.get("table_of_contents"):
+                st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>Table of Contents</div>", unsafe_allow_html=True)
+                _toc_text = "\n".join([f"{i}. {h}" for i, h in enumerate(_bc["table_of_contents"], 1)])
+                st.text_area("TOC (paste into Wix TOC block)", value=_toc_text, height=100, key="blog_out_toc")
+            for _bi, _sec in enumerate(_bc.get("body_sections", []), 1):
+                with st.expander(f"Section {_bi}: {_sec.get('heading', '')}"):
+                    st.text_input(f"H2 Heading {_bi}", value=_sec.get("heading", ""), key=f"blog_sec_h_{_bi}")
+                    if _sec.get("content"):
+                        st.text_area(f"Intro Paragraph {_bi}", value=_sec.get("content", ""), height=100, key=f"blog_sec_c_{_bi}")
+                    for _sj, _sub in enumerate(_sec.get("subsections", []), 1):
+                        st.text_input(f"  H3 Subheading {_bi}.{_sj}", value=_sub.get("subheading", ""), key=f"blog_sub_h_{_bi}_{_sj}")
+                        st.text_area(f"  Content {_bi}.{_sj}", value=_sub.get("content", ""), height=120, key=f"blog_sub_c_{_bi}_{_sj}")
+            if _bc.get("case_study"):
+                with st.expander("📌 Case Study Section"):
+                    _cs = _bc["case_study"]
+                    st.text_input("Section Heading", value=_cs.get("heading", "Seeing It in Practice"), key="blog_cs_heading")
+                    st.text_input("Client", value=_cs.get("client", ""), key="blog_cs_client")
+                    st.text_area("Challenge", value=_cs.get("challenge", ""), height=70, key="blog_cs_challenge")
+                    st.text_area("Solution", value=_cs.get("solution", ""), height=70, key="blog_cs_solution")
+                    st.text_area("Outcome", value=_cs.get("outcome", ""), height=70, key="blog_cs_outcome")
+            st.text_area("Conclusion", value=_bc.get("conclusion", ""), height=100, key="blog_out_conclusion")
+            if _bc.get("key_takeaways"):
+                st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>Key Takeaways</div>", unsafe_allow_html=True)
+                _kt_text = "\n".join([f"• {t}" for t in _bc["key_takeaways"]])
+                st.text_area("Key Takeaways (bullet list)", value=_kt_text, height=120, key="blog_out_kt")
+            if _bc.get("faqs"):
+                with st.expander(f"❓ FAQs ({len(_bc['faqs'])})"):
+                    for _fi, _faq in enumerate(_bc["faqs"], 1):
+                        st.text_input(f"Q{_fi}", value=_faq.get("question", ""), key=f"blog_faq_q_{_fi}")
+                        st.text_area(f"A{_fi}", value=_faq.get("answer", ""), height=70, key=f"blog_faq_a_{_fi}")
+            st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>CTA Block</div>", unsafe_allow_html=True)
+            _bca, _bcb, _bcc = st.columns(3)
+            with _bca:
+                st.text_input("CTA Heading", value=_bc.get("cta_heading", ""), key="blog_cta_h")
+            with _bcb:
+                st.text_input("CTA Button Text", value=_bc.get("cta_button_text", ""), key="blog_cta_btn")
+            with _bcc:
+                st.text_input("CTA URL", value=_bc.get("cta_url", ""), key="blog_cta_url")
+            st.text_area("CTA Body", value=_bc.get("cta_body", ""), height=70, key="blog_cta_body")
+
+            if _bc.get("internal_links"):
+                st.markdown("<div style='color:#e879f9; font-weight:600; font-size:0.82rem; margin:12px 0 4px; text-transform:uppercase; letter-spacing:1px;'>Suggested Internal Links</div>", unsafe_allow_html=True)
+                for _lnk in _bc.get("internal_links", []):
+                    st.markdown(f"<div style='color:#8b949e; font-size:0.82rem;'>→ <strong style='color:#e6edf3;'>{_t(_lnk.get('anchor',''))}</strong> → {_t(_lnk.get('suggested_page',''))}</div>", unsafe_allow_html=True)
+
+        with _bt2:
+            _mt_v = _bc.get("meta_title", "")
+            _md_v = _bc.get("meta_description", "")
+            st.text_input(f"Meta Title ({len(_mt_v)}/60 chars)", value=_mt_v, key="blog_out_mt")
+            if len(_mt_v) > 60:
+                st.error(f"Meta title {len(_mt_v)} chars — must be ≤60")
+            st.text_area(f"Meta Description ({len(_md_v)}/155 chars)", value=_md_v, height=80, key="blog_out_md")
+            if len(_md_v) > 155:
+                st.warning(f"Meta description {len(_md_v)} chars — aim for ≤155")
+            st.text_input("Focus Keyword", value=_bs.get("focus_keyword", ""), key="blog_out_fk")
+            st.text_input("Secondary Keywords", value=", ".join(_bs.get("secondary_keywords", [])), key="blog_out_sk")
+            _sco = _bs.get("keyword_in_title", False)
+            _scd = _bs.get("keyword_in_desc", False)
+            st.markdown(
+                f"<div style='display:flex; gap:16px; margin-top:10px;'>"
+                f"<span style='color:{'#3fb950' if _sco else '#f85149'}; font-size:0.82rem;'>{'✓' if _sco else '✗'} Keyword in title</span>"
+                f"<span style='color:{'#3fb950' if _scd else '#f85149'}; font-size:0.82rem;'>{'✓' if _scd else '✗'} Keyword in description</span>"
+                f"<span style='color:#8b949e; font-size:0.82rem;'>~{_bs.get('estimated_word_count', 0)} words</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+        with _bt3:
+            st.text_area("Hero Image Alt Text", value=_bc.get("image_alt_main", ""), height=60, key="blog_out_img_alt")
+            st.text_area("Hero Image Prompt (for AI generation)", value=_bc.get("image_prompt_main", ""), height=120, key="blog_out_img_prompt")
+
+        with _bt4:
+            st.json(_br)
+
+        st.write("")
+        _blog_push_col, _ = st.columns([1, 2])
+        with _blog_push_col:
+            if st.button("📊  Save to Google Sheets", type="primary", key="blog_push_btn", use_container_width=True):
+                try:
+                    from push_to_sheets import push_blog_post as _push_blog
+                    _push_blog(_br)
+                    _saved_title = _br.get("cms_fields", {}).get("blog_title", "Blog")[:40]
+                    st.success(f"✅ Saved — tab 'Blog — {_saved_title}'")
+                except Exception as _bp_err:
+                    st.error(f"Save failed: {_bp_err}")
+
+# =============================================================================
+# TAB — META / SEO TAG GENERATOR (Agent 10)
+# Session state prefix: meta_
+# =============================================================================
+elif _sel == "meta_seo":
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+
+    st.markdown(_html(
+        '<div style="margin-bottom:18px;">'
+        '<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#38bdf8; margin-bottom:4px;">AGENT 10</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.3rem; color:#fff; margin-bottom:4px;">Meta / SEO Tag Generator</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:300; font-size:0.88rem; color:#8b949e;">Generate all SEO meta tags, Open Graph, Twitter Card, and JSON-LD schema for any viAct page. Paste directly into Wix SEO settings.</div>'
+        '</div>'
+    ), unsafe_allow_html=True)
+
+    _PAGE_TYPE_OPTIONS = {
+        "Industry Page":       "industry",
+        "Product Page":        "product",
+        "Solution Page":       "solution",
+        "Blog Post":           "blog",
+        "Case Study":          "case_study",
+        "Video Analytics Page": "video_analytics",
+        "Homepage":            "homepage",
+    }
+
+    _mc1, _mc2 = st.columns([3, 2], gap="medium")
+    with _mc1:
+        _meta_page_label = st.selectbox("Page Type", list(_PAGE_TYPE_OPTIONS.keys()), key="meta_page_type_sel")
+        _meta_page_type  = _PAGE_TYPE_OPTIONS[_meta_page_label]
+        _meta_title      = st.text_input("Page Title", placeholder="e.g. PPE Detection Software for Construction", key="meta_title_in")
+        _meta_desc_in    = st.text_area("Page Description (brief)", placeholder="Describe what this page is about in 1-2 sentences...", height=80, key="meta_desc_in")
+    with _mc2:
+        _meta_keyword    = st.text_input("Primary Keyword", placeholder="e.g. PPE detection software", key="meta_kw_in")
+        _meta_slug       = st.text_input("URL Slug", placeholder="e.g. /solutions/ppe-detection", key="meta_slug_in")
+        _meta_sec_kws    = st.text_input("Secondary Keywords (optional, comma-separated)", key="meta_sec_kws_in")
+        _meta_go = st.button("Generate SEO Tags", type="primary", use_container_width=True, key="meta_go_btn")
+
+    if _meta_go:
+        if not _meta_title or not _meta_keyword or not _meta_slug:
+            st.warning("Please fill in Page Title, Primary Keyword, and URL Slug.")
+        else:
+            _meta_bar = st.progress(0, text="Generating...")
+            _meta_status = st.empty()
+            def _meta_prog(msg):
+                _meta_status.markdown(f"<div style='color:#38bdf8; font-size:0.85rem;'>{msg}</div>", unsafe_allow_html=True)
+
+            _sec_kw_list = [k.strip() for k in _meta_sec_kws.split(",") if k.strip()] if _meta_sec_kws else []
+
+            try:
+                from agent10_meta_seo import generate_meta_tags as _gen_meta
+                _meta_bar.progress(20, text="Generating meta tags...")
+                _meta_result = _gen_meta(
+                    page_type=_meta_page_type,
+                    page_title=_meta_title,
+                    page_description=_meta_desc_in,
+                    target_keyword=_meta_keyword,
+                    url_slug=_meta_slug,
+                    secondary_keywords=_sec_kw_list,
+                    progress_callback=_meta_prog,
+                )
+                _meta_bar.progress(100, text="Done!")
+                _meta_status.empty()
+                st.session_state["meta_result"] = _meta_result
+                st.success("SEO tags generated!")
+            except Exception as _meta_err:
+                _meta_bar.progress(0)
+                st.error(f"Error: {_meta_err}")
+
+    if "meta_result" in st.session_state:
+        _mr = st.session_state["meta_result"]
+        _mt = _mr.get("meta_tags", {})
+        _ms = _mr.get("seo_scores", {})
+
+        st.markdown("<hr/>", unsafe_allow_html=True)
+
+        # SEO Score bar
+        _sc_val = _ms.get("overall_score", "0/9")
+        _sc_num = int(_sc_val.split("/")[0]) if "/" in _sc_val else 0
+        _sc_color = "#3fb950" if _sc_num >= 7 else ("#f9c74f" if _sc_num >= 4 else "#f85149")
+        st.markdown(
+            f"<div style='background:#12121c; border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:16px;'>"
+            f"<div style='font-family:\"Oxanium\",sans-serif; font-size:1.6rem; font-weight:700; color:{_sc_color};'>{_sc_val}</div>"
+            f"<div style='font-family:\"Jost\",sans-serif; font-size:0.85rem; color:#8b949e;'>SEO Score — {'Excellent' if _sc_num >= 7 else ('Good' if _sc_num >= 4 else 'Needs Work')}</div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+        _mtt1, _mtt2, _mtt3, _mtt4 = st.tabs(["🏷 Meta Tags", "📣 Open Graph & Twitter", "🔧 Schema JSON-LD", "📋 HTML Snippet"])
+
+        with _mtt1:
+            _m_title_v = _mt.get("meta_title", "")
+            _m_desc_v  = _mt.get("meta_description", "")
+            st.text_input(f"Meta Title ({len(_m_title_v)}/60 chars)", value=_m_title_v, key="meta_out_title")
+            if len(_m_title_v) > 60:
+                st.error(f"Title is {len(_m_title_v)} chars — must be ≤60")
+            st.text_area(f"Meta Description ({len(_m_desc_v)}/155 chars)", value=_m_desc_v, height=80, key="meta_out_desc")
+            if len(_m_desc_v) > 155:
+                st.warning(f"Description {len(_m_desc_v)} chars — aim for ≤155")
+            st.text_input("Canonical URL", value=_mt.get("canonical", ""), key="meta_out_canonical")
+            st.text_input("Robots", value=_mt.get("robots", "index, follow"), key="meta_out_robots")
+            st.text_input("Focus Keyword", value=_mt.get("focus_keyword", ""), key="meta_out_fk")
+            st.text_input("Secondary Keywords", value=", ".join(_mt.get("secondary_keywords", [])), key="meta_out_sk")
+            _check_cols = st.columns(4)
+            checks = [
+                ("Keyword in title", _ms.get("keyword_in_title")),
+                ("Keyword in desc", _ms.get("keyword_in_description")),
+                ("OG tags", _ms.get("has_og_tags")),
+                ("FAQ schema", _ms.get("has_faq_schema")),
+            ]
+            for (_lbl, _val), _col in zip(checks, _check_cols):
+                _col.markdown(f"<div style='color:{'#3fb950' if _val else '#f85149'}; font-size:0.82rem; text-align:center;'>{'✓' if _val else '✗'} {_lbl}</div>", unsafe_allow_html=True)
+
+        with _mtt2:
+            st.text_input("OG Title", value=_mt.get("og_title", ""), key="meta_out_og_title")
+            st.text_area("OG Description", value=_mt.get("og_description", ""), height=80, key="meta_out_og_desc")
+            st.text_input("OG Image URL", value=_mt.get("og_image", ""), key="meta_out_og_img")
+            st.text_input("OG Image Alt", value=_mt.get("og_image_alt", ""), key="meta_out_og_alt")
+            st.text_input("OG Type", value=_mt.get("og_type", "website"), key="meta_out_og_type")
+            st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+            st.text_input("Twitter Title", value=_mt.get("twitter_title", ""), key="meta_out_tw_title")
+            st.text_area("Twitter Description", value=_mt.get("twitter_description", ""), height=70, key="meta_out_tw_desc")
+            st.text_input("Twitter Card Type", value=_mt.get("twitter_card", "summary_large_image"), key="meta_out_tw_card")
+            st.text_input("Twitter Site", value=_mt.get("twitter_site", "@viactai"), key="meta_out_tw_site")
+
+        with _mtt3:
+            _schema = _mr.get("schema_json_ld", {})
+            if _schema.get("webpage"):
+                st.markdown("<div style='color:#38bdf8; font-weight:600; font-size:0.82rem; margin-bottom:6px;'>WebPage / Product Schema</div>", unsafe_allow_html=True)
+                st.text_area("JSON-LD (paste into Wix SEO > Schema)", value=_schema.get("webpage", ""), height=220, key="meta_out_schema_wp")
+            if _schema.get("faq"):
+                st.markdown("<div style='color:#38bdf8; font-weight:600; font-size:0.82rem; margin:12px 0 6px;'>FAQ Schema</div>", unsafe_allow_html=True)
+                st.text_area("FAQ JSON-LD", value=_schema.get("faq", ""), height=220, key="meta_out_schema_faq")
+                if _mr.get("faq_pairs"):
+                    st.markdown("<div style='color:#8b949e; font-size:0.82rem; margin:10px 0 4px;'>Generated FAQ pairs:</div>", unsafe_allow_html=True)
+                    for _fq in _mr.get("faq_pairs", []):
+                        with st.expander(_fq.get("question", "")):
+                            st.write(_fq.get("answer", ""))
+
+        with _mtt4:
+            st.markdown("<div style='color:#8b949e; font-size:0.82rem; margin-bottom:8px;'>Copy this entire block and paste into your Wix page's &lt;head&gt; custom code section.</div>", unsafe_allow_html=True)
+            st.text_area("Ready-to-paste HTML", value=_mr.get("html_snippet", ""), height=420, key="meta_out_html")
