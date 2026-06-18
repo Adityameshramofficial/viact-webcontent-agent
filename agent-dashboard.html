@@ -350,11 +350,37 @@ body { background:var(--bg-dark); font-family:'Jost',sans-serif; min-height:100v
   </div>
 </div>
 
+<!-- SHEETS LINK BANNER -->
+<div style="background:var(--bg-dark-2);border-top:1px solid var(--bdr-dark);border-bottom:1px solid var(--bdr-dark);padding:16px 32px;">
+  <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:36px;height:36px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <svg width="18" height="18" fill="none" stroke="#22c55e" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Jost',sans-serif;font-weight:700;font-size:14px;color:#fff;">All Generated Content — Google Sheets</div>
+        <div style="font-size:12px;color:var(--t-g4);margin-top:2px;">Every page auto-pushed here after generation. <span id="sheet-page-count" style="color:var(--green);font-weight:700;"></span></div>
+      </div>
+    </div>
+    <a id="sheets-link" href="https://docs.google.com/spreadsheets" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;
+              font-family:'Jost',sans-serif;font-weight:700;font-size:13px;padding:10px 20px;
+              border-radius:7px;text-decoration:none;transition:opacity 0.2s;white-space:nowrap;">
+      <svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Open Google Sheets
+    </a>
+  </div>
+</div>
+
 <!-- OUTPUT PREVIEW -->
 <div class="section output-bg">
   <div class="section-inner">
-    <p class="sec-eyebrow" style="color:var(--t-soft,#818181);">Today's Output Example</p>
-    <p class="sec-title" style="color:var(--t-black);">What a generated page looks like — actual fields, ready for Wix CMS</p>
+    <p class="sec-eyebrow" style="color:var(--t-soft,#818181);">Actual Output — Last 3 Pages Generated</p>
+    <p class="sec-title" style="color:var(--t-black);">Real content from Google Sheets — every field auto-generated, Wix CMS ready</p>
+
+    <!-- Real output cards injected by JS -->
+    <div id="output-cards-real" style="display:flex;flex-direction:column;gap:16px;margin-bottom:28px;"></div>
+
     <div class="output-grid">
       <div class="out-card">
         <div class="out-card-head">
@@ -443,7 +469,7 @@ body { background:var(--bg-dark); font-family:'Jost',sans-serif; min-height:100v
 <footer class="dash-footer">
   <div class="footer-links">
     <a href="https://viact-webcontent-agent-a7yrhfuaifju4prfqntzku.streamlit.app/" class="footer-link" target="_blank">Open Live App →</a>
-    <a href="https://docs.google.com/spreadsheets" class="footer-link" target="_blank">View Google Sheets →</a>
+    <a href="https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit" class="footer-link" target="_blank">View Google Sheets →</a>
   </div>
   <span class="footer-note">viAct Content Intelligence · Built with Claude + Groq · 10 agents · GitHub Actions automation</span>
 </footer>
@@ -497,7 +523,7 @@ if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 }
 
 /* ── Live data from dashboard-data.json ── */
-fetch('dashboard-data.json')
+fetch('dashboard-data.json?v=' + Date.now())
   .then(r => r.json())
   .then(data => {
     /* Update stat counters */
@@ -565,6 +591,67 @@ fetch('dashboard-data.json')
       const mo = d.toLocaleString('en-GB',{month:'short'});
       const yr = d.getFullYear();
       emailSubject.textContent = `viAct Automation Daily Report — ${dd} ${mo} ${yr}`;
+    }
+
+    /* ── Sheets link ── */
+    if (data.sheet_url) {
+      const sheetsBtn = document.getElementById('sheets-link');
+      if (sheetsBtn) sheetsBtn.href = data.sheet_url;
+      const footerLink = document.querySelector('.footer-link[href*="spreadsheets"]');
+      if (footerLink) footerLink.href = data.sheet_url;
+    }
+    const sheetCount = document.getElementById('sheet-page-count');
+    if (sheetCount && data.total_pages) {
+      sheetCount.textContent = `${data.total_pages.toLocaleString()} pages generated so far.`;
+    }
+
+    /* ── Real output cards ── */
+    const container = document.getElementById('output-cards-real');
+    if (container && data.recent_outputs && data.recent_outputs.length > 0) {
+      container.innerHTML = '';
+      data.recent_outputs.forEach((o, idx) => {
+        const isPillar = o.content_type !== 'Blog';
+        const badgeColor = isPillar ? '#0891b2' : '#7c3aed';
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#fff;border:1px solid rgba(0,0,0,0.09);border-radius:12px;overflow:hidden;';
+        card.innerHTML = `
+          <div style="background:#0a0a0f;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-family:'Oxanium',sans-serif;font-size:10px;color:#64748b;letter-spacing:0.15em;text-transform:uppercase;">Generated ${o.date || 'recently'}</span>
+              <span style="background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}44;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;font-family:'Oxanium',sans-serif;">${o.content_type.toUpperCase()}</span>
+            </div>
+            <span style="font-size:11px;color:#475569;font-family:'Jost',sans-serif;">${o.source || ''}</span>
+          </div>
+          <div style="padding:18px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+            ${o.topic ? `
+            <div>
+              <div style="font-family:'Oxanium',sans-serif;font-size:10px;color:#818181;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;">H1 Headline</div>
+              <div style="font-family:'Jost',sans-serif;font-weight:700;font-size:15px;color:#1a1a2e;line-height:1.4;">${o.topic}</div>
+            </div>` : ''}
+            ${o.meta_title && o.meta_title !== o.topic ? `
+            <div>
+              <div style="font-family:'Oxanium',sans-serif;font-size:10px;color:#818181;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;">Meta Title</div>
+              <div style="font-family:'Jost',sans-serif;font-size:13px;color:#424242;line-height:1.5;">${o.meta_title}</div>
+            </div>` : ''}
+            ${o.meta_desc ? `
+            <div>
+              <div style="font-family:'Oxanium',sans-serif;font-size:10px;color:#818181;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;">Meta Description</div>
+              <div style="font-family:'Jost',sans-serif;font-weight:300;font-size:13px;color:#424242;line-height:1.6;">${o.meta_desc}</div>
+            </div>` : ''}
+            ${o.keyword ? `
+            <div>
+              <div style="font-family:'Oxanium',sans-serif;font-size:10px;color:#818181;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;">Primary Keyword</div>
+              <div style="font-family:'Jost',sans-serif;font-weight:600;font-size:13px;color:#ff6a3d;">${o.keyword}</div>
+            </div>` : ''}
+            ${o.faq_q ? `
+            <div style="grid-column:1/-1;">
+              <div style="font-family:'Oxanium',sans-serif;font-size:10px;color:#818181;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:5px;">FAQ Generated</div>
+              <div style="font-family:'Jost',sans-serif;font-weight:600;font-size:13px;color:#1a1a2e;margin-bottom:4px;">Q: ${o.faq_q}</div>
+              ${o.faq_a ? `<div style="font-family:'Jost',sans-serif;font-weight:300;font-size:12px;color:#424242;line-height:1.6;">A: ${o.faq_a}</div>` : ''}
+            </div>` : ''}
+          </div>`;
+        container.appendChild(card);
+      });
     }
 
     console.log('[dashboard] Live data loaded from dashboard-data.json');

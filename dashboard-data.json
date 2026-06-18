@@ -1,35 +1,77 @@
 {
-  "total_pages": 3689,
-  "this_week_pages": 3029,
+  "total_pages": 60,
+  "this_week_pages": 6,
   "today_pages": 0,
   "total_dedup": 48,
-  "last_run_date": "Decision Logic",
+  "last_run_date": "2026-06-17",
   "latest_topics": [
     {
-      "date": "Decision Logic",
-      "topic": "",
+      "date": "2026-06-17",
+      "topic": "How AI-Powered Safety Solutions Can Prevent Construction Accidents",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-06-17",
+      "topic": "Construction Site Risks",
       "content_type": "Pillar"
     },
     {
-      "date": "DECISION LOGIC (for email to Gary / Surendra)",
-      "topic": "",
+      "date": "2026-06-16",
+      "topic": "Construction Site Safety: AI Camera Guide",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-06-16",
+      "topic": "Real-Time Site Safety",
       "content_type": "Pillar"
     },
     {
-      "date": "Link 1 Context",
-      "topic": "",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "Link 1 URL",
-      "topic": "",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "Link 1 Anchor",
-      "topic": "",
-      "content_type": "Pillar"
+      "date": "2026-06-15",
+      "topic": "Reducing Workplace Accidents with AI",
+      "content_type": "Blog"
     }
   ],
-  "generated_at": "2026-06-18T10:38:09.129583+05:30"
+  "recent_outputs": [
+    {
+      "date": "2026-06-17",
+      "topic": "How AI-Powered Safety Solutions Can Prevent Construction Accidents",
+      "content_type": "Blog",
+      "meta_title": "How AI-Powered Safety Solutions Can Prevent Construction Accidents",
+      "meta_desc": "Discover how AI-powered safety solutions can reduce construction accidents and improve workplace safety",
+      "keyword": "construction site safety",
+      "subheadline": "Reducing risk and improving safety in construction sites with AI technology",
+      "problem": "Construction accidents pose significant risks to workers and projects, resulting in costly delays and loss of life.",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "Compliance with workplace safety and health regulations",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-06-17",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation with AI - viAct",
+      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety automation solutions.",
+      "keyword": "Construction Site Safety Automation with AI",
+      "subheadline": "Regulatory compliance and human cost in construction sites",
+      "problem": "Construction sites face high risks, affecting 32,000+ workers globally, with a significant human and financial cost.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
+      "faq_a": "Compliance with MOM WSH Act regulations.",
+      "source": "Daily Auto-Run — Pillar"
+    },
+    {
+      "date": "2026-06-16",
+      "topic": "Construction Site Safety: AI Camera Guide",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety: AI Camera Guide",
+      "meta_desc": "Reduce incidents with AI-enabled cameras",
+      "keyword": "AI-enabled cameras",
+      "subheadline": "Reducing incidents with AI-enabled cameras",
+      "problem": "Construction sites face high incident rates.",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "Regular site inspections.",
+      "source": "Daily Auto-Run — Blog"
+    }
+  ],
+  "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
+  "generated_at": "2026-06-18T11:16:17.715523+05:30"
 }
