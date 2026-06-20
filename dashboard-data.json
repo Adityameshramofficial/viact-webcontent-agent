@@ -1,10 +1,20 @@
 {
-  "total_pages": 72,
-  "this_week_pages": 18,
-  "today_pages": 10,
+  "total_pages": 74,
+  "this_week_pages": 20,
+  "today_pages": 2,
   "total_dedup": 50,
-  "last_run_date": "2026-06-19",
+  "last_run_date": "2026-06-20",
   "latest_topics": [
+    {
+      "date": "2026-06-20",
+      "topic": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: A Guid",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-06-20",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-06-19",
       "topic": "Construction Site Safety in 2026",
@@ -19,19 +29,35 @@
       "date": "2026-06-19",
       "topic": "Implementing AI Safety Checklist for Food Manufacturers: A Guide for H",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Calculating ROI of AI Safety in Food Production: A Guide for HSE Teams",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Meeting AI Safety Regulations in Food Manufacturing: A Guide",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-06-20",
+      "topic": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: A Guid",
+      "content_type": "Blog",
+      "meta_title": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: Singapore C",
+      "meta_desc": "Learn how AI-powered safety solutions can reduce workplace accidents in construction, improving safety and compliance in Singapore and UAE.",
+      "keyword": "AI-powered safety solutions",
+      "subheadline": "AI-powered safety solutions can significantly reduce workplace accidents in construction, improving safety and compliance.",
+      "problem": "Workplace accidents in construction remain a significant concern, with industry data showing high incident rates. In Singapore, the MOM reported 2,423 workplace fatalities from 2013 to 2022.",
+      "faq_q": "What does Singapore MOM require regarding AI-Powered Safety Solutions?",
+      "faq_a": "The MOM requires employers to implement effective safety measures, including AI-powered solutions, to prevent accidents.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-06-20",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation with AI",
+      "meta_desc": "Reduce construction site risk with AI-powered safety automation. Learn how viAct's solution can help.",
+      "keyword": "Construction Site Safety Automation with AI",
+      "subheadline": "Non-compliance costs Singapore and UAE construction sites millions annually.",
+      "problem": "Construction sites face high injury rates. According to Singapore's MOM, 90% of workplace injuries are preventable.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
+      "faq_a": "MOM requires compliance with WSH Act and safety regulations.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-06-19",
       "topic": "Construction Site Safety in 2026",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require for construction site safety?",
       "faq_a": "MOM requires safety protocols",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Construction Site Risk",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI - viAct",
-      "meta_desc": "Reduce construction site risks with viAct's AI safety monitoring and automated alert system.",
-      "keyword": "Construction Site Safety Automation with AI",
-      "subheadline": "Regulatory non-compliance costs $2.5M+ per project.",
-      "problem": "Construction sites face 50% TRIR and 65% LTI risks. 7,200+ lost workdays occur yearly.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
-      "faq_a": "Compliance with WSH Act regulations.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Implementing AI Safety Checklist for Food Manufacturers: A Guide for H",
-      "content_type": "Blog",
-      "meta_title": "Implementing AI Safety Checklist for Food Manufacturers",
-      "meta_desc": "Ensure compliance and reduce risks with AI-powered safety checklists",
-      "keyword": "AI Safety Checklist",
-      "subheadline": "Ensure compliance and reduce risks with AI-powered safety checklists",
-      "problem": "Food manufacturers face significant safety risks and regulatory challenges",
-      "faq_q": "What does Singapore MOM require regarding Implementing AI Safety Checklist for Food Manufacturers?",
-      "faq_a": "Regular safety audits and risk assessments",
-      "source": "Cluster #52-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-06-19T14:47:42.829439+05:30"
+  "generated_at": "2026-06-20T13:29:22.441572+05:30"
 }
