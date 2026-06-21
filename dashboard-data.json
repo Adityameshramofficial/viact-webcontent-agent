@@ -1,10 +1,20 @@
 {
-  "total_pages": 74,
-  "this_week_pages": 20,
+  "total_pages": 76,
+  "this_week_pages": 22,
   "today_pages": 2,
   "total_dedup": 50,
-  "last_run_date": "2026-06-20",
+  "last_run_date": "2026-06-21",
   "latest_topics": [
+    {
+      "date": "2026-06-21",
+      "topic": "Reducing Workplace Accidents with AI",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-06-21",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-06-20",
       "topic": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: A Guid",
@@ -19,19 +29,35 @@
       "date": "2026-06-19",
       "topic": "Construction Site Safety in 2026",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Construction Site Risk",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Implementing AI Safety Checklist for Food Manufacturers: A Guide for H",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-06-21",
+      "topic": "Reducing Workplace Accidents with AI",
+      "content_type": "Blog",
+      "meta_title": "Construction Safety: Reducing Accidents with AI",
+      "meta_desc": "AI-powered construction safety platforms reduce workplace accidents",
+      "keyword": "construction safety",
+      "subheadline": "Construction safety platforms are crucial for HSE teams",
+      "problem": "Workplace accidents affect construction sites worldwide",
+      "faq_q": "What does Singapore MOM require regarding construction safety?",
+      "faq_a": "Compliance with safety regulations",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-06-21",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "AI Construction Safety Automation Solutions",
+      "meta_desc": "Reduce construction site risks with AI-powered safety automation solutions.",
+      "keyword": "Construction Safety Automation",
+      "subheadline": "Non-compliance costs $2.5M+ per project.",
+      "problem": "Construction sites face 90% risk reduction needs.",
+      "faq_q": "What does Singapore MOM require for AI Construction Safety Automation Solutions?",
+      "faq_a": "MOM requires compliance with safety regulations.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-06-20",
       "topic": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: A Guid",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding AI-Powered Safety Solutions?",
       "faq_a": "The MOM requires employers to implement effective safety measures, including AI-powered solutions, to prevent accidents.",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-06-20",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI",
-      "meta_desc": "Reduce construction site risk with AI-powered safety automation. Learn how viAct's solution can help.",
-      "keyword": "Construction Site Safety Automation with AI",
-      "subheadline": "Non-compliance costs Singapore and UAE construction sites millions annually.",
-      "problem": "Construction sites face high injury rates. According to Singapore's MOM, 90% of workplace injuries are preventable.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
-      "faq_a": "MOM requires compliance with WSH Act and safety regulations.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-06-19",
-      "topic": "Construction Site Safety in 2026",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety in 2026",
-      "meta_desc": "AI improves construction site safety",
-      "keyword": "construction site safety",
-      "subheadline": "AI improves site safety",
-      "problem": "Construction sites face safety risks",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires safety protocols",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-06-20T13:29:22.441572+05:30"
+  "generated_at": "2026-06-21T14:13:49.696664+05:30"
 }
