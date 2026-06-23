@@ -1,10 +1,20 @@
 {
-  "total_pages": 78,
-  "this_week_pages": 2,
+  "total_pages": 80,
+  "this_week_pages": 4,
   "today_pages": 2,
   "total_dedup": 50,
-  "last_run_date": "2026-06-22",
+  "last_run_date": "2026-06-23",
   "latest_topics": [
+    {
+      "date": "2026-06-23",
+      "topic": "Improving Construction Site Safety with AI",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-06-23",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-06-22",
       "topic": "Construction Site Safety In Singapore",
@@ -19,19 +29,35 @@
       "date": "2026-06-21",
       "topic": "Reducing Workplace Accidents with AI",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-06-21",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-06-20",
-      "topic": "How AI-Powered Safety Solutions Can Reduce Workplace Accidents: A Guid",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-06-23",
+      "topic": "Improving Construction Site Safety with AI",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety: How AI-Powered Surveillance Tech Helps",
+      "meta_desc": "Learn how AI-powered surveillance tech improves construction site safety and reduces risks",
+      "keyword": "AI-powered surveillance tech",
+      "subheadline": "Reducing risks and improving compliance with AI-powered surveillance tech",
+      "problem": "Construction sites face high injury rates and non-compliance risks",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "MOM requires compliance with workplace safety regulations",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-06-23",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation with AI - viAct",
+      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety automation solutions.",
+      "keyword": "Construction Site Safety Automation with AI",
+      "subheadline": "90% of construction sites experience safety incidents, affecting 32,000+ workers.",
+      "problem": "Construction sites face high safety risks, with 90% experiencing incidents, affecting workers and costing $2.5M+ per project.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
+      "faq_a": "Compliance with WSH Act regulations.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-06-22",
       "topic": "Construction Site Safety In Singapore",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction site safety?",
       "faq_a": "MOM requires safety protocols.",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-06-22",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Site Safety",
-      "meta_desc": "Reduce construction site risks with viAct's Real-Time Safety Automation Solutions.",
-      "keyword": "Construction Site Safety Automation",
-      "subheadline": "According to Singapore's MOM, construction sites pose significant risks to workers.",
-      "problem": "Construction sites pose significant risks to workers, with high rates of accidents and injuries, affecting over 32,000 workers globally, as per industry data shows.",
-      "faq_q": "What does Singapore MOM require for Real-Time Construction Site Safety Automation Solutions?",
-      "faq_a": "MOM requires construction sites to implement safety measures to prevent accidents.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-06-21",
-      "topic": "Reducing Workplace Accidents with AI",
-      "content_type": "Blog",
-      "meta_title": "Construction Safety: Reducing Accidents with AI",
-      "meta_desc": "AI-powered construction safety platforms reduce workplace accidents",
-      "keyword": "construction safety",
-      "subheadline": "Construction safety platforms are crucial for HSE teams",
-      "problem": "Workplace accidents affect construction sites worldwide",
-      "faq_q": "What does Singapore MOM require regarding construction safety?",
-      "faq_a": "Compliance with safety regulations",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-06-22T15:26:53.241271+05:30"
+  "generated_at": "2026-06-23T13:30:37.120005+05:30"
 }
