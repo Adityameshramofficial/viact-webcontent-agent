@@ -1,77 +1,77 @@
 {
-  "total_pages": 82,
-  "this_week_pages": 6,
-  "today_pages": 2,
-  "total_dedup": 50,
-  "last_run_date": "2026-06-24",
+  "total_pages": 94,
+  "this_week_pages": 18,
+  "today_pages": 6,
+  "total_dedup": 52,
+  "last_run_date": "2026-06-26",
   "latest_topics": [
     {
-      "date": "2026-06-24",
-      "topic": "Reducing Workplace Accidents in Construction",
+      "date": "2026-06-26",
+      "topic": "Construction Site Safety Monitoring: The AI Camera Revolution",
       "content_type": "Blog"
     },
     {
-      "date": "2026-06-24",
+      "date": "2026-06-26",
       "topic": "Construction Site Risks",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-06-23",
-      "topic": "Improving Construction Site Safety with AI",
+      "date": "2026-06-26",
+      "topic": "Implementing AI PPE Tracking in Construction: A Guide for Singapore an",
       "content_type": "Blog"
     },
     {
-      "date": "2026-06-23",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
+      "date": "2026-06-26",
+      "topic": "Calculating ROI on Automated PPE Monitoring: A Guide for Construction",
+      "content_type": "Blog"
     },
     {
-      "date": "2026-06-22",
-      "topic": "Construction Site Safety In Singapore",
+      "date": "2026-06-26",
+      "topic": "Singapore MOM PPE Compliance Checklist: A Guide for Construction Sites",
       "content_type": "Blog"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-06-24",
-      "topic": "Reducing Workplace Accidents in Construction",
+      "date": "2026-06-26",
+      "topic": "Construction Site Safety Monitoring: The AI Camera Revolution",
       "content_type": "Blog",
-      "meta_title": "Reducing Workplace Accidents in Construction",
-      "meta_desc": "AI-powered safety solutions for a safer work environment",
-      "keyword": "AI-powered safety solutions",
-      "subheadline": "AI-powered safety solutions for a safer work environment",
-      "problem": "Workplace accidents in construction pose a significant risk to workers' lives and well-being",
-      "faq_q": "What does Singapore MOM require regarding workplace safety?",
-      "faq_a": "Compliance with workplace safety and health regulations.",
+      "meta_title": "Construction Site Safety: AI Camera Revolution",
+      "meta_desc": "Discover how AI cameras are transforming construction site safety monitoring",
+      "keyword": "construction site safety monitoring",
+      "subheadline": "Enhancing worker safety through AI-enabled surveillance",
+      "problem": "Construction sites face high injury rates and fatality risks.",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "Employers must ensure a safe working environment",
       "source": "Daily Auto-Run — Blog"
     },
     {
-      "date": "2026-06-24",
+      "date": "2026-06-26",
       "topic": "Construction Site Risks",
       "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Site Safety Automation Solutions",
-      "meta_desc": "Real-Time Construction Site Safety Automation Solutions for reduced risks and costs.",
+      "meta_title": "Real-Time Construction Site Safety Automation",
+      "meta_desc": "Reduce construction site risks by 90% with viAct's real-time monitoring and automated alerts.",
       "keyword": "Construction Site Safety Automation",
-      "subheadline": "According to Singapore's MOM, construction sites pose significant risks to workers.",
-      "problem": "Construction sites face 90% risk reduction challenges, affecting 32,000+ workers globally, under Singapore's MOM WSH Act and UAE OSHAD regulations.",
-      "faq_q": "What does Singapore MOM require for Real-Time Construction Site Safety Automation Solutions?",
-      "faq_a": "MOM requires real-time safety monitoring systems on construction sites.",
+      "subheadline": "Non-compliance costs $2.5M+ per project.",
+      "problem": "Construction sites face 90% risk. 32,000+ workers are affected.",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "MOM WSH Act requires real-time safety monitoring.",
       "source": "Daily Auto-Run — Pillar"
     },
     {
-      "date": "2026-06-23",
-      "topic": "Improving Construction Site Safety with AI",
+      "date": "2026-06-26",
+      "topic": "Implementing AI PPE Tracking in Construction: A Guide for Singapore an",
       "content_type": "Blog",
-      "meta_title": "Construction Site Safety: How AI-Powered Surveillance Tech Helps",
-      "meta_desc": "Learn how AI-powered surveillance tech improves construction site safety and reduces risks",
-      "keyword": "AI-powered surveillance tech",
-      "subheadline": "Reducing risks and improving compliance with AI-powered surveillance tech",
-      "problem": "Construction sites face high injury rates and non-compliance risks",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires compliance with workplace safety regulations",
-      "source": "Daily Auto-Run — Blog"
+      "meta_title": "Implementing AI PPE Tracking in Construction",
+      "meta_desc": "Protect your workforce with AI-powered PPE monitoring, reducing incidents by 90%",
+      "keyword": "AI PPE tracking",
+      "subheadline": "Protect your workforce with AI-powered PPE monitoring, reducing incidents by 90%",
+      "problem": "Construction sites face high incident rates due to inadequate PPE tracking.",
+      "faq_q": "What does Singapore MOM require regarding PPE tracking?",
+      "faq_a": "MOM requires employers to ensure workers wear PPE.",
+      "source": "Cluster #58-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-06-24T13:22:10.307283+05:30"
+  "generated_at": "2026-06-26T13:37:21.511242+05:30"
 }
