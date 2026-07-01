@@ -1,0 +1,57 @@
+name: Daily Partner Outreach (Agent 11)
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # Every day at 1:00 AM UTC = 6:30 AM IST
+  workflow_dispatch:       # Manual trigger button in GitHub Actions tab
+
+jobs:
+  run-partner-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30    # One competitor daily: ~3-8 min. Mondays include Agent 1: ~10-12 min
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install python-whois
+
+      - name: "Run Partner Outreach Pipeline (daily - 1 competitor, Mondays include Agent 1)"
+        continue-on-error: true
+        env:
+          # Search + scrape
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          # LLM
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Sheets
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          PARTNER_SHEET_ID: ${{ secrets.PARTNER_SHEET_ID }}
+          # Email verification (optional — leave empty in secrets if not signed up)
+          MAILBOXVALIDATOR_API_KEY: ${{ secrets.MAILBOXVALIDATOR_API_KEY }}
+          # Prod mode: Firecrawl first, Jina fallback
+          DEV_MODE: "false"
+        run: python partner_pipeline.py --daily
+
+      - name: Upload run log (for post-mortem if something fails)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: partner-run-${{ github.run_number }}
+          path: .tmp/partner_*.log
+          if-no-files-found: ignore
+          retention-days: 14

@@ -2042,6 +2042,584 @@ def push_solutions_page(result: dict, sheet_id: str = "") -> int:
     return 1
 
 
+def push_blog_post(result: dict, sheet_id: str = "") -> int:
+    """
+    Push blog post CMS fields to a tab named "Blog — {title}".
+    Vertical layout: field name in col A, value in col B.
+    Creates tab if missing; clears and rewrites on each run.
+    Returns 1 on success.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("INDUSTRY_SHEET_ID") or get_env("SHEET_ID")
+
+    service  = get_sheets_service()
+    cms      = result.get("cms_fields", {})
+    seo      = result.get("seo", {})
+    meta     = result.get("generation_meta", {})
+    title    = cms.get("blog_title", meta.get("topic", "Blog")).strip()
+    tab_name = f"Blog — {title}"[:100]
+
+    sheet_meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing   = [s["properties"]["title"] for s in sheet_meta.get("sheets", [])]
+    if tab_name not in existing:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": tab_name}}}]},
+        ).execute()
+    else:
+        service.spreadsheets().values().clear(
+            spreadsheetId=sheet_id, range=f"'{tab_name}'!A:B",
+        ).execute()
+
+    rows: list[list] = []
+    section_rows: list[int] = []
+
+    def sec(t):
+        section_rows.append(len(rows))
+        rows.append([t, ""])
+
+    def f(label, value):
+        rows.append([label, str(value) if value is not None else ""])
+
+    def blank():
+        rows.append(["", ""])
+
+    # META
+    sec("META")
+    f("Date",          meta.get("generated_at", "")[:10])
+    f("Blog Title",    title)
+    f("Slug",          cms.get("slug", ""))
+    f("Category",      cms.get("category", ""))
+    f("Tags",          ", ".join(cms.get("tags", [])))
+    f("Reading Time",  cms.get("reading_time", ""))
+    f("Author",        cms.get("author", "viAct Editorial Team"))
+    f("Publish Date",  cms.get("publish_date", ""))
+    f("Status",        "Draft")
+    blank()
+
+    # SEO
+    sec("SEO")
+    f("Meta Title",         cms.get("meta_title", ""))
+    f("Meta Description",   cms.get("meta_description", ""))
+    f("Focus Keyword",      seo.get("focus_keyword", ""))
+    f("Secondary Keywords", ", ".join(seo.get("secondary_keywords", [])))
+    f("Est. Word Count",    str(seo.get("estimated_word_count", "")))
+    f("Keyword in Title",   "Yes" if seo.get("keyword_in_title") else "No")
+    f("Keyword in Desc",    "Yes" if seo.get("keyword_in_desc") else "No")
+    blank()
+
+    # BODY
+    sec("BODY")
+    f("Excerpt",      cms.get("excerpt", ""))
+    f("Introduction", cms.get("introduction", ""))
+    tldr = cms.get("tldr", [])
+    if tldr:
+        f("TLDR", "\n".join([f"{i}. {p}" for i, p in enumerate(tldr, 1)]))
+    toc = cms.get("table_of_contents", [])
+    if toc:
+        f("Table of Contents", "\n".join([f"{i}. {h}" for i, h in enumerate(toc, 1)]))
+    for i, sec_data in enumerate(cms.get("body_sections", []), 1):
+        f(f"Section {i} H2", sec_data.get("heading", ""))
+        if sec_data.get("content"):
+            f(f"Section {i} Intro", sec_data.get("content", ""))
+        for j, sub in enumerate(sec_data.get("subsections", []), 1):
+            f(f"Section {i}.{j} H3", sub.get("subheading", ""))
+            f(f"Section {i}.{j} Content", sub.get("content", ""))
+    cs = cms.get("case_study", {})
+    if cs:
+        sec("CASE STUDY")
+        f("Section Heading", cs.get("heading", ""))
+        f("Client",    cs.get("client", ""))
+        f("Challenge", cs.get("challenge", ""))
+        f("Solution",  cs.get("solution", ""))
+        f("Outcome",   cs.get("outcome", ""))
+    f("Conclusion", cms.get("conclusion", ""))
+    kt = cms.get("key_takeaways", [])
+    if kt:
+        f("Key Takeaways", "\n".join([f"• {t}" for t in kt]))
+    faqs = cms.get("faqs", [])
+    if faqs:
+        sec("FAQs")
+        for i, faq in enumerate(faqs, 1):
+            f(f"FAQ {i} Q", faq.get("question", ""))
+            f(f"FAQ {i} A", faq.get("answer", ""))
+    blank()
+
+    # CTA
+    sec("CTA")
+    f("CTA Heading",     cms.get("cta_heading", ""))
+    f("CTA Body",        cms.get("cta_body", ""))
+    f("CTA Button Text", cms.get("cta_button_text", ""))
+    f("CTA URL",         cms.get("cta_url", ""))
+    blank()
+
+    # IMAGE
+    sec("IMAGE")
+    f("Hero Image Alt Text",    cms.get("image_alt_main", ""))
+    f("Hero Image Prompt",      cms.get("image_prompt_main", ""))
+    blank()
+
+    # INTERNAL LINKS
+    sec("INTERNAL LINKS")
+    for lnk in cms.get("internal_links", []):
+        f(lnk.get("anchor", ""), lnk.get("suggested_page", ""))
+
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": rows},
+    ).execute()
+
+    fmt_requests = []
+    for r in section_rows:
+        fmt_requests.append({
+            "repeatCell": {
+                "range": {"sheetId": _get_sheet_id(service, sheet_id, tab_name),
+                           "startRowIndex": r, "endRowIndex": r + 1,
+                           "startColumnIndex": 0, "endColumnIndex": 2},
+                "cell": {"userEnteredFormat": {
+                    "backgroundColor": {"red": 0.93, "green": 0.47, "blue": 0.24},
+                    "textFormat": {"bold": True, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+                }},
+                "fields": "userEnteredFormat(backgroundColor,textFormat)",
+            }
+        })
+
+    if fmt_requests:
+        sheet_meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        tab_gid = next(
+            s["properties"]["sheetId"]
+            for s in sheet_meta2["sheets"]
+            if s["properties"]["title"] == tab_name
+        )
+        for req in fmt_requests:
+            req["repeatCell"]["range"]["sheetId"] = tab_gid
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id, body={"requests": fmt_requests},
+        ).execute()
+    return 1
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Partner Outreach (Agent 11) — one tab per competitor in PARTNER_SHEET_ID
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Existing user-maintained columns (A–H) preserved verbatim.
+# 3 agent-managed columns added (I–K).
+# Phone Number (D) kept in schema but left blank — agent does not fill it.
+PARTNER_COLUMNS = [
+    "Company Name",      # A
+    "Description",       # B
+    "Website",           # C
+    "Phone Number",      # D — left blank (user's manual column)
+    "Email",             # E — scraped or verified email
+    "Address",           # F — scraped from partner website
+    "Country",           # G — scraped or inferred
+    "Status",            # H — user sets "Shortlist" / "Done" manually
+    "Email Source",      # I — scraped | tavily | pattern_verified | whois
+    "Discovered Via",    # J — A1:sitemap | A2:homepage | A3:patterns | A4:site-search | A5:news | A6:customers
+    "Discovered At",     # K — YYYY-MM-DD
+]
+
+
+def _norm_domain_for_dedup(website: str) -> str:
+    """Strip protocol/www/path — same logic as discover_partners._norm_domain."""
+    import re as _re
+    if not website:
+        return ""
+    w = website.lower().strip()
+    w = _re.sub(r"^https?://", "", w)
+    w = _re.sub(r"^www\.", "", w)
+    w = w.split("/")[0].strip()
+    return w
+
+
+def _norm_name_for_dedup(name: str) -> str:
+    """Lowercase + strip suffixes — same logic as discover_partners._norm_name."""
+    import re as _re
+    n = name.lower().strip()
+    n = _re.sub(r"[,\.]", "", n)
+    n = _re.sub(r"\b(inc|llc|ltd|limited|corp|corporation|co|gmbh|pvt|private)\b", "", n)
+    n = _re.sub(r"\s+", " ", n).strip()
+    return n
+
+
+def _ensure_partner_columns(service, sheet_id: str, tab_name: str) -> None:
+    """Make sure header row has the 5 agent-managed columns (I-M). Idempotent."""
+    range_ = f"'{tab_name}'!1:1"
+    resp = service.spreadsheets().values().get(spreadsheetId=sheet_id, range=range_).execute()
+    header = resp.get("values", [[]])
+    header = header[0] if header else []
+
+    # Header is correct if all 13 cols match
+    if header[:len(PARTNER_COLUMNS)] == PARTNER_COLUMNS:
+        return
+
+    # Otherwise overwrite row 1 with the canonical header
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"'{tab_name}'!A1",
+        valueInputOption="RAW",
+        body={"values": [PARTNER_COLUMNS]},
+    ).execute()
+
+
+def _read_existing_partners(service, sheet_id: str, tab_name: str) -> tuple[set, set]:
+    """
+    Return (existing_domains, existing_names_normalized) from the tab.
+    Used to dedup before appending.
+    """
+    try:
+        resp = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=f"'{tab_name}'!A2:C",
+        ).execute()
+    except Exception:
+        return set(), set()
+
+    rows = resp.get("values", [])
+    domains: set = set()
+    names: set = set()
+    for row in rows:
+        name = row[0] if len(row) >= 1 else ""
+        website = row[2] if len(row) >= 3 else ""
+        if website:
+            d = _norm_domain_for_dedup(website)
+            if d:
+                domains.add(d)
+        if name:
+            names.add(_norm_name_for_dedup(name))
+    return domains, names
+
+
+def push_partners(competitor_tab: str, partners: list[dict], sheet_id: str = "") -> int:
+    """
+    Append new partner rows to the competitor's tab. Dedup against existing
+    rows by Website domain first, then by normalized Company Name.
+
+    Args:
+        competitor_tab: Exact tab name in PARTNER_SHEET_ID (e.g., "Openspace").
+        partners: List of dicts from discover_partners() — fields:
+            name, description, website, country, discovered_via
+        sheet_id: Override PARTNER_SHEET_ID (optional).
+
+    Returns:
+        Count of rows actually appended (after dedup).
+
+    Raises:
+        EnvironmentError if PARTNER_SHEET_ID is not set.
+        ValueError if the tab doesn't exist (we do NOT auto-create — user
+        controls which competitors are tracked).
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("PARTNER_SHEET_ID", "")
+    if not sheet_id:
+        raise EnvironmentError(
+            "PARTNER_SHEET_ID not set. Add to .env: "
+            "PARTNER_SHEET_ID=1Q2XJZ2STaCN94DK4JEnS1mHkrgILfFljjNCc1dy_5qw"
+        )
+
+    if not partners:
+        return 0
+
+    service = get_sheets_service()
+
+    # Auto-create the tab if missing (v2: Competitors tab drives which tabs exist,
+    # so any Track-marked new competitor without a pre-existing tab gets one now)
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing_tabs = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if competitor_tab not in existing_tabs:
+        # Create the tab
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": competitor_tab}}}]},
+        ).execute()
+        # Write header row
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=f"'{competitor_tab}'!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [PARTNER_COLUMNS]},
+        ).execute()
+        # Style header row
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        tab_gid = next(
+            s["properties"]["sheetId"]
+            for s in meta2["sheets"]
+            if s["properties"]["title"] == competitor_tab
+        )
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": tab_gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(PARTNER_COLUMNS)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.812, "green": 0.886, "blue": 0.953},
+                        "textFormat": {"bold": True, "fontSize": 10},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+
+    _ensure_partner_columns(service, sheet_id, competitor_tab)
+    existing_domains, existing_names = _read_existing_partners(service, sheet_id, competitor_tab)
+
+    today_str = date.today().isoformat()
+    new_rows: list[list[str]] = []
+
+    for p in partners:
+        name = (p.get("name") or "").strip()
+        if not name:
+            continue
+        website = (p.get("website") or "").strip()
+        norm_d = _norm_domain_for_dedup(website)
+        norm_n = _norm_name_for_dedup(name)
+
+        # Dedup: domain first (stronger signal), then name
+        if norm_d and norm_d in existing_domains:
+            continue
+        if norm_n in existing_names:
+            continue
+
+        new_rows.append([
+            name,
+            (p.get("description") or "").strip(),
+            website,
+            (p.get("phone") or "").strip(),              # Phone — v3.1: extracted from partner website
+            (p.get("email") or "").strip(),              # Email
+            (p.get("address") or "").strip(),            # Address
+            (p.get("country") or "").strip(),
+            "",                                          # Status — user fills manually
+            (p.get("email_source") or "").strip(),       # Email Source
+            p.get("discovered_via", ""),
+            today_str,
+        ])
+
+        # Update local sets so duplicates within the same batch get dropped too
+        if norm_d:
+            existing_domains.add(norm_d)
+        existing_names.add(norm_n)
+
+    if not new_rows:
+        return 0
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{competitor_tab}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": new_rows},
+    ).execute()
+
+    return len(new_rows)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Competitors tab (Agent 1) — auto-discovered competitors go here
+# ─────────────────────────────────────────────────────────────────────────────
+
+COMPETITORS_TAB = "Competitors"
+COMPETITORS_COLUMNS = [
+    "Name",             # A
+    "Website",          # B
+    "Category",         # C — ai_vision | wearables_iot | site_documentation | compliance_checklist | project_management
+    "Description",      # D
+    "Discovered At",    # E — YYYY-MM-DD
+    "Discovered Via",   # F — tavily+g2+capterra
+    "Status",           # G — user marks Track / Skip
+]
+
+
+def _ensure_competitors_tab(service, sheet_id: str) -> None:
+    """Create Competitors tab if missing, write header, apply header formatting."""
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    existing_titles = [s["properties"]["title"] for s in meta.get("sheets", [])]
+
+    if COMPETITORS_TAB not in existing_titles:
+        # Create tab
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{"addSheet": {"properties": {"title": COMPETITORS_TAB}}}]},
+        ).execute()
+
+        # Write header
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITORS_TAB}'!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [COMPETITORS_COLUMNS]},
+        ).execute()
+
+        # Style header
+        meta2 = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        tab_gid = next(
+            s["properties"]["sheetId"]
+            for s in meta2["sheets"]
+            if s["properties"]["title"] == COMPETITORS_TAB
+        )
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={"requests": [{
+                "repeatCell": {
+                    "range": {"sheetId": tab_gid, "startRowIndex": 0, "endRowIndex": 1,
+                              "startColumnIndex": 0, "endColumnIndex": len(COMPETITORS_COLUMNS)},
+                    "cell": {"userEnteredFormat": {
+                        "backgroundColor": {"red": 0.812, "green": 0.886, "blue": 0.953},
+                        "textFormat": {"bold": True, "fontSize": 10},
+                    }},
+                    "fields": "userEnteredFormat(backgroundColor,textFormat)",
+                }
+            }]},
+        ).execute()
+        return
+
+    # Tab exists — check header row is correct
+    resp = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id,
+        range=f"'{COMPETITORS_TAB}'!1:1",
+    ).execute()
+    header = resp.get("values", [[]])
+    header = header[0] if header else []
+    if header[:len(COMPETITORS_COLUMNS)] != COMPETITORS_COLUMNS:
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITORS_TAB}'!A1",
+            valueInputOption="RAW",
+            body={"values": [COMPETITORS_COLUMNS]},
+        ).execute()
+
+
+def _read_existing_competitors(service, sheet_id: str) -> tuple[set[str], set[str]]:
+    """Return (existing_names, existing_domains) from the Competitors tab."""
+    try:
+        resp = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITORS_TAB}'!A2:B",
+        ).execute()
+    except Exception:
+        return set(), set()
+
+    rows = resp.get("values", [])
+    names: set[str] = set()
+    domains: set[str] = set()
+    for row in rows:
+        if len(row) >= 1 and row[0]:
+            names.add(_norm_name_for_dedup(row[0]))
+        if len(row) >= 2 and row[1]:
+            domains.add(_norm_domain_for_dedup(row[1]))
+    return names, domains
+
+
+def push_competitors(competitors: list[dict], sheet_id: str = "") -> int:
+    """
+    Append newly-discovered competitors to the Competitors tab. Dedup by
+    normalized name and domain.
+
+    Args:
+        competitors: List of dicts from discover_competitors() — fields:
+            name, website, category, description, discovered_at, discovered_via
+        sheet_id: Override PARTNER_SHEET_ID (optional).
+
+    Returns:
+        Count of rows actually appended after dedup.
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("PARTNER_SHEET_ID", "")
+    if not sheet_id:
+        raise EnvironmentError(
+            "PARTNER_SHEET_ID not set. Add to .env: "
+            "PARTNER_SHEET_ID=1Q2XJZ2STaCN94DK4JEnS1mHkrgILfFljjNCc1dy_5qw"
+        )
+
+    if not competitors:
+        return 0
+
+    service = get_sheets_service()
+    _ensure_competitors_tab(service, sheet_id)
+
+    existing_names, existing_domains = _read_existing_competitors(service, sheet_id)
+
+    new_rows: list[list[str]] = []
+    for c in competitors:
+        name = (c.get("name") or "").strip()
+        website = (c.get("website") or "").strip()
+        if not name or not website:
+            continue
+
+        n_name = _norm_name_for_dedup(name)
+        n_domain = _norm_domain_for_dedup(website)
+
+        if n_name in existing_names or (n_domain and n_domain in existing_domains):
+            continue
+
+        new_rows.append([
+            name,
+            website,
+            (c.get("category") or "").strip(),
+            (c.get("description") or "").strip(),
+            (c.get("discovered_at") or "").strip(),
+            (c.get("discovered_via") or "").strip(),
+            (c.get("status") or "").strip(),  # Optional pre-set (e.g., "Track" for seeded existing competitors)
+        ])
+
+        existing_names.add(n_name)
+        if n_domain:
+            existing_domains.add(n_domain)
+
+    if not new_rows:
+        return 0
+
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"'{COMPETITORS_TAB}'!A1",
+        valueInputOption="RAW",
+        insertDataOption="INSERT_ROWS",
+        body={"values": new_rows},
+    ).execute()
+
+    return len(new_rows)
+
+
+def read_tracked_competitors(sheet_id: str = "") -> list[dict]:
+    """
+    Return competitors from the Competitors tab where Status = "Track"
+    (case-insensitive). Used by Agent 2 to know which new competitors to
+    process. Format: [{name, website, category}].
+    """
+    if not sheet_id:
+        sheet_id = os.getenv("PARTNER_SHEET_ID", "")
+    if not sheet_id:
+        return []
+    try:
+        service = get_sheets_service()
+        resp = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=f"'{COMPETITORS_TAB}'!A2:G",
+        ).execute()
+    except Exception:
+        return []
+
+    out = []
+    for row in resp.get("values", []):
+        # Row layout: [name, website, category, description, discovered_at, discovered_via, status]
+        if len(row) < 7:
+            continue
+        status = (row[6] or "").strip().lower()
+        if status != "track":
+            continue
+        out.append({
+            "name": row[0],
+            "website": row[1],
+            "category": row[2] if len(row) > 2 else "",
+        })
+    return out
+
+
 if __name__ == "__main__":
     import argparse
 
