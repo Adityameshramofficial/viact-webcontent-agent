@@ -23,6 +23,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
 from discover_partners import COMPETITOR_MAP, discover_partners
+from enrich_partners import enrich_tab
 from push_to_sheets import push_partners, push_competitors, read_tracked_competitors
 
 
@@ -100,10 +101,35 @@ def run_one(slug: str, name_override: str = "", domain_override: str = "",
     try:
         appended = push_partners(tab, rows)
         log(f"  Sheet: {appended} new row(s) appended (of {len(rows)} discovered)")
-        return {"slug": slug, "discovered": len(rows), "appended": appended, "error": None}
     except Exception as e:
         log(f"  SHEET PUSH FAILED: {e}")
-        return {"slug": slug, "discovered": len(rows), "appended": 0, "error": str(e)}
+        return {"slug": slug, "discovered": len(rows), "appended": 0,
+                "email_hits": 0, "phone_hits": 0, "error": str(e)}
+
+    # v3.2: Agent 2 done. Now chain Agent 3 (enrichment) as a SEPARATE step.
+    # This runs on the exact rows we just pushed (plus any older blank ones).
+    log(f"  [Agent 3] Enriching contacts for '{tab}'...")
+    try:
+        # domain_override is the competitor's own domain from the slug lookup;
+        # for ad-hoc competitors we use domain_override argument directly.
+        actual_domain = domain_override or (
+            COMPETITOR_MAP.get(slug, {}).get("domain", "")
+        )
+        enrich_result = enrich_tab(
+            tab,
+            competitor_domain=actual_domain,
+            overwrite=False,
+            progress=lambda m: log(f"    {m}"),
+        )
+        log(f"  Enrichment: {enrich_result['email_hits']} emails, "
+            f"{enrich_result['phone_hits']} phones added")
+        return {"slug": slug, "discovered": len(rows), "appended": appended,
+                "email_hits": enrich_result["email_hits"],
+                "phone_hits": enrich_result["phone_hits"], "error": None}
+    except Exception as e:
+        log(f"  ENRICHMENT FAILED: {e}")
+        return {"slug": slug, "discovered": len(rows), "appended": appended,
+                "email_hits": 0, "phone_hits": 0, "error": str(e)}
 
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
@@ -123,9 +149,12 @@ def _print_summary(summary: list[dict], label: str):
     log(f"=== {label} ===")
     total_disc = sum(s["discovered"] for s in summary)
     total_app = sum(s["appended"] for s in summary)
+    total_emails = sum(s.get("email_hits", 0) for s in summary)
+    total_phones = sum(s.get("phone_hits", 0) for s in summary)
     failed = [s for s in summary if s["error"]]
     log(f"  Discovered: {total_disc} partners across {len(summary)} competitor(s)")
     log(f"  Appended:   {total_app} new rows to sheets")
+    log(f"  Enriched:   {total_emails} emails, {total_phones} phones")
     if failed:
         log(f"  Failures:   {len(failed)} — {', '.join(s['slug'] for s in failed)}")
 
@@ -148,6 +177,15 @@ def main():
     group.add_argument("--daily", action="store_true",
                        help="Daily cron mode: pick ONE competitor (rotated by today's date) from "
                             "Competitors tab (Status=Track). On Mondays, also runs Agent 1.")
+    group.add_argument("--enrich",
+                       help="Agent 3 alone — re-enrich contact info for one existing competitor tab. "
+                            "Reads rows with blank Email and tries to fill them. No new discovery.")
+    group.add_argument("--enrich-all", action="store_true",
+                       help="Agent 3 alone — re-enrich all Track-status tabs. Same as --enrich but "
+                            "loops over all tracked competitors.")
+    parser.add_argument("--overwrite", action="store_true",
+                       help="For --enrich / --enrich-all: also re-scrape rows that already have "
+                            "Email filled (useful after strict-validation upgrade).")
     args = parser.parse_args()
 
     # ── --list ────────────────────────────────────────────────────────────────
@@ -165,6 +203,49 @@ def main():
     # ── --discover-competitors ────────────────────────────────────────────────
     if args.discover_competitors:
         run_agent1()
+        return
+
+    # ── --enrich (Agent 3 alone on one tab) ───────────────────────────────────
+    if args.enrich:
+        from enrich_partners import _competitor_domain_for_tab
+        from push_to_sheets import get_sheets_service as _gss
+        service = _gss()
+        sheet_id = os.getenv("PARTNER_SHEET_ID", "")
+        domain = _competitor_domain_for_tab(service, sheet_id, args.enrich)
+        if not domain:
+            log(f"WARN: cannot auto-detect competitor domain for '{args.enrich}'.")
+        result = enrich_tab(
+            args.enrich,
+            competitor_domain=domain,
+            overwrite=args.overwrite,
+            progress=lambda m: log(f"  {m}"),
+        )
+        log(f"Result: {result['email_hits']} emails, {result['phone_hits']} phones added")
+        return
+
+    # ── --enrich-all (Agent 3 alone on all Track tabs) ────────────────────────
+    if args.enrich_all:
+        from enrich_partners import _competitor_domain_for_tab
+        from push_to_sheets import get_sheets_service as _gss
+        service = _gss()
+        sheet_id = os.getenv("PARTNER_SHEET_ID", "")
+        tracked = read_tracked_competitors()
+        log(f"Enriching {len(tracked)} Track-status tabs...")
+        total_emails = total_phones = 0
+        for t in tracked:
+            tab_name = t["name"]
+            domain = _competitor_domain_for_tab(service, sheet_id, tab_name)
+            log(f"=== {tab_name} ===")
+            result = enrich_tab(
+                tab_name,
+                competitor_domain=domain,
+                overwrite=args.overwrite,
+                progress=lambda m: log(f"  {m}"),
+            )
+            total_emails += result["email_hits"]
+            total_phones += result["phone_hits"]
+            time.sleep(1)
+        log(f"=== TOTAL: {total_emails} emails, {total_phones} phones ===")
         return
 
     # ── --competitor ──────────────────────────────────────────────────────────

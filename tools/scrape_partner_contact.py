@@ -118,19 +118,56 @@ def _decode_cf_email(hex_str: str) -> str:
         return ""
 
 
+def _clean_email(raw: str) -> str:
+    """
+    Aggressively strip junk from a scraped email string.
+    Returns cleaned email or '' if it's still malformed after cleanup.
+    """
+    if not raw or "@" not in raw:
+        return ""
+    e = raw.strip()
+
+    # Decode common HTML entities
+    e = e.replace("&#34;", "").replace("&#39;", "").replace("&quot;", "")
+    e = e.replace("&amp;", "&").replace("&lt;", "").replace("&gt;", "")
+
+    # Strip leading junk (like //, mailto:, quotes)
+    e = re.sub(r"^(?:mailto:|//|/|['\"<>({])+", "", e)
+
+    # Strip trailing junk (parens, semicolons, colons, quotes, HTML tags, JSON, commas, dots)
+    e = re.sub(r"[)}>'\";,:]+$", "", e)
+    e = re.sub(r"[.]+$", "", e)  # trailing periods separately (email regex allows dots)
+
+    # Any remaining suspicious chars (not part of a valid email) invalidate the email
+    if re.search(r'[<>"\'\s(){}\[\]|\\&#;]', e):
+        return ""
+
+    # Final format check: must be exactly one @, valid TLD
+    if not re.fullmatch(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", e):
+        return ""
+
+    return e.lower()
+
+
 def _extract_emails(html: str) -> list[str]:
     """
     Pull all emails from raw HTML. Combines:
       1. mailto: link extraction (most reliable)
       2. Cloudflare data-cfemail decoding
       3. Plain regex over full text (catches unlinked emails)
+
+    Every candidate goes through _clean_email() so no junk chars can leak
+    into the final list (fixes bug where emails like
+    `support@x.com)`, `//customercare@y.com`, or `sales@z.com&#34;}}` were
+    written to the sheet).
     """
     if not html:
         return []
     found: list[str] = []
 
-    # mailto: links
-    for m in re.finditer(r'mailto:([^"\'\s?]+)', html):
+    # mailto: links — use a tight character class that excludes MORE junk
+    # (previously `[^"\'\s?]+` allowed `)`, `>`, `,`, etc. — root cause of bad emails)
+    for m in re.finditer(r'mailto:([^\s"\'<>?)(,;#&{}]+)', html):
         found.append(m.group(1))
 
     # Cloudflare data-cfemail="hex_encoded"
@@ -150,6 +187,14 @@ def _extract_emails(html: str) -> list[str]:
     text = re.sub(r"\s*\(\s*dot\s*\)\s*", ".", text, flags=re.IGNORECASE)
     for m in EMAIL_REGEX.findall(text):
         found.append(m)
+
+    # ── Post-process EVERY candidate through _clean_email ─────────────────
+    cleaned = []
+    for raw in found:
+        e = _clean_email(raw)
+        if e:
+            cleaned.append(e)
+    found = cleaned
 
     # Normalize + dedup (case-insensitive)
     seen = set()
@@ -437,12 +482,23 @@ def _tavily_email_search(company_name: str, domain: str) -> list[str]:
             for item in r.json().get("results", []):
                 blob = item.get("content", "") + " " + item.get("title", "")
                 for m in EMAIL_REGEX.findall(blob):
-                    found.append(m.lower())
+                    cleaned = _clean_email(m)
+                    if cleaned:
+                        found.append(cleaned)
         except Exception:
             continue
 
-    # Filter to emails on the partner's own domain
-    return [e for e in found if domain in e]
+    # STRICT domain match: email's domain must equal partner's domain
+    # (or be a subdomain of it). Previous loose 'domain in email' let through
+    # unrelated emails when the partner's domain string happened to appear.
+    strict = []
+    for e in found:
+        if "@" not in e:
+            continue
+        email_domain = e.split("@", 1)[1].lower()
+        if email_domain == domain or email_domain.endswith("." + domain):
+            strict.append(e)
+    return strict
 
 
 # ── Tier 3: Pattern guess + MailboxValidator verify ──────────────────────────

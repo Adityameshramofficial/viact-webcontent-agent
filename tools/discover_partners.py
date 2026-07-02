@@ -506,46 +506,10 @@ def discover_partners(competitor_slug: str, progress=None,
     deduped = _dedup(all_rows, name)
     emit(f"=== Total: {len(all_rows)} raw → {len(deduped)} after dedup ===")
 
-    # ── Phase 5.5: Contact enrichment (free — website scrape only) ────────────
-    with_website = [p for p in deduped if p.get("website")]
-    emit(f"[Enrich] {len(with_website)} partner(s) have websites — scraping contacts...")
-
-    hit_email = 0
-    hit_address = 0
-    for i, partner in enumerate(with_website):
-        website = partner["website"]
-        emit(f"  [{i + 1}/{len(with_website)}] {partner['name'][:40]} — {website[:50]}")
-        try:
-            contact = scrape_contact(
-                website,
-                company_name=partner.get("name", ""),
-                competitor_domain=domain,  # v3 fix: skip enrichment if partner is hosted on competitor's own domain
-            )
-            if contact.get("email"):
-                partner["email"] = contact["email"]
-                partner["email_source"] = contact.get("email_source", "")
-                hit_email += 1
-            if contact.get("phone"):
-                partner["phone"] = contact["phone"]
-            if contact.get("address"):
-                partner["address"] = contact["address"]
-                hit_address += 1
-            # Only overwrite country if LLM extracted one AND partner didn't have one from discovery
-            if contact.get("country") and not partner.get("country"):
-                partner["country"] = contact["country"]
-            status = contact.get("scrape_status", "?")
-            found = []
-            if contact.get("email"):
-                found.append(f"email={contact['email']} ({contact.get('email_source', '?')})")
-            if contact.get("address"):
-                found.append("address")
-            emit(f"      → {status}" + (f"  ({', '.join(found)})" if found else ""))
-        except Exception as e:
-            emit(f"      → error: {e}")
-
-    emit(f"=== Enrichment: {hit_email}/{len(with_website)} emails, "
-         f"{hit_address}/{len(with_website)} addresses ===")
-
+    # v3.2: Agent 2 is DISCOVERY ONLY. Enrichment (email/phone/address) is now
+    # handled by Agent 3 (tools/enrich_partners.py), invoked separately after
+    # Agent 2 pushes partner rows to the sheet. This keeps agents modular and
+    # makes it possible to re-run enrichment without re-running discovery.
     return deduped
 
 
