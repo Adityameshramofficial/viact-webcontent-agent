@@ -1,10 +1,20 @@
 {
-  "total_pages": 112,
-  "this_week_pages": 14,
-  "today_pages": 10,
+  "total_pages": 114,
+  "this_week_pages": 16,
+  "today_pages": 2,
   "total_dedup": 54,
-  "last_run_date": "2026-07-01",
+  "last_run_date": "2026-07-03",
   "latest_topics": [
+    {
+      "date": "2026-07-03",
+      "topic": "Construction Site Safety in 2025",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-03",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-01",
       "topic": "Enhancing Site Safety with AI",
@@ -19,19 +29,35 @@
       "date": "2026-07-01",
       "topic": "Implementing Leading Safety Indicators Checklist: A Guide for APAC Con",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-01",
-      "topic": "Calculating ROI of Safety Compliance in UAE: A Guide for Construction",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-01",
-      "topic": "Singapore MOM Safety Regulations for Construction: A Guide",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-03",
+      "topic": "Construction Site Safety in 2025",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety in 2025: Singapore Guide",
+      "meta_desc": "AI improves construction site safety in Singapore and UAE.",
+      "keyword": "construction site safety",
+      "subheadline": "AI improves safety for HSE teams in Singapore and UAE.",
+      "problem": "Construction sites face high injury risks.",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "MOM requires compliance with WSH Act regulations.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-03",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "AI Construction Site Safety Automation Solutions",
+      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety solutions.",
+      "keyword": "Construction Safety Automation",
+      "subheadline": "According to Singapore's MOM, construction sites pose significant risks to workers.",
+      "problem": "Construction sites pose a significant risk to workers, with high rates of injury and fatality. According to the MOM, the construction industry has one of the highest rates of workplace injuries in Sin",
+      "faq_q": "What does Singapore MOM require for AI Construction Site Safety Automation Solutions?",
+      "faq_a": "MOM requires construction sites to implement safety measures to reduce risks.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-01",
       "topic": "Enhancing Site Safety with AI",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require for construction site safety?",
       "faq_a": "MOM requires compliance with workplace safety regulations.",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-01",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "AI-Powered Construction Site Safety",
-      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety automation solutions",
-      "keyword": "Construction Site Safety Automation",
-      "subheadline": "90% of sites experience incidents, costing $2.5M+ per project",
-      "problem": "Construction sites face high risks, with 90% experiencing incidents, affecting 32,000+ workers globally",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "Regular site inspections and incident reporting",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-01",
-      "topic": "Implementing Leading Safety Indicators Checklist: A Guide for APAC Con",
-      "content_type": "Blog",
-      "meta_title": "Implementing Leading Safety Indicators Checklist: APAC Construction Guide",
-      "meta_desc": "Reduce construction site risks with a proactive safety approach",
-      "keyword": "Implementing Leading Safety Indicators Checklist",
-      "subheadline": "Reduce construction site risks with a proactive safety approach",
-      "problem": "Construction sites face high risks and costs due to inadequate safety measures",
-      "faq_q": "What does Singapore MOM require regarding Implementing Leading Safety Indicators Checklist?",
-      "faq_a": "Singapore MOM requires implementing leading safety indicators to reduce workplace injuries",
-      "source": "Cluster #64-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-01T13:57:00.631436+05:30"
+  "generated_at": "2026-07-03T13:01:03.823764+05:30"
 }
