@@ -29,8 +29,54 @@ import time
 
 sys.path.insert(0, os.path.dirname(__file__))
 from push_to_sheets import get_sheets_service, PARTNER_COLUMNS
-from scrape_partner_contact import scrape_contact
+from scrape_partner_contact import scrape_contact, _ddg_search
 from discover_partners import COMPETITOR_MAP
+
+import re as _re
+
+# v3.6: Websites we should NEVER accept as a company's "official website"
+_NOT_A_WEBSITE_DOMAIN = {
+    "facebook.com", "linkedin.com", "twitter.com", "x.com",
+    "instagram.com", "youtube.com", "wikipedia.org", "wikipedia.com",
+    "crunchbase.com", "g2.com", "capterra.com", "tracxn.com",
+    "bloomberg.com", "forbes.com", "reddit.com", "medium.com",
+    "quora.com", "yelp.com", "yellowpages.com",
+    "glassdoor.com", "indeed.com", "ziprecruiter.com",
+    "pitchbook.com", "owler.com", "clutch.co", "goodfirms.co",
+    "github.com", "stackoverflow.com",
+}
+
+
+def _find_website_via_search(company_name: str, competitor_domain: str = "") -> str:
+    """
+    v3.6: Discover a company's own website via DDG search.
+    Used when the sheet row has a company name but no website (e.g., partner
+    was extracted from a case-study page that only listed the name).
+
+    Skips social media, directories, review sites, and (optionally) the
+    competitor's own domain to avoid recursion.
+
+    Returns full URL like "https://massdesigngroup.org" or "" if none found.
+    """
+    if not company_name:
+        return ""
+    results = _ddg_search(f'"{company_name}" official website', max_results=6)
+    for r in results:
+        url = r.get("url", "")
+        if not url.startswith("http"):
+            continue
+        domain = _re.sub(r'^https?://(www\.)?', '', url).split('/')[0].lower().strip()
+        if not domain:
+            continue
+        # Reject known non-website domains
+        if any(bad in domain for bad in _NOT_A_WEBSITE_DOMAIN):
+            continue
+        # Reject the competitor's own domain (would just re-scrape it)
+        if competitor_domain and (domain == competitor_domain
+                                   or domain.endswith("." + competitor_domain)):
+            continue
+        return f"https://{domain}"
+    return ""
 
 
 def _col_letter(idx: int) -> str:
@@ -127,8 +173,10 @@ def enrich_tab(tab: str, competitor_domain: str = "",
     to_process = []
     for row in rows:
         website = (row.get("Website") or "").strip()
+        name = (row.get("Company Name") or "").strip()
         current_email = (row.get("Email") or "").strip()
-        if not website:
+        # v3.6: process rows even if website is blank — we'll try to discover it
+        if not website and not name:
             continue
         if current_email and not overwrite:
             continue
@@ -141,9 +189,23 @@ def enrich_tab(tab: str, competitor_domain: str = "",
     errors = []
 
     for i, row in enumerate(to_process):
-        website = row["Website"]
-        name = row.get("Company Name", "")
+        website = (row.get("Website") or "").strip()
+        name = row.get("Company Name", "").strip()
         row_num = row["_row"]
+
+        # v3.6: If website is blank, discover it via DDG
+        if not website and name:
+            emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — discovering website...")
+            discovered = _find_website_via_search(name, competitor_domain)
+            if discovered:
+                website = discovered
+                # Persist to sheet so it's visible + reused next time
+                _write_cell(service, sheet_id, tab, row_num, col_letters["Website"], website)
+                emit(f"      found website: {website}")
+            else:
+                emit(f"      no website found — skipping")
+                continue
+
         emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — {website[:50]}")
 
         try:
