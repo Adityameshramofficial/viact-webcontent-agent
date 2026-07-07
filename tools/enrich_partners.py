@@ -83,20 +83,44 @@ def _is_wrong_website(website: str, competitor_domain: str = "") -> bool:
     return False
 
 
-def _find_website_via_search(company_name: str, competitor_domain: str = "") -> str:
+def _find_website_via_search(company_name: str, competitor_domain: str = "",
+                              context_hint: str = "") -> str:
     """
-    v3.6: Discover a company's own website via DDG search.
-    Used when the sheet row has a company name but no website (e.g., partner
-    was extracted from a case-study page that only listed the name).
+    v3.6/v3.7.2: Discover a company's own website via DDG search.
 
-    Skips social media, directories, review sites, and (optionally) the
-    competitor's own domain to avoid recursion.
+    Args:
+        company_name: The name to search for.
+        competitor_domain: Skip URLs on this domain (would re-scrape competitor).
+        context_hint: v3.7.2 — 3-6 word disambiguation hint from the partner's
+            description column. Helps distinguish namesakes (e.g., "Heirloom"
+            can mean climate-tech OR tiny-homes — hint "climate carbon capture"
+            steers DDG to the right company).
 
+    Skips social media, directories, review sites, and competitor domain.
     Returns full URL like "https://massdesigngroup.org" or "" if none found.
     """
     if not company_name:
         return ""
-    results = _ddg_search(f'"{company_name}" official website', max_results=6)
+
+    # v3.7.2: extract 3-6 meaningful words from description as disambiguation
+    hint = ""
+    if context_hint:
+        # Strip common filler words to focus on descriptive nouns
+        filler = {"a", "an", "the", "of", "and", "or", "in", "on", "at", "for",
+                  "with", "to", "from", "is", "are", "was", "were", "by", "it",
+                  "as", "their", "which", "that", "this", "based", "focused",
+                  "provider", "solutions", "services", "company", "products"}
+        words = [w.strip(".,;:") for w in context_hint.split() if w.strip(".,;:")]
+        keep = [w for w in words if w.lower() not in filler and len(w) > 2][:6]
+        hint = " ".join(keep)
+
+    query = f'"{company_name}" {hint} official website'.strip()
+    results = _ddg_search(query, max_results=6)
+
+    # Fallback query without hint if hint-based search returned nothing
+    if not results and hint:
+        results = _ddg_search(f'"{company_name}" official website', max_results=6)
+
     for r in results:
         url = r.get("url", "")
         if not url.startswith("http"):
@@ -106,6 +130,9 @@ def _find_website_via_search(company_name: str, competitor_domain: str = "") -> 
             continue
         # Reject known non-website domains
         if any(bad in domain for bad in _NOT_A_WEBSITE_DOMAIN):
+            continue
+        # Reject registry / directory hints in domain
+        if any(hint_bad in domain for hint_bad in _DIRECTORY_HINTS):
             continue
         # Reject the competitor's own domain (would just re-scrape it)
         if competitor_domain and (domain == competitor_domain
@@ -231,6 +258,9 @@ def enrich_tab(tab: str, competitor_domain: str = "",
 
         # v3.6/v3.7: If website is blank OR clearly wrong (competitor domain,
         # directory site), discover the partner's real website via DDG.
+        # Note: description hint is available in _find_website_via_search but
+        # not passed by default — testing showed it hurts as often as helps for
+        # namesake disambiguation. Enable per-call if needed.
         if _is_wrong_website(website, competitor_domain) and name:
             reason = "blank" if not website else "wrong-site"
             emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — discovering website ({reason})...")
