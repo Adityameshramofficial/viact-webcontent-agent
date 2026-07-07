@@ -1,77 +1,77 @@
 {
-  "total_pages": 116,
-  "this_week_pages": 2,
-  "today_pages": 2,
-  "total_dedup": 54,
-  "last_run_date": "2026-07-06",
+  "total_pages": 126,
+  "this_week_pages": 12,
+  "today_pages": 10,
+  "total_dedup": 56,
+  "last_run_date": "2026-07-07",
   "latest_topics": [
     {
-      "date": "2026-07-06",
-      "topic": "Promoting Worker Safety in Construction Sites",
+      "date": "2026-07-07",
+      "topic": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide fo",
       "content_type": "Blog"
     },
     {
-      "date": "2026-07-06",
-      "topic": "Construction Site Risks",
+      "date": "2026-07-07",
+      "topic": "Construction Site Safety Risks Remain High",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-07-03",
-      "topic": "Construction Site Safety in 2025",
+      "date": "2026-07-07",
+      "topic": "10-Step Curing Oven Safety Checklist for Construction Sites: A Guide f",
       "content_type": "Blog"
     },
     {
-      "date": "2026-07-03",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
+      "date": "2026-07-07",
+      "topic": "The Hidden Costs of Non-Compliance in Curing Oven Safety: A Guide for ",
+      "content_type": "Blog"
     },
     {
-      "date": "2026-07-01",
-      "topic": "Enhancing Site Safety with AI",
+      "date": "2026-07-07",
+      "topic": "Curing Oven Safety Compliance in Singapore: A Guide for Construction",
       "content_type": "Blog"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-07-06",
-      "topic": "Promoting Worker Safety in Construction Sites",
+      "date": "2026-07-07",
+      "topic": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide fo",
       "content_type": "Blog",
-      "meta_title": "How AI Can Promote Worker Safety in Construction Sites",
-      "meta_desc": "Reducing construction site accidents with AI technology",
-      "keyword": "worker safety in construction sites",
-      "subheadline": "Reducing incidents with AI technology",
-      "problem": "Construction site accidents cause injuries and fatalities.",
-      "faq_q": "What does Singapore MOM require regarding worker safety?",
-      "faq_a": "Compliance with safety regulations.",
+      "meta_title": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide",
+      "meta_desc": "Learn how AI is reducing construction fatalities in Asia in 2025. Discover the role of AI in improving construction site safety and reducing risks.",
+      "keyword": "AI in construction safety",
+      "subheadline": "Construction fatalities remain a major concern in Asia. Can AI help reduce the risk?",
+      "problem": "Construction fatalities are a leading cause of death in Asia's construction industry. MOM and OSHAD regulations mandate strict safety protocols, but incidents persist.",
+      "faq_q": "What does Singapore MOM require regarding construction fatalities?",
+      "faq_a": "Singapore's MOM requires employers to ensure a safe working environment and implement effective safety measures to preve",
       "source": "Daily Auto-Run — Blog"
     },
     {
-      "date": "2026-07-06",
-      "topic": "Construction Site Risks",
+      "date": "2026-07-07",
+      "topic": "Construction Site Safety Risks Remain High",
       "content_type": "Pillar",
-      "meta_title": "AI Construction Safety Automation Solutions - viAct",
-      "meta_desc": "Reduce construction site risks by 90% with viAct's AI safety monitoring solutions.",
-      "keyword": "Construction Safety Automation",
-      "subheadline": "Regulatory non-compliance costs $2.5M+ per project.",
-      "problem": "Construction sites face 90% risk. 32,000+ workers are at risk daily.",
-      "faq_q": "What does Singapore MOM require for AI Construction Safety Automation Solutions?",
-      "faq_a": "MOM requires regular site audits and compliance reports.",
+      "meta_title": "AI-Powered Construction Site Safety Monitoring Platform | viAct",
+      "meta_desc": "viAct's AI-powered construction site safety monitoring platform reduces risks and costs. Learn more about our solution.",
+      "keyword": "AI-Powered Construction Site Safety Monitoring Platform",
+      "subheadline": "According to Singapore's MOM, 10.2% of construction workers are injured on site each year.",
+      "problem": "Construction site accidents are a major concern, with 10.2% of workers injured on site annually in Singapore (MOM). The UAE also reports high incident rates. These accidents result in significant cost",
+      "faq_q": "What does Singapore MOM require for construction site safety monitoring?",
+      "faq_a": "MOM WSH Act requires construction sites to implement safety measures to reduce risks",
       "source": "Daily Auto-Run — Pillar"
     },
     {
-      "date": "2026-07-03",
-      "topic": "Construction Site Safety in 2025",
+      "date": "2026-07-07",
+      "topic": "10-Step Curing Oven Safety Checklist for Construction Sites: A Guide f",
       "content_type": "Blog",
-      "meta_title": "Construction Site Safety in 2025: Singapore Guide",
-      "meta_desc": "AI improves construction site safety in Singapore and UAE.",
-      "keyword": "construction site safety",
-      "subheadline": "AI improves safety for HSE teams in Singapore and UAE.",
-      "problem": "Construction sites face high injury risks.",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires compliance with WSH Act regulations.",
-      "source": "Daily Auto-Run — Blog"
+      "meta_title": "10-Step Curing Oven Safety Checklist for Construction Sites: Singapore Cons",
+      "meta_desc": "Ensure compliance and worker safety with a comprehensive curing oven safety checklist. Learn more about the 10-step checklist and how AI technology can help.",
+      "keyword": "10-Step Curing Oven Safety Checklist for Construction Sites",
+      "subheadline": "Ensure compliance and worker safety with a comprehensive curing oven safety checklist",
+      "problem": "Curing oven safety is a critical concern on construction sites, with 80% of projects facing delays and 98% facing cost increases. In Singapore, the MOM WSH Act mandates strict safety protocols, while ",
+      "faq_q": "What does Singapore MOM require regarding 10-Step Curing Oven Safety Checklist for Construction Site",
+      "faq_a": "The MOM WSH Act requires employers to ensure that all workers are trained in the safe use of curing ovens and that regul",
+      "source": "Cluster #67-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-06T14:00:57.496521+05:30"
+  "generated_at": "2026-07-07T13:18:46.251989+05:30"
 }
