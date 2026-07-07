@@ -48,6 +48,22 @@ UA = (
 
 EMAIL_REGEX = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
 
+# v3.5: Placeholder / sample / template email local-parts that leak from
+# email-finder services (Hunter, Snov, RocketReach) showing pattern examples
+# on their sales pages. These are NEVER real business emails.
+PLACEHOLDER_LOCAL_PARTS = {
+    "john.doe", "jane.doe", "jane", "john", "johndoe", "janedoe",
+    "first.last", "firstname.lastname", "first", "last",
+    "firstname", "lastname", "fname", "lname",
+    "example", "test", "demo", "sample", "user", "email", "name",
+    "yourname", "yourfirstname", "yourlastname", "your.email",
+    "email.address", "your-email", "youremail", "your_email",
+    "yourfullname", "fullname", "full.name",
+    "jdoe", "jsmith", "j.smith", "jane.smith", "john.smith",
+    "person", "someone", "yourboss",
+    "hello world", "helloworld",
+}
+
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
 # Requires at least 7 digits total (excludes short codes/years).
 PHONE_REGEX = re.compile(
@@ -146,7 +162,18 @@ def _clean_email(raw: str) -> str:
     if not re.fullmatch(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", e):
         return ""
 
-    return e.lower()
+    e = e.lower()
+
+    # v3.5: Reject placeholder / sample / template emails
+    local = e.split("@", 1)[0]
+    if local in PLACEHOLDER_LOCAL_PARTS:
+        return ""
+    # Numeric variants like jsmith123, jsmith1, john.doe2
+    local_no_trailing_num = re.sub(r"\d+$", "", local)
+    if local_no_trailing_num in PLACEHOLDER_LOCAL_PARTS:
+        return ""
+
+    return e
 
 
 def _extract_emails(html: str) -> list[str]:
@@ -448,18 +475,42 @@ def _html_to_text(html: str, max_chars: int = 8000) -> str:
     return text.strip()[:max_chars]
 
 
-# ── Tier 2: Tavily email search ───────────────────────────────────────────────
+# ── DuckDuckGo helper (v3.5) — free unlimited search, replaces Tavily ────────
+
+def _ddg_search(query: str, max_results: int = 5) -> list[dict]:
+    """
+    Free DuckDuckGo search. Returns [{title, url, body}] on success, [] on failure.
+    No API key needed. Uses the `ddgs` Python package.
+    """
+    try:
+        from ddgs import DDGS
+        ddgs = DDGS()
+        results = list(ddgs.text(query, max_results=max_results))
+        return [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("href", ""),
+                "body": r.get("body", ""),
+            }
+            for r in results
+        ]
+    except Exception:
+        return []
+
+
+# ── Tier 2: Email search (DuckDuckGo, v3.5) ──────────────────────────────────
 
 def _tavily_email_search(company_name: str, domain: str) -> list[str]:
     """
-    Free — uses existing TAVILY_API_KEY.
-    Searches Google (via Tavily) for emails in articles and press releases
-    that mention the company. Catches emails not on the company's own site.
-    """
-    api_key = os.getenv("TAVILY_API_KEY", "")
-    if not api_key:
-        return []
+    v3.5: name kept for backward compatibility, but now uses DuckDuckGo (free
+    unlimited) instead of Tavily.
 
+    Searches Google-index of articles / press releases mentioning the company,
+    extracts emails that pass strict _clean_email() validation (which also
+    filters placeholder emails like john.doe@ / first.last@).
+
+    Returns list of emails STRICTLY on the partner's own domain.
+    """
     queries = [
         f'"@{domain}" contact email',
         f'"{company_name}" contact email address',
@@ -467,30 +518,15 @@ def _tavily_email_search(company_name: str, domain: str) -> list[str]:
 
     found: list[str] = []
     for q in queries:
-        try:
-            r = requests.post(
-                "https://api.tavily.com/search",
-                json={
-                    "api_key": api_key,
-                    "query": q,
-                    "search_depth": "basic",
-                    "max_results": 5,
-                },
-                timeout=15,
-            )
-            r.raise_for_status()
-            for item in r.json().get("results", []):
-                blob = item.get("content", "") + " " + item.get("title", "")
-                for m in EMAIL_REGEX.findall(blob):
-                    cleaned = _clean_email(m)
-                    if cleaned:
-                        found.append(cleaned)
-        except Exception:
-            continue
+        for item in _ddg_search(q, max_results=5):
+            blob = item.get("body", "") + " " + item.get("title", "")
+            for m in EMAIL_REGEX.findall(blob):
+                cleaned = _clean_email(m)
+                if cleaned:
+                    found.append(cleaned)
 
     # STRICT domain match: email's domain must equal partner's domain
-    # (or be a subdomain of it). Previous loose 'domain in email' let through
-    # unrelated emails when the partner's domain string happened to appear.
+    # (or be a subdomain of it).
     strict = []
     for e in found:
         if "@" not in e:
@@ -603,14 +639,14 @@ SOCIAL_DOMAINS = {
 
 def _social_email_search(company_name: str, partner_domain: str) -> list[tuple[str, str]]:
     """
-    Search public social profiles (via Tavily → Google) for emails.
+    v3.5: swapped from Tavily to DuckDuckGo (free unlimited).
 
+    Searches public social profiles (via DDG → Google index) for emails.
     Returns list of (email, source) tuples. source ∈ {facebook, linkedin, twitter, instagram}.
-    Only returns emails that pass _clean_email() strict validation.
-    Prefers emails on partner_domain (BD-usable) but accepts other business emails too.
+    Only returns emails that pass _clean_email() strict validation (which also
+    rejects placeholder emails like john.doe@ / first.last@).
     """
-    api_key = os.getenv("TAVILY_API_KEY", "")
-    if not api_key or not company_name:
+    if not company_name:
         return []
 
     queries = [
@@ -621,39 +657,25 @@ def _social_email_search(company_name: str, partner_domain: str) -> list[tuple[s
 
     hits: list[tuple[str, str]] = []
     for q in queries:
-        try:
-            r = requests.post(
-                "https://api.tavily.com/search",
-                json={
-                    "api_key": api_key,
-                    "query": q,
-                    "search_depth": "basic",
-                    "max_results": 5,
-                },
-                timeout=15,
-            )
-            r.raise_for_status()
-            for item in r.json().get("results", []):
-                url = item.get("url", "").lower()
-                # Detect which social source this result came from
-                source = None
-                for social_dom, tag in SOCIAL_DOMAINS.items():
-                    if social_dom in url:
-                        source = tag
-                        break
-                if not source:
-                    continue
+        for item in _ddg_search(q, max_results=5):
+            url = item.get("url", "").lower()
+            # Detect which social source this result came from
+            source = None
+            for social_dom, tag in SOCIAL_DOMAINS.items():
+                if social_dom in url:
+                    source = tag
+                    break
+            if not source:
+                continue
 
-                # Extract emails from title + content snippet
-                blob = item.get("content", "") + " " + item.get("title", "")
-                for m in EMAIL_REGEX.findall(blob):
-                    cleaned = _clean_email(m)
-                    if cleaned:
-                        hits.append((cleaned, source))
-        except Exception:
-            continue
+            # Extract emails from title + body snippet
+            blob = item.get("body", "") + " " + item.get("title", "")
+            for m in EMAIL_REGEX.findall(blob):
+                cleaned = _clean_email(m)
+                if cleaned:
+                    hits.append((cleaned, source))
 
-    # Dedup while preserving first occurrence (which usually has better source ranking)
+    # Dedup while preserving first occurrence
     seen: set[str] = set()
     unique = []
     for email, source in hits:

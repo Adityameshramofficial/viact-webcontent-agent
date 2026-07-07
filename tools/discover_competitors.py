@@ -71,21 +71,24 @@ BLACKLIST_DOMAINS = {
 # ── Sources ───────────────────────────────────────────────────────────────────
 
 def _tavily_search(query: str, max_results: int = 10) -> list[dict]:
+    """
+    v3.5: swapped from Tavily to DuckDuckGo (free unlimited).
+    Function name kept for backward compat with existing caller sites.
+    """
     try:
-        r = requests.post(
-            "https://api.tavily.com/search",
-            json={
-                "api_key": get_env("TAVILY_API_KEY"),
-                "query": query,
-                "search_depth": "basic",
-                "max_results": max_results,
-            },
-            timeout=20,
-        )
-        r.raise_for_status()
-        return r.json().get("results", [])
+        from ddgs import DDGS
+        ddgs = DDGS()
+        results = list(ddgs.text(query, max_results=max_results))
+        return [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("href", ""),
+                "content": r.get("body", ""),
+            }
+            for r in results
+        ]
     except Exception as e:
-        print(f"  [tavily] {query[:50]}... failed: {e}")
+        print(f"  [ddg] {query[:50]}... failed: {e}")
         return []
 
 

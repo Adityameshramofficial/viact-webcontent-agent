@@ -226,21 +226,33 @@ def _scrape_paths(domain: str, paths: list[str]) -> list[dict]:
 # ── Source C: Tavily news + site-search ───────────────────────────────────────
 
 def _tavily_search(query: str, max_results: int = 8, include_domains: list[str] | None = None) -> list[dict]:
-    """Run a Tavily search. Returns list of {title, url, content} on success, [] otherwise."""
-    payload: dict = {
-        "api_key": get_env("TAVILY_API_KEY"),
-        "query": query,
-        "search_depth": "basic",
-        "max_results": max_results,
-    }
+    """
+    v3.5: name kept for backward compatibility; internally now uses DuckDuckGo
+    (free unlimited) instead of Tavily.
+
+    Returns list of {title, url, content} where 'content' maps to DDG's 'body'.
+    If include_domains provided, appends a 'site:' operator to the query for
+    each domain (only the first is used — DDG only supports one at a time).
+    """
+    q = query
     if include_domains:
-        payload["include_domains"] = include_domains
+        # DDG doesn't natively support include_domains; use site: operator
+        # for the first domain (usually enough for our use case).
+        q = f"{query} site:{include_domains[0]}"
     try:
-        resp = requests.post("https://api.tavily.com/search", json=payload, timeout=20)
-        resp.raise_for_status()
-        return resp.json().get("results", [])
+        from ddgs import DDGS
+        ddgs = DDGS()
+        results = list(ddgs.text(q, max_results=max_results))
+        return [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("href", ""),
+                "content": r.get("body", ""),
+            }
+            for r in results
+        ]
     except Exception as e:
-        print(f"  [tavily] {query[:60]}... failed: {e}")
+        print(f"  [ddg] {query[:60]}... failed: {e}")
         return []
 
 
