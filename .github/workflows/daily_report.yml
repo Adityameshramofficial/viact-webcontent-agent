@@ -28,5 +28,6 @@ jobs:
         env:
           GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           SHEET_ID: ${{ secrets.SHEET_ID }}
+          PARTNER_SHEET_ID: ${{ secrets.PARTNER_SHEET_ID }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: python daily_report_script.py

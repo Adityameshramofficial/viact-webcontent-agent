@@ -99,6 +99,103 @@ def _get_sheets_data() -> dict:
         return {}
 
 
+# ── 1b. Read Partner Outreach data (Agent 11) ────────────────────────────────
+def _get_partner_outreach_stats() -> dict:
+    """Return stats from the Partnership Leads sheet (Agent 11)."""
+    from push_to_sheets import get_sheets_service
+
+    sheet_id = _env("PARTNER_SHEET_ID")
+    if not sheet_id:
+        return {}
+    try:
+        svc = get_sheets_service()
+        # List all tabs
+        meta = svc.spreadsheets().get(spreadsheetId=sheet_id).execute()
+        all_tabs = [s["properties"]["title"] for s in meta.get("sheets", [])]
+
+        # Skip system tabs — everything else is a competitor partner tab
+        skip = {"Competitors", "Other", "Sheet4", "External"}
+        partner_tabs = [t for t in all_tabs if t not in skip]
+
+        today_str = datetime.date.today().isoformat()
+        total_partners = 0
+        total_emails = 0
+        total_phones = 0
+        today_new_partners = 0
+        today_new_emails = 0
+        today_tab = ""
+        per_tab_stats = []
+
+        for tab in partner_tabs:
+            try:
+                r = svc.spreadsheets().values().get(
+                    spreadsheetId=sheet_id, range=f"'{tab}'!A2:K200"
+                ).execute()
+                rows = r.get("values", [])
+                tab_partners = 0
+                tab_emails = 0
+                tab_phones = 0
+                for row in rows:
+                    if not row or not row[0].strip():
+                        continue
+                    tab_partners += 1
+                    if len(row) > 4 and row[4].strip():
+                        tab_emails += 1
+                    if len(row) > 3 and row[3].strip():
+                        tab_phones += 1
+                    # Discovered At = column K (index 10)
+                    if len(row) > 10 and row[10].strip() == today_str:
+                        today_new_partners += 1
+                        today_tab = tab
+                        if len(row) > 4 and row[4].strip():
+                            today_new_emails += 1
+                total_partners += tab_partners
+                total_emails += tab_emails
+                total_phones += tab_phones
+                if tab_partners > 0:
+                    per_tab_stats.append({
+                        "tab": tab,
+                        "partners": tab_partners,
+                        "emails": tab_emails,
+                        "coverage": int(tab_emails * 100 / tab_partners) if tab_partners else 0,
+                    })
+            except Exception:
+                continue
+
+        # Top 5 tabs by partner count
+        per_tab_stats.sort(key=lambda x: -x["partners"])
+        top_tabs = per_tab_stats[:5]
+
+        # Read Competitors tab for Track/Skip breakdown
+        try:
+            r = svc.spreadsheets().values().get(
+                spreadsheetId=sheet_id, range="'Competitors'!A2:G50"
+            ).execute()
+            comp_rows = r.get("values", [])
+            comp_total = len(comp_rows)
+            comp_track = sum(1 for row in comp_rows if len(row) >= 7 and row[6].strip().lower() == "track")
+        except Exception:
+            comp_total = 0
+            comp_track = 0
+
+        return {
+            "total_tabs": len(partner_tabs),
+            "total_partners": total_partners,
+            "total_emails": total_emails,
+            "total_phones": total_phones,
+            "coverage_pct": int(total_emails * 100 / total_partners) if total_partners else 0,
+            "today_new_partners": today_new_partners,
+            "today_new_emails": today_new_emails,
+            "today_tab": today_tab,
+            "top_tabs": top_tabs,
+            "comp_total": comp_total,
+            "comp_track": comp_track,
+        }
+    except Exception as exc:
+        log(f"Partner outreach read failed: {exc}")
+        return {}
+
+
 # ── 2. Get today's git improvements ──────────────────────────────────────────
 def _get_todays_commits() -> list[dict]:
     try:
@@ -122,7 +219,88 @@ def _get_todays_commits() -> list[dict]:
 
 
 # ── 3. Build HTML email ───────────────────────────────────────────────────────
-def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
+def _build_partner_outreach_section(p: dict) -> str:
+    """Return HTML for the Partner Outreach (Agent 11) section."""
+    if not p or p.get("total_partners", 0) == 0:
+        return ""
+
+    today_line = ""
+    if p.get("today_new_partners", 0) > 0:
+        today_line = (
+            f'<div style="background:#0f172a;border:1px solid #22c55e33;border-radius:8px;'
+            f'padding:10px 14px;margin-bottom:10px;">'
+            f'<span style="color:#22c55e;font-size:11px;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:1px;">Today ({p.get("today_tab", "—")}):</span> '
+            f'<span style="color:#e2e8f0;font-size:13px;font-weight:600;">'
+            f'{p["today_new_partners"]} new partners, {p["today_new_emails"]} emails</span>'
+            f'</div>'
+        )
+
+    # Top tabs
+    top_rows_html = ""
+    for t in p.get("top_tabs", []):
+        top_rows_html += (
+            f'<tr style="border-bottom:1px solid #1e293b;">'
+            f'<td style="padding:6px 12px;color:#e2e8f0;font-size:12px;font-weight:500;">{t["tab"]}</td>'
+            f'<td style="padding:6px 12px;text-align:center;color:#3b82f6;font-size:12px;font-weight:700;">{t["partners"]}</td>'
+            f'<td style="padding:6px 12px;text-align:center;color:#22c55e;font-size:12px;font-weight:700;">{t["emails"]}</td>'
+            f'<td style="padding:6px 12px;text-align:center;color:#94a3b8;font-size:11px;">{t["coverage"]}%</td>'
+            f'</tr>'
+        )
+
+    return f"""
+    <div style="margin-bottom:20px;">
+      <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
+        letter-spacing:1.5px;margin:0 0 10px;">Partner Outreach (Agent 11)</p>
+      {today_line}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+        <tr>
+          <td style="width:25%;padding-right:6px;vertical-align:top;">
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+              <div style="color:#3b82f6;font-size:24px;font-weight:800;line-height:1;">{p["total_partners"]}</div>
+              <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Partners</div>
+            </div>
+          </td>
+          <td style="width:25%;padding:0 6px;vertical-align:top;">
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+              <div style="color:#22c55e;font-size:24px;font-weight:800;line-height:1;">{p["total_emails"]}</div>
+              <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Emails</div>
+            </div>
+          </td>
+          <td style="width:25%;padding:0 6px;vertical-align:top;">
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+              <div style="color:#a855f7;font-size:24px;font-weight:800;line-height:1;">{p["total_phones"]}</div>
+              <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Phones</div>
+            </div>
+          </td>
+          <td style="width:25%;padding-left:6px;vertical-align:top;">
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:center;">
+              <div style="color:#ff6a3d;font-size:24px;font-weight:800;line-height:1;">{p["coverage_pct"]}%</div>
+              <div style="color:#475569;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:5px;">Coverage</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;background:#0f172a;
+        border:1px solid #334155;border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:#1e293b;border-bottom:1px solid #334155;">
+          <th style="padding:8px 12px;text-align:left;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Top Competitor Tabs</th>
+          <th style="padding:8px 12px;text-align:center;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Partners</th>
+          <th style="padding:8px 12px;text-align:center;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">Emails</th>
+          <th style="padding:8px 12px;text-align:center;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;">%</th>
+        </tr></thead>
+        <tbody>{top_rows_html}</tbody>
+      </table>
+      <div style="margin-top:8px;background:#0f172a;border:1px solid #334155;border-radius:8px;
+        padding:8px 14px;font-size:11px;color:#94a3b8;">
+        Competitors tracked: <strong style="color:#e2e8f0;">{p["comp_track"]}</strong> / {p["comp_total"]}
+        &nbsp;·&nbsp; Tabs: <strong style="color:#e2e8f0;">{p["total_tabs"]}</strong>
+        &nbsp;·&nbsp; Free stack (no Apollo/paid) &nbsp;·&nbsp; Daily 6:30 AM IST auto-refresh
+      </div>
+    </div>"""
+
+
+def _build_email(data: dict, commits: list[dict], partner_stats: dict) -> tuple[str, str]:
 
     run_date      = datetime.datetime.now(
         datetime.timezone(datetime.timedelta(hours=5, minutes=30))
@@ -319,6 +497,8 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
 
     {improvements_section}
 
+    {_build_partner_outreach_section(partner_stats)}
+
     {input_output_section}
 
     {topics_section}
@@ -374,13 +554,37 @@ def _build_email(data: dict, commits: list[dict]) -> tuple[str, str]:
 </body>
 </html>"""
 
+    # Partner Outreach text section
+    p = partner_stats or {}
+    partner_text = ""
+    if p.get("total_partners", 0) > 0:
+        top_lines = "\n".join(
+            f"    {t['tab']:20} {t['partners']:3} partners  {t['emails']:3} emails ({t['coverage']}%)"
+            for t in p.get("top_tabs", [])
+        )
+        today_partner_line = ""
+        if p.get("today_new_partners", 0) > 0:
+            today_partner_line = (
+                f"  Today ({p.get('today_tab','—')}): "
+                f"{p['today_new_partners']} partners, {p['today_new_emails']} emails\n"
+            )
+        partner_text = (
+            f"\nPARTNER OUTREACH (Agent 11):\n"
+            f"  Partners: {p['total_partners']} | Emails: {p['total_emails']} "
+            f"| Phones: {p['total_phones']} | Coverage: {p['coverage_pct']}%\n"
+            f"  Tracked competitors: {p['comp_track']}/{p['comp_total']} | Tabs: {p['total_tabs']}\n"
+            f"{today_partner_line}"
+            f"  Top tabs:\n{top_lines}\n"
+        )
+
     text_body = (
         f"viAct Automation — Daily Report\n{run_date}\n{'='*60}\n\n"
         f"METRICS:\n"
         f"  Total Pages    : {total}\n"
         f"  This Week      : {this_week} ({pillar_cnt} pillar + {blog_cnt} blog)\n"
         f"  Today          : {today_new}\n"
-        f"  Topics Tracked : {dedup}\n\n"
+        f"  Topics Tracked : {dedup}\n"
+        f"{partner_text}\n"
         f"{improvements_text}"
         f"INPUT: 8 competitors, viAct sitemap, 5 regulatory sources, Reference Library\n"
         f"OUTPUT: 1 pillar + 3 blogs + SEO meta + internal links → auto-pushed to Sheets\n\n"
@@ -406,11 +610,15 @@ def send_daily_report() -> bool:
     data = _get_sheets_data() or {}
     log(f"  Total: {data.get('total_pages', 0)} pages | This week: {data.get('this_week_pages', 0)}")
 
+    log("Reading Partner Outreach data (Agent 11)...")
+    partner_stats = _get_partner_outreach_stats() or {}
+    log(f"  Partners: {partner_stats.get('total_partners', 0)} | Emails: {partner_stats.get('total_emails', 0)}")
+
     log("Reading today's git commits...")
     commits = _get_todays_commits()
     log(f"  {len(commits)} commit(s) today")
 
-    html_body, text_body = _build_email(data, commits)
+    html_body, text_body = _build_email(data, commits, partner_stats)
 
     try:
         resp = requests.post(
