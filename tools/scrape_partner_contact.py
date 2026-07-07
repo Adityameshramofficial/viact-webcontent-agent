@@ -584,17 +584,97 @@ def _whois_email(domain: str) -> str:
     return ""
 
 
+# ── Tier 5: Social media email search (NEW in v3.4) ─────────────────────────
+#
+# For partners whose website has no email but who maintain public Facebook /
+# LinkedIn / Twitter / Instagram business pages with contact info in the About
+# section, use Tavily to search Google's index of those pages. Direct social
+# scraping is anti-bot-blocked; Google indexes public pages and Tavily surfaces
+# them reliably.
+
+SOCIAL_DOMAINS = {
+    "facebook.com": "facebook",
+    "linkedin.com": "linkedin",
+    "twitter.com": "twitter",
+    "x.com": "twitter",
+    "instagram.com": "instagram",
+}
+
+
+def _social_email_search(company_name: str, partner_domain: str) -> list[tuple[str, str]]:
+    """
+    Search public social profiles (via Tavily → Google) for emails.
+
+    Returns list of (email, source) tuples. source ∈ {facebook, linkedin, twitter, instagram}.
+    Only returns emails that pass _clean_email() strict validation.
+    Prefers emails on partner_domain (BD-usable) but accepts other business emails too.
+    """
+    api_key = os.getenv("TAVILY_API_KEY", "")
+    if not api_key or not company_name:
+        return []
+
+    queries = [
+        f'"{company_name}" facebook email contact',
+        f'"{company_name}" linkedin email',
+        f'"{company_name}" twitter email',
+    ]
+
+    hits: list[tuple[str, str]] = []
+    for q in queries:
+        try:
+            r = requests.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": api_key,
+                    "query": q,
+                    "search_depth": "basic",
+                    "max_results": 5,
+                },
+                timeout=15,
+            )
+            r.raise_for_status()
+            for item in r.json().get("results", []):
+                url = item.get("url", "").lower()
+                # Detect which social source this result came from
+                source = None
+                for social_dom, tag in SOCIAL_DOMAINS.items():
+                    if social_dom in url:
+                        source = tag
+                        break
+                if not source:
+                    continue
+
+                # Extract emails from title + content snippet
+                blob = item.get("content", "") + " " + item.get("title", "")
+                for m in EMAIL_REGEX.findall(blob):
+                    cleaned = _clean_email(m)
+                    if cleaned:
+                        hits.append((cleaned, source))
+        except Exception:
+            continue
+
+    # Dedup while preserving first occurrence (which usually has better source ranking)
+    seen: set[str] = set()
+    unique = []
+    for email, source in hits:
+        if email in seen:
+            continue
+        seen.add(email)
+        unique.append((email, source))
+    return unique
+
+
 # ── Main entrypoint ──────────────────────────────────────────────────────────
 
 def scrape_contact(website: str, company_name: str = "",
                    competitor_domain: str = "") -> dict:
     """
-    Cascade contact enrichment. Runs Tier 1 → 2 → 3 → 4 until email is found.
+    Cascade contact enrichment. Runs Tier 1 → 2 → 3 → 4 → 5 until email is found.
 
     Args:
         website: Partner's website URL (with or without scheme).
-        company_name: Optional company name for Tier 2 searches. If blank,
-            Tier 2 uses domain only.
+        company_name: Optional company name for Tier 2 + Tier 5 searches. If blank,
+            those tiers use domain only.
         competitor_domain: The competitor's own domain (e.g., "autodesk.com").
             If provided AND the partner's website is hosted on this domain
             (e.g., `www.autodesk.com/integrations/partner/360sync`), then all
@@ -604,7 +684,7 @@ def scrape_contact(website: str, company_name: str = "",
     Returns:
         {
           "email":         str,     # best email found, or ""
-          "email_source":  str,     # "scraped" | "tavily" | "pattern_verified" | "whois" | ""
+          "email_source":  str,     # "scraped" | "tavily" | "pattern_verified" | "whois" | "facebook" | "linkedin" | "twitter" | "instagram" | ""
           "address":       str,
           "country":       str,
           "scrape_status": str,     # "ok" | "blocked" | "no_website" | "no_email_found" | "on_competitor_domain"
@@ -708,6 +788,24 @@ def scrape_contact(website: str, company_name: str = "",
         if whois_email:
             result["email"] = whois_email
             result["email_source"] = "whois"
+
+    # ── Tier 5: Social media email search (Facebook / LinkedIn / X / Instagram)
+    # Runs last — for partners with no discoverable email on their website but
+    # active social business pages. Uses Tavily to search Google's index.
+    if not result["email"] and company_name:
+        social_hits = _social_email_search(company_name, partner_domain)
+        if social_hits:
+            # Prefer emails on partner's own domain; otherwise take the first cleanly
+            # extracted email (already _clean_email-validated).
+            emails_only = [e for e, _ in social_hits]
+            best_social = _pick_best_email(emails_only, partner_domain)
+            if best_social:
+                result["email"] = best_social
+                # Look up which social source produced this email
+                for email, source in social_hits:
+                    if email == best_social:
+                        result["email_source"] = source
+                        break
 
     # Set final status
     if not got_any_page and not result["email"]:
