@@ -142,6 +142,27 @@ def _verify_website_belongs_to_company(url: str, company_name: str,
     if not (in_domain or in_title or in_h1):
         return False
 
+    # v3.9: Narrow anti-namesake filter — only reject if page has RICH content
+    # AND page mentions CLEARLY UNRELATED industry keywords AND hint has a
+    # specific industry signal. Otherwise trust the LLM check that follows.
+    if context_hint and (len(meta["description"]) > 60 or len(meta["title"]) > 80):
+        page_blob = (meta["title"] + " " + meta["description"] + " " + meta["h1"]).lower()
+        hint_lower = context_hint.lower()
+        # Well-defined anti-pairs — if hint contains left, and page has right
+        # (but not any of left), this is a clear namesake mismatch.
+        anti_pairs = [
+            (["carbon capture", "climate tech", "co2"], ["rose", "flower", "garden", "bulb", "perennial"]),
+            (["ai vision", "computer vision", "safety"], ["restaurant", "food", "cafe", "menu"]),
+            (["construction", "building"], ["jewelry", "necklace", "ring", "bracelet"]),
+            (["software", "saas", "app"], ["farm", "livestock", "cattle", "poultry"]),
+        ]
+        for hint_kws, bad_kws in anti_pairs:
+            hint_has = any(kw in hint_lower for kw in hint_kws)
+            page_has_bad = any(kw in page_blob for kw in bad_kws)
+            page_has_good = any(kw in page_blob for kw in hint_kws)
+            if hint_has and page_has_bad and not page_has_good:
+                return False
+
     # Any other case (including domain-match + hint present) → LLM check.
     # The hint's purpose is to catch namesakes, so always let LLM look.
 

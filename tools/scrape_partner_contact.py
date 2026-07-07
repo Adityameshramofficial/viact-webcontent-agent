@@ -410,39 +410,51 @@ def _normalize_phone(raw: str) -> str:
     if not raw:
         return ""
 
-    # v3.7.1: Reject ISO date patterns BEFORE cleaning
-    # (2024-02-16, 2025/12/12, etc.)
-    if re.match(r"^\s*(19|20)\d{2}[-/\.]\d{1,2}[-/\.]\d{1,2}\s*$", raw):
+    # v3.9: Reject date-like patterns hard, ANY format:
+    # 2024-02-16, 2024/02/16, 2024.02.16, 16-02-2024, 16/02/2024
+    date_patterns = [
+        r"^\s*(19|20)\d{2}[-/\.]\d{1,2}[-/\.]\d{1,2}\s*$",   # YYYY-M-D
+        r"^\s*\d{1,2}[-/\.]\d{1,2}[-/\.](19|20)\d{2}\s*$",   # D-M-YYYY
+        r"^\s*(19|20)\d{2}[\s\.]\d{1,2}[\s\.]\d{1,2}\s*$",   # YYYY.M.D w/ spaces
+    ]
+    for p in date_patterns:
+        if re.match(p, raw):
+            return ""
+
+    # v3.9: Reject decimals with too many trailing digits (JSON leak like 15.6091309)
+    if re.match(r"^\s*\d{1,3}\.\d{6,}\s*$", raw):
         return ""
 
     # Strip anything but digits, +, -, space, parens, dot
     cleaned = re.sub(r"[^\d\+\-\s\(\)\.]", "", raw).strip()
 
-    # v3.7.1: Strip trailing junk chars (), commas, semicolons, quotes
-    cleaned = re.sub(r"[\)\.,;'\"]+$", "", cleaned).strip()
+    # v3.9: Strip trailing junk chars aggressively (multi-char sequences too)
+    cleaned = re.sub(r"[\)\.,;'\"\s]+$", "", cleaned).strip()
 
     # Count digits
     digits_only = re.sub(r"\D", "", cleaned)
     if len(digits_only) < 7 or len(digits_only) > 15:
         return ""
-    # Reject if it looks like a year, date, or product code
-    if re.fullmatch(r"20\d{2}", digits_only):  # year
+
+    # Reject if digits look like a year, date, or product code
+    if re.fullmatch(r"20\d{2}", digits_only):
         return ""
-    if re.fullmatch(r"19\d{2}", digits_only):  # year
+    if re.fullmatch(r"19\d{2}", digits_only):
         return ""
-    # v3.7.1: Reject if digits look like YYYYMMDD or DDMMYYYY
+    # YYYYMMDD or DDMMYYYY
     if re.fullmatch(r"(19|20)\d{6}", digits_only):
         return ""
     if re.fullmatch(r"\d{2}\d{2}(19|20)\d{2}", digits_only):
+        return ""
+    # v3.9: reject any digit sequence starting with a year (e.g., 2024xxx)
+    if re.match(r"^(19|20)\d{2}", digits_only) and len(digits_only) <= 10:
         return ""
 
     # Prefer format with country code
     if digits_only.startswith("00"):
         digits_only = "+" + digits_only[2:]
     elif not cleaned.startswith("+") and len(digits_only) >= 10:
-        # Keep as-is; caller may add default country prefix if desired
         pass
-    # Reformat: keep original separators for readability, but ensure no double-spaces
     result = re.sub(r"\s+", " ", cleaned).strip()
     return result
 
