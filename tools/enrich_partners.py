@@ -31,8 +31,175 @@ sys.path.insert(0, os.path.dirname(__file__))
 from push_to_sheets import get_sheets_service, PARTNER_COLUMNS
 from scrape_partner_contact import scrape_contact, _ddg_search
 from discover_partners import COMPETITOR_MAP
+from utils import get_env
 
 import re as _re
+import requests as _requests
+
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+)
+
+
+def _fetch_page_metadata(url: str, timeout: int = 8) -> dict:
+    """
+    v3.8: Fetch first ~10KB of a page, extract <title>, meta description,
+    og:description, and first <h1>. Used for website verification.
+    """
+    try:
+        r = _requests.get(
+            url,
+            headers={"User-Agent": _BROWSER_UA, "Accept": "text/html"},
+            timeout=timeout,
+            allow_redirects=True,
+            stream=True,
+        )
+        content = ""
+        for chunk in r.iter_content(chunk_size=4096, decode_unicode=False):
+            if chunk:
+                try:
+                    content += chunk.decode("utf-8", errors="ignore")
+                except Exception:
+                    pass
+            if len(content) > 12000:
+                break
+    except Exception:
+        return {"title": "", "description": "", "h1": ""}
+
+    title = ""
+    m = _re.search(r"<title[^>]*>(.*?)</title>", content, _re.I | _re.S)
+    if m:
+        title = _re.sub(r"\s+", " ", m.group(1)).strip()[:200]
+
+    desc = ""
+    m = _re.search(
+        r'<meta\s+[^>]*(?:name|property)\s*=\s*["\'](?:description|og:description)["\'][^>]*'
+        r'content\s*=\s*["\']([^"\']+)["\']',
+        content, _re.I,
+    )
+    if m:
+        desc = _re.sub(r"\s+", " ", m.group(1)).strip()[:400]
+
+    h1 = ""
+    m = _re.search(r"<h1[^>]*>(.*?)</h1>", content, _re.I | _re.S)
+    if m:
+        h1 = _re.sub(r"\s+", " ", _re.sub(r"<[^>]+>", " ", m.group(1))).strip()[:200]
+
+    return {"title": title, "description": desc, "h1": h1}
+
+
+_CORP_SUFFIX = {"inc", "ltd", "llc", "corp", "gmbh", "pvt", "co",
+                "corporation", "limited", "group", "the"}
+
+
+def _key_words(name: str) -> list[str]:
+    """Extract distinguishing name words (drop tiny words + corp suffixes)."""
+    words = _re.split(r"[\s\.,]+", name.lower())
+    return [w for w in words if len(w) >= 4 and w not in _CORP_SUFFIX]
+
+
+def _verify_website_belongs_to_company(url: str, company_name: str,
+                                        context_hint: str = "") -> bool:
+    """
+    v3.8: Return True if `url` looks like the official site of `company_name`.
+
+    Cascading checks (strongest first):
+      1. STRONG: name-word in domain AND (name-word in title OR h1) → accept
+      2. STRONG: name-word in domain (no hint given) → accept
+      3. WEAK/AMBIGUOUS: name-word in title only, hint given → LLM check
+      4. NO SIGNALS → reject (or LLM check if hint present)
+    """
+    if not url or not company_name:
+        return False
+
+    meta = _fetch_page_metadata(url)
+    keys = _key_words(company_name)
+    if not keys:
+        # No distinguishing words — always LLM-check (or reject)
+        return False
+
+    domain_part = _re.sub(r'^https?://(www\.)?', '', url).split('/')[0].lower()
+    title = meta["title"].lower()
+    h1 = meta["h1"].lower()
+    desc = meta["description"].lower()
+
+    in_domain = any(w in domain_part for w in keys)
+    in_title = any(w in title for w in keys)
+    in_h1 = any(w in h1 for w in keys)
+    in_desc = any(w in desc for w in keys)
+
+    # STRONG: domain matches + page-content signal AND no hint → accept fast
+    # (no namesake risk to worry about)
+    if in_domain and (in_title or in_h1 or in_desc) and not context_hint:
+        return True
+
+    # STRONG: domain matches + no context hint → accept
+    if in_domain and not context_hint:
+        return True
+
+    # No signals at all → reject
+    if not (in_domain or in_title or in_h1):
+        return False
+
+    # Any other case (including domain-match + hint present) → LLM check.
+    # The hint's purpose is to catch namesakes, so always let LLM look.
+
+    # AMBIGUOUS: partial match — use LLM to break the tie
+    try:
+        from groq import Groq
+        client = Groq(api_key=get_env("GROQ_API_KEY"))
+        if context_hint:
+            # INDUSTRY MISMATCH check — default is ACCEPT unless clear contradiction
+            prompt = (
+                f'A company named "{company_name}" is described as: {context_hint}\n\n'
+                f'Below is a webpage that might belong to this company.\n\n'
+                f'Website URL: {url}\n'
+                f'Page title: {meta["title"] or "(empty)"}\n'
+                f'Meta description: {meta["description"] or "(empty)"}\n'
+                f'Main heading (H1): {meta["h1"] or "(empty)"}\n\n'
+                f'Question: Does this page CONTRADICT the company description above?\n\n'
+                f'Rules:\n'
+                f'- Answer YES (i.e., "keep this website") by default. Accept minimal / thin pages.\n'
+                f'- Answer NO ONLY if the page content explicitly indicates a DIFFERENT '
+                f'industry (e.g., page is clearly about ROSES/GARDENING but hint says AI/tech, '
+                f'or page is TINY HOMES but hint says CLIMATE CARBON CAPTURE, or page is '
+                f'JEWELRY but hint says CONSTRUCTION).\n'
+                f'- If page is empty, minimal, or unclear → YES (accept).\n\n'
+                f'Reply with a single word: YES or NO.'
+            )
+        else:
+            # No hint — lenient (name-only)
+            prompt = (
+                f'Website URL: {url}\n'
+                f'Page title: {meta["title"] or "(empty)"}\n'
+                f'Meta description: {meta["description"] or "(empty)"}\n'
+                f'Main heading (H1): {meta["h1"] or "(empty)"}\n\n'
+                f'Is this website plausibly the official site of "{company_name}"? Reply YES or NO.'
+            )
+        # v3.8: try lightweight model first (higher rate limits), fall back to 70b
+        try:
+            resp = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=5,
+                temperature=0.0,
+            )
+        except Exception:
+            resp = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=5,
+                temperature=0.0,
+            )
+        answer = (resp.choices[0].message.content or "").strip().upper()
+        return answer.startswith("YES")
+    except Exception:
+        # LLM failed (rate-limited or offline). Use lenient heuristic fallback:
+        # if we have strong name signals (domain + at least one page signal),
+        # trust that. Namesake mismatches slip through only if LLM is down —
+        # acceptable trade-off vs blank data.
+        return in_domain and (in_title or in_h1 or in_desc)
 
 # v3.6: Websites we should NEVER accept as a company's "official website"
 _NOT_A_WEBSITE_DOMAIN = {
@@ -114,31 +281,39 @@ def _find_website_via_search(company_name: str, competitor_domain: str = "",
         keep = [w for w in words if w.lower() not in filler and len(w) > 2][:6]
         hint = " ".join(keep)
 
-    query = f'"{company_name}" {hint} official website'.strip()
-    results = _ddg_search(query, max_results=6)
+    # v3.8: search without the hint first (usually cleaner ranking);
+    # try the hinted query only if no candidates verify.
+    all_results = _ddg_search(f'"{company_name}" official website', max_results=8)
+    if not all_results and hint:
+        all_results = _ddg_search(f'"{company_name}" {hint} official website', max_results=6)
 
-    # Fallback query without hint if hint-based search returned nothing
-    if not results and hint:
-        results = _ddg_search(f'"{company_name}" official website', max_results=6)
-
-    for r in results:
+    seen_domains = set()
+    for r in all_results:
         url = r.get("url", "")
         if not url.startswith("http"):
             continue
         domain = _re.sub(r'^https?://(www\.)?', '', url).split('/')[0].lower().strip()
-        if not domain:
+        if not domain or domain in seen_domains:
             continue
+        seen_domains.add(domain)
         # Reject known non-website domains
         if any(bad in domain for bad in _NOT_A_WEBSITE_DOMAIN):
             continue
         # Reject registry / directory hints in domain
-        if any(hint_bad in domain for hint_bad in _DIRECTORY_HINTS):
+        if any(dir_hint in domain for dir_hint in _DIRECTORY_HINTS):
             continue
-        # Reject the competitor's own domain (would just re-scrape it)
+        # Reject competitor's own domain
         if competitor_domain and (domain == competitor_domain
                                    or domain.endswith("." + competitor_domain)):
             continue
-        return f"https://{domain}"
+
+        candidate_url = f"https://{domain}"
+
+        # v3.8: verify the candidate really belongs to this company
+        if _verify_website_belongs_to_company(candidate_url, company_name, context_hint):
+            return candidate_url
+        # else try next candidate
+
     return ""
 
 
@@ -256,15 +431,16 @@ def enrich_tab(tab: str, competitor_domain: str = "",
         name = row.get("Company Name", "").strip()
         row_num = row["_row"]
 
-        # v3.6/v3.7: If website is blank OR clearly wrong (competitor domain,
-        # directory site), discover the partner's real website via DDG.
-        # Note: description hint is available in _find_website_via_search but
-        # not passed by default — testing showed it hurts as often as helps for
-        # namesake disambiguation. Enable per-call if needed.
+        # v3.6/v3.7/v3.8: If website is blank OR clearly wrong (competitor
+        # domain, directory site), discover the partner's real website via DDG
+        # AND verify the candidate's page actually matches the company.
+        # Description passed as context — used ONLY inside the LLM verification
+        # step (not in the DDG search itself, since that hurts ranking).
         if _is_wrong_website(website, competitor_domain) and name:
             reason = "blank" if not website else "wrong-site"
             emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — discovering website ({reason})...")
-            discovered = _find_website_via_search(name, competitor_domain)
+            desc_hint = (row.get("Description") or "").strip()
+            discovered = _find_website_via_search(name, competitor_domain, context_hint=desc_hint)
             if discovered:
                 website = discovered
                 # Persist to sheet so it's visible + reused next time
