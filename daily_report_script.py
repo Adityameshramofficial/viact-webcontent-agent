@@ -224,6 +224,12 @@ def _build_partner_outreach_section(p: dict) -> str:
     if not p or p.get("total_partners", 0) == 0:
         return ""
 
+    partner_sheet_id = _env("PARTNER_SHEET_ID", "")
+    partner_sheet_url = (
+        f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit"
+        if partner_sheet_id else "#"
+    )
+
     today_line = ""
     if p.get("today_new_partners", 0) > 0:
         today_line = (
@@ -250,8 +256,12 @@ def _build_partner_outreach_section(p: dict) -> str:
 
     return f"""
     <div style="margin-bottom:20px;">
-      <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
-        letter-spacing:1.5px;margin:0 0 10px;">Partner Outreach (Agent 11)</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;">
+        <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
+          letter-spacing:1.5px;margin:0;">Partner Outreach (Agent 11)</p>
+        <a href="{partner_sheet_url}" style="color:#3b82f6;font-size:11px;font-weight:600;
+          text-decoration:none;">Open Sheet &rarr;</a>
+      </div>
       {today_line}
       <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
         <tr>
@@ -297,6 +307,9 @@ def _build_partner_outreach_section(p: dict) -> str:
         &nbsp;·&nbsp; Tabs: <strong style="color:#e2e8f0;">{p["total_tabs"]}</strong>
         &nbsp;·&nbsp; Free stack (no Apollo/paid) &nbsp;·&nbsp; Daily 6:30 AM IST auto-refresh
       </div>
+      <a href="{partner_sheet_url}" style="display:block;background:#3b82f6;color:#fff;
+        padding:10px 0;border-radius:7px;text-decoration:none;font-size:12px;
+        font-weight:700;text-align:center;margin-top:10px;">Open Partnership Leads Sheet &rarr;</a>
     </div>"""
 
 
@@ -568,6 +581,11 @@ def _build_email(data: dict, commits: list[dict], partner_stats: dict) -> tuple[
                 f"  Today ({p.get('today_tab','—')}): "
                 f"{p['today_new_partners']} partners, {p['today_new_emails']} emails\n"
             )
+        partner_sheet_id = _env("PARTNER_SHEET_ID", "")
+        partner_sheet_url_txt = (
+            f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit"
+            if partner_sheet_id else "(link unavailable)"
+        )
         partner_text = (
             f"\nPARTNER OUTREACH (Agent 11):\n"
             f"  Partners: {p['total_partners']} | Emails: {p['total_emails']} "
@@ -575,6 +593,7 @@ def _build_email(data: dict, commits: list[dict], partner_stats: dict) -> tuple[
             f"  Tracked competitors: {p['comp_track']}/{p['comp_total']} | Tabs: {p['total_tabs']}\n"
             f"{today_partner_line}"
             f"  Top tabs:\n{top_lines}\n"
+            f"  Sheet: {partner_sheet_url_txt}\n"
         )
 
     text_body = (
