@@ -225,8 +225,10 @@ def _build_partner_outreach_section(p: dict) -> str:
         return ""
 
     partner_sheet_id = _env("PARTNER_SHEET_ID", "")
+    # Deep-link to the Competitors tab (gid=1589996515) so recipients can
+    # jump straight into marking Track/Skip on newly-discovered rows.
     partner_sheet_url = (
-        f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit"
+        f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit?gid=1589996515#gid=1589996515"
         if partner_sheet_id else "#"
     )
 
@@ -583,7 +585,7 @@ def _build_email(data: dict, commits: list[dict], partner_stats: dict) -> tuple[
             )
         partner_sheet_id = _env("PARTNER_SHEET_ID", "")
         partner_sheet_url_txt = (
-            f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit"
+            f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit?gid=1589996515#gid=1589996515"
             if partner_sheet_id else "(link unavailable)"
         )
         partner_text = (
