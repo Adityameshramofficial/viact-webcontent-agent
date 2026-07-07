@@ -44,7 +44,43 @@ _NOT_A_WEBSITE_DOMAIN = {
     "glassdoor.com", "indeed.com", "ziprecruiter.com",
     "pitchbook.com", "owler.com", "clutch.co", "goodfirms.co",
     "github.com", "stackoverflow.com",
+    # v3.7.1: lead-gen / data directories that were leaking through
+    "zoominfo.com", "rocketreach.co", "hunter.io", "snov.io",
+    "apollo.io", "leadiq.com", "signalhire.com", "clearbit.com",
+    "kaspr.io", "cognism.com", "seamless.ai",
 }
+
+# v3.7.1: expanded — many company-lookup / registry sites gave false positives
+_DIRECTORY_HINTS = (
+    "companiesin", "opencorporates", "bizapedia", "manta.com",
+    "yellowpages", "yell.com", "hoovers.com", "d-b.net", "dnb.com",
+    "companycheck", "companieshouse", "endole.co.uk", "corporationwiki",
+    "buzzfile", "ownership.com", "leadar.io", "sagentia.com",
+)
+
+
+def _is_wrong_website(website: str, competitor_domain: str = "") -> bool:
+    """
+    v3.7: return True if the stored website is clearly NOT the partner's own
+    (competitor's domain, directory site, or blank). Used to decide whether
+    to trigger auto-discovery.
+    """
+    if not website:
+        return True
+    domain = _re.sub(r'^https?://(www\.)?', '', website).split('/')[0].lower().strip()
+    if not domain:
+        return True
+    # On competitor's own domain — auto-discovery needed
+    if competitor_domain and (domain == competitor_domain
+                               or domain.endswith("." + competitor_domain)):
+        return True
+    # Known non-website domains (social, directories)
+    if any(bad in domain for bad in _NOT_A_WEBSITE_DOMAIN):
+        return True
+    # Registry / directory hints
+    if any(hint in domain for hint in _DIRECTORY_HINTS):
+        return True
+    return False
 
 
 def _find_website_via_search(company_name: str, competitor_domain: str = "") -> str:
@@ -193,9 +229,11 @@ def enrich_tab(tab: str, competitor_domain: str = "",
         name = row.get("Company Name", "").strip()
         row_num = row["_row"]
 
-        # v3.6: If website is blank, discover it via DDG
-        if not website and name:
-            emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — discovering website...")
+        # v3.6/v3.7: If website is blank OR clearly wrong (competitor domain,
+        # directory site), discover the partner's real website via DDG.
+        if _is_wrong_website(website, competitor_domain) and name:
+            reason = "blank" if not website else "wrong-site"
+            emit(f"  [{i+1}/{len(to_process)}] r{row_num} {name[:30]} — discovering website ({reason})...")
             discovered = _find_website_via_search(name, competitor_domain)
             if discovered:
                 website = discovered

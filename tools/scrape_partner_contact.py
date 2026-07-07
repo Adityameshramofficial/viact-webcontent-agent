@@ -62,6 +62,9 @@ PLACEHOLDER_LOCAL_PARTS = {
     "jdoe", "jsmith", "j.smith", "jane.smith", "john.smith",
     "person", "someone", "yourboss",
     "hello world", "helloworld",
+    # v3.7.1: expanded from live-run leaks
+    "your", "you", "recipient", "contactname", "clientname",
+    "fake", "abc", "xyz", "somebody",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
@@ -239,6 +242,8 @@ def _extract_emails(html: str) -> list[str]:
         # Reject junk domains — analytics, error tracking, CMS platforms, placeholders
         junk_domain_substrings = [
             "example.com", "example.org", "yourdomain",
+            "email.com", "domain.com", "domain.tld", "yourcompany",  # v3.7.1
+            "yourdomain.com", "site.com", "email-address",             # v3.7.1
             "sentry.io", "sentry-next", "wixpress.com", "wixstudio.com",
             "wordpress.com", "squarespace.com", "webflow.com", "shopifycdn",
             "cloudfront.net", "cloudflare.com", "amazonaws.com",
@@ -296,16 +301,46 @@ def _score_email(email: str, partner_domain: str = "") -> tuple[int, str]:
     return (score, email)
 
 
-def _pick_best_email(emails: list[str], partner_domain: str = "") -> str:
-    """Return the highest-priority usable email, or '' if none pass the filter."""
+def _pick_best_email(emails: list[str], partner_domain: str = "",
+                     allow_last_resort: bool = True) -> str:
+    """
+    Return the highest-priority usable email, or '' if none pass the filter.
+
+    v3.7: `allow_last_resort=True` (default) — if no email passes the strict
+    skip-list, still return the "least bad" one that at least has a valid
+    format AND is on the partner's own domain. This picks up cases like
+    Native Instruments where the only visible email is `privacy-berlin@` —
+    still better than blank for BD purposes.
+    """
     if not emails:
         return ""
     scored = [_score_email(e, partner_domain) for e in emails]
-    scored = [s for s in scored if s[0] < 999]
-    if not scored:
+    strict = [s for s in scored if s[0] < 999]
+    if strict:
+        strict.sort(key=lambda x: x[0])
+        return strict[0][1]
+
+    if not allow_last_resort:
         return ""
-    scored.sort(key=lambda x: x[0])
-    return scored[0][1]
+
+    # Last resort: skip-listed emails, but ONLY if on partner's own domain
+    # (avoids leaking `careers@othercompany.com` from search results).
+    if not partner_domain:
+        return ""
+    fallback = []
+    for score, email in scored:
+        if "@" not in email:
+            continue
+        email_domain = email.split("@", 1)[1].lower()
+        if email_domain == partner_domain or email_domain.endswith("." + partner_domain):
+            # Reject only truly useless (bounce / auto): noreply, mailer-daemon, unsubscribe
+            local = email.split("@")[0]
+            if any(local.startswith(bad) for bad in
+                   ("noreply", "no-reply", "donotreply", "do-not-reply",
+                    "unsubscribe", "bounce", "mailer-daemon")):
+                continue
+            fallback.append(email)
+    return fallback[0] if fallback else ""
 
 
 def _normalize_website(website: str) -> str:
@@ -374,8 +409,18 @@ def _normalize_phone(raw: str) -> str:
     """Clean phone number. Return '' if invalid."""
     if not raw:
         return ""
+
+    # v3.7.1: Reject ISO date patterns BEFORE cleaning
+    # (2024-02-16, 2025/12/12, etc.)
+    if re.match(r"^\s*(19|20)\d{2}[-/\.]\d{1,2}[-/\.]\d{1,2}\s*$", raw):
+        return ""
+
     # Strip anything but digits, +, -, space, parens, dot
     cleaned = re.sub(r"[^\d\+\-\s\(\)\.]", "", raw).strip()
+
+    # v3.7.1: Strip trailing junk chars (), commas, semicolons, quotes
+    cleaned = re.sub(r"[\)\.,;'\"]+$", "", cleaned).strip()
+
     # Count digits
     digits_only = re.sub(r"\D", "", cleaned)
     if len(digits_only) < 7 or len(digits_only) > 15:
@@ -385,6 +430,12 @@ def _normalize_phone(raw: str) -> str:
         return ""
     if re.fullmatch(r"19\d{2}", digits_only):  # year
         return ""
+    # v3.7.1: Reject if digits look like YYYYMMDD or DDMMYYYY
+    if re.fullmatch(r"(19|20)\d{6}", digits_only):
+        return ""
+    if re.fullmatch(r"\d{2}\d{2}(19|20)\d{2}", digits_only):
+        return ""
+
     # Prefer format with country code
     if digits_only.startswith("00"):
         digits_only = "+" + digits_only[2:]
