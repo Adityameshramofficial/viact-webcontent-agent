@@ -183,6 +183,11 @@ def main():
     group.add_argument("--enrich-all", action="store_true",
                        help="Agent 3 alone — re-enrich all Track-status tabs. Same as --enrich but "
                             "loops over all tracked competitors.")
+    group.add_argument("--fill-missing",
+                       help="Agent 3.5 alone — fill blank Description/Address/Country/Phone in one tab "
+                            "via free stack (Jina + Groq 8B). Doesn't re-scrape email if already there.")
+    group.add_argument("--fill-missing-all", action="store_true",
+                       help="Fill missing fields across all Track-status tabs.")
     parser.add_argument("--overwrite", action="store_true",
                        help="For --enrich / --enrich-all: also re-scrape rows that already have "
                             "Email filled (useful after strict-validation upgrade).")
@@ -221,6 +226,29 @@ def main():
             progress=lambda m: log(f"  {m}"),
         )
         log(f"Result: {result['email_hits']} emails, {result['phone_hits']} phones added")
+        return
+
+    # ── --fill-missing (Agent 3.5 on one tab) ─────────────────────────────────
+    if args.fill_missing:
+        from fill_missing_fields import fill_tab
+        result = fill_tab(args.fill_missing, progress=lambda m: log(f"  {m}"))
+        log(f"Result: {result}")
+        return
+
+    # ── --fill-missing-all ────────────────────────────────────────────────────
+    if args.fill_missing_all:
+        from fill_missing_fields import fill_tab
+        tracked = read_tracked_competitors()
+        log(f"Filling missing fields for {len(tracked)} tracked tabs...")
+        totals = {"descriptions": 0, "phones": 0, "addresses": 0, "countries": 0}
+        for t in tracked:
+            log(f"=== {t['name']} ===")
+            r = fill_tab(t["name"], progress=lambda m: log(f"  {m}"))
+            for k in totals:
+                totals[k] += r[k]
+            time.sleep(1)
+        log(f"=== TOTALS: descs={totals['descriptions']} phones={totals['phones']} "
+            f"addrs={totals['addresses']} countries={totals['countries']} ===")
         return
 
     # ── --enrich-all (Agent 3 alone on all Track tabs) ────────────────────────
