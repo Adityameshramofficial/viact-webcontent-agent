@@ -38,6 +38,123 @@ _MODEL_FAST = "llama-3.1-8b-instant"
 _MODEL_BACKUP = "llama-3.3-70b-versatile"
 
 
+# ── ccTLD → country map (only unambiguous / consistent-use TLDs) ─────────────
+# Deliberately EXCLUDES: .co (Colombia BUT overwhelmingly used generically),
+# .io / .ai / .ly / .ml / .tv / .cc / .me / .tk — tech domains, no country signal
+_TLD_TO_COUNTRY = {
+    # North America
+    "us": "United States", "ca": "Canada", "mx": "Mexico",
+
+    # Latin America
+    "br": "Brazil", "ar": "Argentina", "cl": "Chile", "pe": "Peru",
+    "ec": "Ecuador", "uy": "Uruguay", "py": "Paraguay", "ve": "Venezuela",
+
+    # Western Europe
+    "uk": "United Kingdom", "gb": "United Kingdom",
+    "de": "Germany", "fr": "France", "it": "Italy", "es": "Spain",
+    "nl": "Netherlands", "be": "Belgium", "pt": "Portugal", "ie": "Ireland",
+    "at": "Austria", "ch": "Switzerland", "li": "Liechtenstein",
+    "lu": "Luxembourg", "mt": "Malta",
+
+    # Nordics
+    "se": "Sweden", "no": "Norway", "dk": "Denmark", "fi": "Finland",
+    "is": "Iceland",
+
+    # Central/Eastern Europe
+    "pl": "Poland", "cz": "Czech Republic", "sk": "Slovakia", "hu": "Hungary",
+    "ro": "Romania", "bg": "Bulgaria", "hr": "Croatia", "si": "Slovenia",
+    "rs": "Serbia", "gr": "Greece", "ee": "Estonia", "lv": "Latvia",
+    "lt": "Lithuania",
+
+    # East / South-East Asia
+    "jp": "Japan", "kr": "South Korea", "cn": "China", "hk": "Hong Kong",
+    "tw": "Taiwan", "sg": "Singapore", "my": "Malaysia", "th": "Thailand",
+    "id": "Indonesia", "ph": "Philippines", "vn": "Vietnam", "kh": "Cambodia",
+
+    # South Asia
+    "in": "India", "pk": "Pakistan", "bd": "Bangladesh", "lk": "Sri Lanka",
+    "np": "Nepal",
+
+    # Middle East / North Africa
+    "ae": "United Arab Emirates", "sa": "Saudi Arabia", "qa": "Qatar",
+    "kw": "Kuwait", "bh": "Bahrain", "om": "Oman", "eg": "Egypt",
+    "ma": "Morocco", "tn": "Tunisia", "dz": "Algeria", "il": "Israel",
+    "tr": "Turkey", "ir": "Iran", "jo": "Jordan", "lb": "Lebanon",
+
+    # Sub-Saharan Africa
+    "za": "South Africa", "ng": "Nigeria", "ke": "Kenya", "ug": "Uganda",
+    "tz": "Tanzania", "gh": "Ghana", "et": "Ethiopia", "rw": "Rwanda",
+
+    # Oceania
+    "au": "Australia", "nz": "New Zealand",
+
+    # Eastern Europe / former USSR
+    "ru": "Russia", "ua": "Ukraine", "by": "Belarus", "kz": "Kazakhstan",
+    "uz": "Uzbekistan", "ge": "Georgia", "am": "Armenia", "az": "Azerbaijan",
+}
+
+# Compound TLDs — checked BEFORE single-TLD lookup because these override
+_COMPOUND_TLDS = {
+    "co.uk": "United Kingdom", "org.uk": "United Kingdom", "ac.uk": "United Kingdom",
+    "co.in": "India", "com.in": "India", "net.in": "India",
+    "com.au": "Australia", "org.au": "Australia", "net.au": "Australia",
+    "co.jp": "Japan", "or.jp": "Japan", "ne.jp": "Japan",
+    "co.kr": "South Korea", "or.kr": "South Korea", "ne.kr": "South Korea",
+    "com.br": "Brazil", "org.br": "Brazil",
+    "com.mx": "Mexico", "org.mx": "Mexico",
+    "com.sg": "Singapore", "org.sg": "Singapore",
+    "com.hk": "Hong Kong", "org.hk": "Hong Kong",
+    "com.tw": "Taiwan", "org.tw": "Taiwan",
+    "co.nz": "New Zealand", "org.nz": "New Zealand",
+    "co.za": "South Africa", "org.za": "South Africa",
+    "com.tr": "Turkey", "org.tr": "Turkey",
+    "co.il": "Israel", "org.il": "Israel",
+    "co.ke": "Kenya",
+    "com.ar": "Argentina",
+    "com.co": "Colombia",
+    "com.pe": "Peru",
+    "com.ph": "Philippines",
+    "com.my": "Malaysia",
+    "co.th": "Thailand",
+    "com.vn": "Vietnam",
+    "com.pk": "Pakistan",
+    "com.bd": "Bangladesh",
+    "com.eg": "Egypt",
+    "com.sa": "Saudi Arabia",
+    "com.qa": "Qatar",
+    "com.kw": "Kuwait",
+}
+
+
+def _country_from_tld(website: str) -> str:
+    """
+    Infer country from a website URL's TLD. Returns '' for gTLDs
+    (.com, .net, .org, .io, .ai, etc.) and ambiguous ccTLDs.
+
+    Examples:
+        https://archilizer.com    -> ''             (gTLD)
+        https://example.co.uk     -> 'United Kingdom'
+        https://tata.co.in        -> 'India'
+        https://acme.de           -> 'Germany'
+    """
+    if not website:
+        return ""
+    # Strip protocol + www
+    dom = re.sub(r"^https?://(www\.)?", "", website.lower()).split("/")[0].strip()
+    if not dom or "." not in dom:
+        return ""
+    # Check compound TLDs first (e.g., 'co.uk' before 'uk')
+    for compound, country in _COMPOUND_TLDS.items():
+        if dom.endswith("." + compound):
+            return country
+    # Single ccTLD
+    parts = dom.rsplit(".", 1)
+    if len(parts) == 2:
+        tld = parts[1]
+        return _TLD_TO_COUNTRY.get(tld, "")
+    return ""
+
+
 def _col_letter(idx: int) -> str:
     """Zero-based index -> A1 letter."""
     result = ""
@@ -251,6 +368,28 @@ def fill_tab(tab: str, dry_run: bool = False, progress=None) -> dict:
                     ).execute()
                 fills["countries"] += 1
                 emit(f"    country: {result['country']}")
+
+        # v4.0 improvement: TLD-based country fallback.
+        # If country is STILL blank after all LLM attempts, guess from the
+        # website's TLD (deterministic mapping, no API call).
+        if "country" in missing:
+            llm_got_country = False
+            try:
+                llm_got_country = bool(result.get("country"))
+            except NameError:
+                pass  # result didn't exist (row didn't hit LLM branch)
+            if not llm_got_country:
+                tld_country = _country_from_tld(website)
+                if tld_country:
+                    if not dry_run:
+                        service.spreadsheets().values().update(
+                            spreadsheetId=sheet_id,
+                            range=f"'{tab}'!{col_letters['Country']}{i}",
+                            valueInputOption="RAW",
+                            body={"values": [[tld_country]]},
+                        ).execute()
+                    fills["countries"] += 1
+                    emit(f"    country (from TLD): {tld_country}")
 
         processed += 1
         time.sleep(0.5)  # gentle pacing
