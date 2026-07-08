@@ -1,10 +1,20 @@
 {
-  "total_pages": 126,
-  "this_week_pages": 12,
-  "today_pages": 10,
+  "total_pages": 128,
+  "this_week_pages": 14,
+  "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-07",
+  "last_run_date": "2026-07-08",
   "latest_topics": [
+    {
+      "date": "2026-07-08",
+      "topic": "Reducing Construction Fatalities in Asia with AI: A Guide for 2025",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-08",
+      "topic": "Construction Site Safety Risks Remain High",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-07",
       "topic": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide fo",
@@ -19,19 +29,35 @@
       "date": "2026-07-07",
       "topic": "10-Step Curing Oven Safety Checklist for Construction Sites: A Guide f",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-07",
-      "topic": "The Hidden Costs of Non-Compliance in Curing Oven Safety: A Guide for ",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-07",
-      "topic": "Curing Oven Safety Compliance in Singapore: A Guide for Construction",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-08",
+      "topic": "Reducing Construction Fatalities in Asia with AI: A Guide for 2025",
+      "content_type": "Blog",
+      "meta_title": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide",
+      "meta_desc": "Discover how AI technology is improving site safety and reducing fatalities in Singapore and UAE construction projects",
+      "keyword": "construction safety management",
+      "subheadline": "Discover how AI technology is improving site safety and reducing fatalities in Singapore and UAE construction projects",
+      "problem": "Construction fatalities remain a significant concern in Asia, with thousands of workers injured or killed on site every year. In Singapore, the MOM reported 22 construction fatalities in 2022, while i",
+      "faq_q": "What does Singapore MOM require regarding construction safety management?",
+      "faq_a": "Under the Workplace Safety and Health Act, construction companies in Singapore are required to implement a safety manage",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-08",
+      "topic": "Construction Site Safety Risks Remain High",
+      "content_type": "Pillar",
+      "meta_title": "AI-Powered Construction Site Safety Monitoring Platform - viAct",
+      "meta_desc": "viAct's AI-powered construction site safety monitoring platform reduces risks and costs. Learn more about our solution.",
+      "keyword": "AI-Powered Construction Site Safety Monitoring Platform",
+      "subheadline": "In Singapore and UAE, regulatory bodies report high incident rates despite strict guidelines.",
+      "problem": "Construction sites in Singapore and UAE face significant safety risks. According to MOM and OSHAD, thousands of incidents occur annually, causing injuries and fatalities. Industry data shows substanti",
+      "faq_q": "What does Singapore MOM / BCA require for AI-Powered Construction Site Safety Monitoring Platform?",
+      "faq_a": "MOM WSH Act and BCA guidelines require construction sites to implement proactive safety measures, including regular site",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-07",
       "topic": "How AI Is Reducing Construction Fatalities in Asia in 2025: A Guide fo",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction fatalities?",
       "faq_a": "Singapore's MOM requires employers to ensure a safe working environment and implement effective safety measures to preve",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-07",
-      "topic": "Construction Site Safety Risks Remain High",
-      "content_type": "Pillar",
-      "meta_title": "AI-Powered Construction Site Safety Monitoring Platform | viAct",
-      "meta_desc": "viAct's AI-powered construction site safety monitoring platform reduces risks and costs. Learn more about our solution.",
-      "keyword": "AI-Powered Construction Site Safety Monitoring Platform",
-      "subheadline": "According to Singapore's MOM, 10.2% of construction workers are injured on site each year.",
-      "problem": "Construction site accidents are a major concern, with 10.2% of workers injured on site annually in Singapore (MOM). The UAE also reports high incident rates. These accidents result in significant cost",
-      "faq_q": "What does Singapore MOM require for construction site safety monitoring?",
-      "faq_a": "MOM WSH Act requires construction sites to implement safety measures to reduce risks",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-07",
-      "topic": "10-Step Curing Oven Safety Checklist for Construction Sites: A Guide f",
-      "content_type": "Blog",
-      "meta_title": "10-Step Curing Oven Safety Checklist for Construction Sites: Singapore Cons",
-      "meta_desc": "Ensure compliance and worker safety with a comprehensive curing oven safety checklist. Learn more about the 10-step checklist and how AI technology can help.",
-      "keyword": "10-Step Curing Oven Safety Checklist for Construction Sites",
-      "subheadline": "Ensure compliance and worker safety with a comprehensive curing oven safety checklist",
-      "problem": "Curing oven safety is a critical concern on construction sites, with 80% of projects facing delays and 98% facing cost increases. In Singapore, the MOM WSH Act mandates strict safety protocols, while ",
-      "faq_q": "What does Singapore MOM require regarding 10-Step Curing Oven Safety Checklist for Construction Site",
-      "faq_a": "The MOM WSH Act requires employers to ensure that all workers are trained in the safe use of curing ovens and that regul",
-      "source": "Cluster #67-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-07T13:18:46.251989+05:30"
+  "generated_at": "2026-07-08T12:06:25.566766+05:30"
 }
