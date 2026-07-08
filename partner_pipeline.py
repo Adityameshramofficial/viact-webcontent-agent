@@ -327,6 +327,18 @@ def main():
             domain_override=domain,
             tab_override=name,
         )
+
+        # v4.1: chain fill_missing after enrichment so every daily run also
+        # populates Description / Country (via TLD) / Phone / Address gaps
+        try:
+            from fill_missing_fields import fill_tab
+            log(f"=== fill_missing for {name} ===")
+            fm = fill_tab(name, progress=lambda m: log(f"  {m}"))
+            log(f"  fill_missing added: desc={fm['descriptions']} "
+                f"country={fm['countries']} phone={fm['phones']} addr={fm['addresses']}")
+        except Exception as e:
+            log(f"  fill_missing failed (non-fatal): {e}")
+
         _print_summary([result], f"Daily run — {name}")
         return
 
