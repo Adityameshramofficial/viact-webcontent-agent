@@ -102,34 +102,37 @@ def _get_sheets_data() -> dict:
 # ── 1b. Read Partner Outreach data (Agent 11) ────────────────────────────────
 def _get_partner_outreach_stats() -> dict:
     """Return stats from the Partnership Leads sheet (Agent 11)."""
-    from push_to_sheets import get_sheets_service
+    from push_to_sheets import get_sheets_service, read_tracked_competitors
 
     sheet_id = _env("PARTNER_SHEET_ID")
     if not sheet_id:
         return {}
     try:
         svc = get_sheets_service()
-        # List all tabs
         meta = svc.spreadsheets().get(spreadsheetId=sheet_id).execute()
         all_tabs = [s["properties"]["title"] for s in meta.get("sheets", [])]
 
-        # Skip system tabs — everything else is a competitor partner tab
         skip = {"Competitors", "Other", "Sheet4", "External"}
         partner_tabs = [t for t in all_tabs if t not in skip]
 
         today_str = datetime.date.today().isoformat()
+        yesterday_str = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+
         total_partners = 0
         total_emails = 0
         total_phones = 0
         today_new_partners = 0
         today_new_emails = 0
+        today_new_phones = 0
         today_tab = ""
+        yesterday_new_partners = 0
+        yesterday_tab = ""
         per_tab_stats = []
 
         for tab in partner_tabs:
             try:
                 r = svc.spreadsheets().values().get(
-                    spreadsheetId=sheet_id, range=f"'{tab}'!A2:K200"
+                    spreadsheetId=sheet_id, range=f"'{tab}'!A2:K300"
                 ).execute()
                 rows = r.get("values", [])
                 tab_partners = 0
@@ -139,16 +142,24 @@ def _get_partner_outreach_stats() -> dict:
                     if not row or not row[0].strip():
                         continue
                     tab_partners += 1
-                    if len(row) > 4 and row[4].strip():
+                    has_email = len(row) > 4 and row[4].strip()
+                    has_phone = len(row) > 3 and row[3].strip()
+                    if has_email:
                         tab_emails += 1
-                    if len(row) > 3 and row[3].strip():
+                    if has_phone:
                         tab_phones += 1
                     # Discovered At = column K (index 10)
-                    if len(row) > 10 and row[10].strip() == today_str:
+                    discovered = row[10].strip() if len(row) > 10 else ""
+                    if discovered == today_str:
                         today_new_partners += 1
                         today_tab = tab
-                        if len(row) > 4 and row[4].strip():
+                        if has_email:
                             today_new_emails += 1
+                        if has_phone:
+                            today_new_phones += 1
+                    elif discovered == yesterday_str:
+                        yesterday_new_partners += 1
+                        yesterday_tab = tab
                 total_partners += tab_partners
                 total_emails += tab_emails
                 total_phones += tab_phones
@@ -162,11 +173,10 @@ def _get_partner_outreach_stats() -> dict:
             except Exception:
                 continue
 
-        # Top 5 tabs by partner count
         per_tab_stats.sort(key=lambda x: -x["partners"])
         top_tabs = per_tab_stats[:5]
 
-        # Read Competitors tab for Track/Skip breakdown
+        # Competitors tab — track counts + predict tomorrow's rotation
         try:
             r = svc.spreadsheets().values().get(
                 spreadsheetId=sheet_id, range="'Competitors'!A2:G50"
@@ -178,6 +188,17 @@ def _get_partner_outreach_stats() -> dict:
             comp_total = 0
             comp_track = 0
 
+        # Predict tomorrow's competitor (same formula as daily cron)
+        tomorrow_target = ""
+        try:
+            tracked = read_tracked_competitors()
+            if tracked:
+                tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+                idx = tomorrow.toordinal() % len(tracked)
+                tomorrow_target = tracked[idx]["name"]
+        except Exception:
+            pass
+
         return {
             "total_tabs": len(partner_tabs),
             "total_partners": total_partners,
@@ -186,7 +207,11 @@ def _get_partner_outreach_stats() -> dict:
             "coverage_pct": int(total_emails * 100 / total_partners) if total_partners else 0,
             "today_new_partners": today_new_partners,
             "today_new_emails": today_new_emails,
+            "today_new_phones": today_new_phones,
             "today_tab": today_tab,
+            "yesterday_new_partners": yesterday_new_partners,
+            "yesterday_tab": yesterday_tab,
+            "tomorrow_target": tomorrow_target,
             "top_tabs": top_tabs,
             "comp_total": comp_total,
             "comp_track": comp_track,
@@ -232,15 +257,51 @@ def _build_partner_outreach_section(p: dict) -> str:
         if partner_sheet_id else "#"
     )
 
-    today_line = ""
+    # Today's rotation banner
     if p.get("today_new_partners", 0) > 0:
         today_line = (
-            f'<div style="background:#0f172a;border:1px solid #22c55e33;border-radius:8px;'
+            f'<div style="background:linear-gradient(135deg,#0f172a 0%,#0a1f14 100%);'
+            f'border:2px solid #22c55e;border-radius:10px;padding:14px 18px;margin-bottom:12px;">'
+            f'<div style="color:#22c55e;font-size:10px;font-weight:800;text-transform:uppercase;'
+            f'letter-spacing:2px;margin-bottom:4px;">◉ TODAY\'S ROTATION</div>'
+            f'<div style="color:#f1f5f9;font-size:18px;font-weight:800;margin-bottom:6px;">'
+            f'{p.get("today_tab", "—")}</div>'
+            f'<table style="width:100%;border-collapse:collapse;">'
+            f'<tr>'
+            f'<td style="color:#94a3b8;font-size:12px;padding:3px 0;">Partners discovered</td>'
+            f'<td style="color:#22c55e;font-size:14px;font-weight:700;text-align:right;">'
+            f'{p["today_new_partners"]}</td></tr>'
+            f'<tr><td style="color:#94a3b8;font-size:12px;padding:3px 0;">Emails found</td>'
+            f'<td style="color:#22c55e;font-size:14px;font-weight:700;text-align:right;">'
+            f'{p["today_new_emails"]}</td></tr>'
+            f'<tr><td style="color:#94a3b8;font-size:12px;padding:3px 0;">Phones found</td>'
+            f'<td style="color:#22c55e;font-size:14px;font-weight:700;text-align:right;">'
+            f'{p.get("today_new_phones", 0)}</td></tr>'
+            f'</table></div>'
+        )
+    elif p.get("yesterday_new_partners", 0) > 0:
+        # No run today yet — show yesterday's
+        today_line = (
+            f'<div style="background:#0f172a;border:1px solid #3b82f633;border-radius:8px;'
             f'padding:10px 14px;margin-bottom:10px;">'
-            f'<span style="color:#22c55e;font-size:11px;font-weight:700;text-transform:uppercase;'
-            f'letter-spacing:1px;">Today ({p.get("today_tab", "—")}):</span> '
-            f'<span style="color:#e2e8f0;font-size:13px;font-weight:600;">'
-            f'{p["today_new_partners"]} new partners, {p["today_new_emails"]} emails</span>'
+            f'<span style="color:#3b82f6;font-size:11px;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:1px;">Yesterday ({p.get("yesterday_tab", "—")}):</span> '
+            f'<span style="color:#94a3b8;font-size:13px;">'
+            f'{p["yesterday_new_partners"]} new partners  |  Today\'s run: pending 6:30 AM IST</span>'
+            f'</div>'
+        )
+    else:
+        today_line = ""
+
+    # Tomorrow's rotation preview
+    tomorrow_line = ""
+    if p.get("tomorrow_target"):
+        tomorrow_line = (
+            f'<div style="background:#0f172a;border:1px dashed #64748b55;border-radius:8px;'
+            f'padding:8px 14px;margin-bottom:10px;font-size:11px;color:#64748b;">'
+            f'<span style="color:#94a3b8;font-weight:600;">Tomorrow 6:30 AM IST:</span> '
+            f'<span style="color:#e2e8f0;font-weight:700;">{p["tomorrow_target"]}</span> '
+            f'<span style="color:#64748b;">will be refreshed</span>'
             f'</div>'
         )
 
@@ -265,6 +326,7 @@ def _build_partner_outreach_section(p: dict) -> str:
           text-decoration:none;">Open Sheet &rarr;</a>
       </div>
       {today_line}
+      {tomorrow_line}
       <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
         <tr>
           <td style="width:25%;padding-right:6px;vertical-align:top;">
@@ -580,9 +642,18 @@ def _build_email(data: dict, commits: list[dict], partner_stats: dict) -> tuple[
         today_partner_line = ""
         if p.get("today_new_partners", 0) > 0:
             today_partner_line = (
-                f"  Today ({p.get('today_tab','—')}): "
-                f"{p['today_new_partners']} partners, {p['today_new_emails']} emails\n"
+                f"  ◉ TODAY'S ROTATION: {p.get('today_tab','—')}\n"
+                f"    Partners discovered: {p['today_new_partners']}\n"
+                f"    Emails found:        {p['today_new_emails']}\n"
+                f"    Phones found:        {p.get('today_new_phones', 0)}\n"
             )
+        elif p.get("yesterday_new_partners", 0) > 0:
+            today_partner_line = (
+                f"  Yesterday ({p.get('yesterday_tab','—')}): {p['yesterday_new_partners']} partners\n"
+                f"  Today's 6:30 AM IST run: pending\n"
+            )
+        if p.get("tomorrow_target"):
+            today_partner_line += f"  Tomorrow 6:30 AM IST: {p['tomorrow_target']} will be refreshed\n"
         partner_sheet_id = _env("PARTNER_SHEET_ID", "")
         partner_sheet_url_txt = (
             f"https://docs.google.com/spreadsheets/d/{partner_sheet_id}/edit?gid=1589996515#gid=1589996515"
