@@ -466,25 +466,25 @@ def discover_partners(competitor_slug: str, progress=None,
     sitemap_urls = _discover_via_sitemap(domain)
     emit(f"     {len(sitemap_urls)} candidate URL(s) ranked from sitemap")
     if sitemap_urls:
-        _process(_scrape_urls(sitemap_urls), "A1:sitemap", "sitemap-partner-page")
+        _process(_scrape_urls(sitemap_urls), "1-High: Partners page (sitemap)", "sitemap-partner-page")
 
     # ── A2: Homepage smart crawl ──────────────────────────────────────────────
     emit(f"[A2] Homepage crawl for partner links on {domain}...")
     homepage_urls = _discover_via_homepage(domain)
     emit(f"     {len(homepage_urls)} candidate URL(s) from homepage")
     if homepage_urls:
-        _process(_scrape_urls(homepage_urls), "A2:homepage", "homepage-crawl")
+        _process(_scrape_urls(homepage_urls), "1-High: Homepage link", "homepage-crawl")
 
     # ── A3: Static URL patterns ───────────────────────────────────────────────
     emit(f"[A3] Trying static partner URL patterns on {domain}...")
-    _process(_scrape_paths(domain, PARTNER_PATH_PATTERNS), "A3:patterns", "partners page")
+    _process(_scrape_paths(domain, PARTNER_PATH_PATTERNS), "1-High: Partners page (URL match)", "partners page")
 
     # ── A4: Google site-search via Tavily ─────────────────────────────────────
     emit(f"[A4] Google site-search on {domain}...")
     site_search_urls = _discover_via_google_site_search(name, domain)
     emit(f"     {len(site_search_urls)} candidate URL(s) from site-search")
     if site_search_urls:
-        _process(_scrape_urls(site_search_urls), "A4:site-search", "google-site-search")
+        _process(_scrape_urls(site_search_urls), "1-High: Website (site search)", "google-site-search")
 
     # ── A5: Tavily news search ────────────────────────────────────────────────
     emit(f"[A5] Tavily news search for {name} partnerships...")
@@ -506,13 +506,13 @@ def discover_partners(competitor_slug: str, progress=None,
         companies = _extract_companies(news_blob, name, "news / press releases")
         emit(f"     extracted {len(companies)} from news")
         for c in companies:
-            c["discovered_via"] = "A5:news"
+            c["discovered_via"] = "2-Medium: News / Press release"
             c["source_url"] = "tavily-news"
             all_rows.append(c)
 
     # ── A6: Customer / case-study pages ───────────────────────────────────────
     emit(f"[A6] Trying customer/case-study pages on {domain}...")
-    _process(_scrape_paths(domain, CUSTOMER_PATH_PATTERNS), "A6:customers", "customer page")
+    _process(_scrape_paths(domain, CUSTOMER_PATH_PATTERNS), "3-Low: Case study / customer", "customer page")
 
     # ── Dedup ─────────────────────────────────────────────────────────────────
     deduped = _dedup(all_rows, name)
