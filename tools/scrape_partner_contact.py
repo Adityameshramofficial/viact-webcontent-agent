@@ -318,14 +318,28 @@ def _pick_best_email(emails: list[str], partner_domain: str = "",
 
     v3.7: `allow_last_resort=True` (default) — if no email passes the strict
     skip-list, still return the "least bad" one that at least has a valid
-    format AND is on the partner's own domain. This picks up cases like
-    Native Instruments where the only visible email is `privacy-berlin@` —
-    still better than blank for BD purposes.
+    format AND is on the partner's own domain.
+
+    v4.2: STRICT DOMAIN MATCH — if partner_domain is provided, only emails
+    on that exact domain (or a subdomain) are accepted. This prevents
+    cross-domain contamination when Tier 1 scrapes a partner site that
+    happens to display emails belonging to third parties (trade sites,
+    aggregators, integration partners, etc.).
     """
     if not emails:
         return ""
     scored = [_score_email(e, partner_domain) for e in emails]
     strict = [s for s in scored if s[0] < 999]
+
+    # v4.2: Enforce partner-domain match on the strict path
+    if partner_domain:
+        strict = [
+            s for s in strict
+            if "@" in s[1]
+            and (s[1].split("@", 1)[1].lower() == partner_domain
+                 or s[1].split("@", 1)[1].lower().endswith("." + partner_domain))
+        ]
+
     if strict:
         strict.sort(key=lambda x: x[0])
         return strict[0][1]
