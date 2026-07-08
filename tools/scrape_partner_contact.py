@@ -259,6 +259,16 @@ def _extract_emails(html: str) -> list[str]:
         if local.endswith(("png", "jpg", "jpeg", "svg", "gif", "webp", "ico")):
             continue
 
+        # v4.1: Reject if DOMAIN ends in an image/asset extension (e.g., @2x.png)
+        # This catches captured src attributes from HTML that regex mistook for emails
+        if domain.endswith((".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp",
+                            ".ico", ".css", ".js", ".woff", ".woff2", ".ttf",
+                            ".mp4", ".mp3", ".pdf")):
+            continue
+        # v4.1: reject asset-URL patterns anywhere in the email
+        if any(pat in e_clean for pat in ("@2x.", "@3x.", "@1x.")):
+            continue
+
         # Reject auto-generated project IDs — local-part that's a long hex string
         # (Sentry/analytics inject these: "605a7baede844d278b89dc95ae0a9123@...")
         if len(local) >= 24 and re.fullmatch(r"[a-f0-9]+", local):
