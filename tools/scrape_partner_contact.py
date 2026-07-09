@@ -38,6 +38,14 @@ CONTACT_PATHS = [
     "/about",
     "/about-us",
     "/",  # homepage as last fallback
+    # v4.3: extended coverage for footer/legal/German B2B
+    "/team",
+    "/company",
+    "/legal",
+    "/support",
+    "/imprint",
+    "/impressum",
+    "/kontakt",
 ]
 
 # Standard browser UA — most sites accept this
@@ -179,6 +187,41 @@ def _clean_email(raw: str) -> str:
     return e
 
 
+def _extract_footer_html(html: str) -> str:
+    """
+    Return just the footer portion of a page.
+
+    Tries in order:
+      1. Last <footer>...</footer> element
+      2. Last <div class="footer"...>...</div> (loose match on class name)
+      3. Bottom 25% of the raw HTML as a fallback
+
+    Business contact emails printed in a footer are almost always the correct
+    BD contact (copyright block, corporate contact block). v4.3 scores these
+    with a strong priority bonus.
+    """
+    if not html:
+        return ""
+
+    # 1. Native <footer> tag — take the LAST occurrence (main site footer)
+    matches = list(re.finditer(
+        r"<footer\b[^>]*>(.*?)</footer>", html, flags=re.IGNORECASE | re.DOTALL
+    ))
+    if matches:
+        return matches[-1].group(1)
+
+    # 2. Divs with a "footer" class name (common pre-HTML5 pattern)
+    matches = list(re.finditer(
+        r'<div\b[^>]*class="[^"]*\bfooter\b[^"]*"[^>]*>(.*?)</div>',
+        html, flags=re.IGNORECASE | re.DOTALL
+    ))
+    if matches:
+        return matches[-1].group(1)
+
+    # 3. Fallback: bottom 25% of the page
+    return html[int(len(html) * 0.75):]
+
+
 def _extract_emails(html: str) -> list[str]:
     """
     Pull all emails from raw HTML. Combines:
@@ -284,10 +327,13 @@ def _extract_emails(html: str) -> list[str]:
     return unique
 
 
-def _score_email(email: str, partner_domain: str = "") -> tuple[int, str]:
+def _score_email(email: str, partner_domain: str = "",
+                 from_footer: bool = False) -> tuple[int, str]:
     """
     Return (priority_score, email). Lower score = higher priority.
     Emails on the partner's own domain get a bonus (subtract 10).
+    v4.3: Emails found in the page footer get an even stronger bonus (subtract 15).
+    Footer emails are almost always the correct BD contact.
     """
     local = email.split("@")[0].lower()
     email_domain = email.split("@")[1].lower() if "@" in email else ""
@@ -308,11 +354,16 @@ def _score_email(email: str, partner_domain: str = "") -> tuple[int, str]:
     if partner_domain and partner_domain in email_domain:
         score -= 10
 
+    # v4.3: strong bonus for emails printed in the site footer
+    if from_footer:
+        score -= 15
+
     return (score, email)
 
 
 def _pick_best_email(emails: list[str], partner_domain: str = "",
-                     allow_last_resort: bool = True) -> str:
+                     allow_last_resort: bool = True,
+                     footer_emails: set = None) -> str:
     """
     Return the highest-priority usable email, or '' if none pass the filter.
 
@@ -328,7 +379,9 @@ def _pick_best_email(emails: list[str], partner_domain: str = "",
     """
     if not emails:
         return ""
-    scored = [_score_email(e, partner_domain) for e in emails]
+    footer_set = footer_emails or set()
+    scored = [_score_email(e, partner_domain, from_footer=(e in footer_set))
+              for e in emails]
     strict = [s for s in scored if s[0] < 999]
 
     # v4.2: Enforce partner-domain match on the strict path
@@ -724,25 +777,164 @@ SOCIAL_DOMAINS = {
 }
 
 
+def _slugify_company(name: str) -> str:
+    """
+    Turn 'ACME Robotics, Inc.' → 'acmerobotics' for guessing Facebook / LinkedIn URLs.
+    Removes punctuation, spaces, and common legal suffixes.
+    """
+    if not name:
+        return ""
+    s = name.lower().strip()
+    # Strip legal suffixes that never appear in social page slugs
+    for suffix in [
+        ", inc.", ", inc", " inc.", " inc",
+        ", ltd.", ", ltd", " ltd.", " ltd", " limited",
+        ", llc", " llc",
+        ", corp.", " corp.", " corporation",
+        " co.", " company", " gmbh", " ag", " s.a.", " sarl",
+    ]:
+        if s.endswith(suffix):
+            s = s[: -len(suffix)].strip()
+    # Kill anything that isn't a letter or digit
+    return re.sub(r"[^a-z0-9]+", "", s)
+
+
+def _slugify_company_hyphen(name: str) -> str:
+    """Same as _slugify_company but keeps hyphens between words (LinkedIn style)."""
+    if not name:
+        return ""
+    s = name.lower().strip()
+    for suffix in [
+        ", inc.", ", inc", " inc.", " inc",
+        ", ltd.", ", ltd", " ltd.", " ltd", " limited",
+        ", llc", " llc",
+        ", corp.", " corp.", " corporation",
+        " co.", " company", " gmbh", " ag", " s.a.", " sarl",
+    ]:
+        if s.endswith(suffix):
+            s = s[: -len(suffix)].strip()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    return s.strip("-")
+
+
+def _fetch_facebook_about(company_name: str) -> list[str]:
+    """
+    v4.3: Fetch Facebook page directly via Jina Reader (JS-rendered).
+    Tries a few candidate slugs + a DDG-discovered URL. Returns extracted emails.
+    """
+    if not company_name:
+        return []
+    emails: list[str] = []
+    tried: set[str] = set()
+
+    # Candidate slugs
+    slug = _slugify_company(company_name)
+    hyphen_slug = _slugify_company_hyphen(company_name)
+    candidates: list[str] = []
+    if slug:
+        candidates.append(f"https://www.facebook.com/{slug}/about")
+        candidates.append(f"https://www.facebook.com/{slug}")
+    if hyphen_slug and hyphen_slug != slug:
+        candidates.append(f"https://www.facebook.com/{hyphen_slug}/about")
+
+    # Discovered slug via DDG
+    for item in _ddg_search(f'"{company_name}" site:facebook.com', max_results=3):
+        url = item.get("url", "")
+        if "facebook.com" in url.lower() and url not in tried:
+            # Normalize to /about
+            m = re.match(r"https?://[^/]*facebook\.com/([^/?#]+)", url)
+            if m:
+                fb_slug = m.group(1)
+                if fb_slug and fb_slug not in ("pages", "profile.php"):
+                    candidates.append(f"https://www.facebook.com/{fb_slug}/about")
+
+    for url in candidates:
+        if url in tried:
+            continue
+        tried.add(url)
+        content = _fetch_jina(url, timeout=15)
+        if content:
+            for e in _extract_emails(content):
+                emails.append(e)
+        if emails:
+            break  # first hit is enough — avoid burning fetches
+
+    return emails
+
+
+def _fetch_linkedin_about(company_name: str) -> list[str]:
+    """
+    v4.3: Fetch LinkedIn company About page directly via Jina Reader.
+    LinkedIn is heavily rate-limited but public /about pages are indexable
+    through Jina. Returns extracted emails.
+    """
+    if not company_name:
+        return []
+    emails: list[str] = []
+    tried: set[str] = set()
+
+    hyphen_slug = _slugify_company_hyphen(company_name)
+    plain_slug = _slugify_company(company_name)
+
+    candidates: list[str] = []
+    if hyphen_slug:
+        candidates.append(f"https://www.linkedin.com/company/{hyphen_slug}/about/")
+        candidates.append(f"https://www.linkedin.com/company/{hyphen_slug}")
+    if plain_slug and plain_slug != hyphen_slug:
+        candidates.append(f"https://www.linkedin.com/company/{plain_slug}/about/")
+
+    # Discovered slug via DDG
+    for item in _ddg_search(f'"{company_name}" site:linkedin.com/company', max_results=3):
+        url = item.get("url", "")
+        m = re.match(r"https?://[^/]*linkedin\.com/company/([^/?#]+)", url, re.IGNORECASE)
+        if m:
+            li_slug = m.group(1)
+            candidates.append(f"https://www.linkedin.com/company/{li_slug}/about/")
+
+    for url in candidates:
+        if url in tried:
+            continue
+        tried.add(url)
+        content = _fetch_jina(url, timeout=15)
+        if content:
+            for e in _extract_emails(content):
+                emails.append(e)
+        if emails:
+            break
+
+    return emails
+
+
 def _social_email_search(company_name: str, partner_domain: str) -> list[tuple[str, str]]:
     """
-    v3.5: swapped from Tavily to DuckDuckGo (free unlimited).
+    v4.3: Try direct Facebook + LinkedIn page fetch via Jina Reader FIRST
+    (catches emails that only appear in the About section, not in Google's index).
+    Falls back to DDG snippet search across all social platforms.
 
-    Searches public social profiles (via DDG → Google index) for emails.
-    Returns list of (email, source) tuples. source ∈ {facebook, linkedin, twitter, instagram}.
-    Only returns emails that pass _clean_email() strict validation (which also
-    rejects placeholder emails like john.doe@ / first.last@).
+    Returns list of (email, source) tuples.
+    source ∈ {facebook, linkedin, twitter, instagram}.
+    Only returns emails that pass _clean_email() strict validation.
     """
     if not company_name:
         return []
 
+    hits: list[tuple[str, str]] = []
+
+    # ── v4.3: Direct fetch of Facebook About via Jina ────────────────────────
+    for e in _fetch_facebook_about(company_name):
+        hits.append((e, "facebook"))
+
+    # ── v4.3: Direct fetch of LinkedIn About via Jina ────────────────────────
+    for e in _fetch_linkedin_about(company_name):
+        hits.append((e, "linkedin"))
+
+    # ── Fallback: DDG snippet search across social platforms ─────────────────
     queries = [
         f'"{company_name}" facebook email contact',
         f'"{company_name}" linkedin email',
         f'"{company_name}" twitter email',
     ]
 
-    hits: list[tuple[str, str]] = []
     for q in queries:
         for item in _ddg_search(q, max_results=5):
             url = item.get("url", "").lower()
@@ -830,6 +1022,7 @@ def scrape_contact(website: str, company_name: str = "",
     combined_html = ""
     all_emails: list[str] = []
     all_phones: list[str] = []
+    footer_emails: set[str] = set()   # v4.3: track which emails came from a footer
     got_any_page = False
 
     for path in CONTACT_PATHS:
@@ -840,11 +1033,20 @@ def scrape_contact(website: str, company_name: str = "",
         if not html:
             continue
         got_any_page = True
-        all_emails.extend(_extract_emails(html))
+        page_emails = _extract_emails(html)
+        all_emails.extend(page_emails)
         all_phones.extend(_extract_phones(html))
         combined_html += "\n" + html
         combined_text += "\n\n" + _html_to_text(html)
-        best_so_far = _pick_best_email(all_emails, partner_domain)
+
+        # v4.3: harvest footer emails separately for priority scoring
+        footer_html = _extract_footer_html(html)
+        if footer_html:
+            for e in _extract_emails(footer_html):
+                footer_emails.add(e)
+
+        best_so_far = _pick_best_email(all_emails, partner_domain,
+                                       footer_emails=footer_emails)
         if best_so_far and len(combined_text) > 3000:
             break
 
@@ -862,10 +1064,11 @@ def scrape_contact(website: str, company_name: str = "",
             unique_emails.append(e)
     result["all_emails"] = unique_emails
 
-    tier1_email = _pick_best_email(unique_emails, partner_domain)
+    tier1_email = _pick_best_email(unique_emails, partner_domain,
+                                   footer_emails=footer_emails)
     if tier1_email:
         result["email"] = tier1_email
-        result["email_source"] = "scraped"
+        result["email_source"] = "footer" if tier1_email in footer_emails else "scraped"
 
     # Extract address + country + phone (LLM fallback for phone) from scraped text
     if combined_text.strip():
