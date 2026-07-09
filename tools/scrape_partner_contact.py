@@ -73,6 +73,10 @@ PLACEHOLDER_LOCAL_PARTS = {
     # v3.7.1: expanded from live-run leaks
     "your", "you", "recipient", "contactname", "clientname",
     "fake", "abc", "xyz", "somebody",
+    # v4.4: leaked in Voxel run — "First Last" / "Doe John" patterns
+    "flast", "f.last", "flastname",
+    "doej", "doejohn", "doej.smith", "d.oe",
+    "fname.lname", "f.l",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.

@@ -328,6 +328,34 @@ def _find_website_via_search(company_name: str, competitor_domain: str = "",
                                    or domain.endswith("." + competitor_domain)):
             continue
 
+        # v4.4: reject staging / dev / test / beta subdomains — these are internal URLs
+        if any(domain.startswith(p) for p in (
+            "staging.", "stg.", "dev.", "beta.", "test.", "sandbox.",
+            "preview.", "qa.", "uat.", "demo."
+        )):
+            continue
+
+        # v4.4: reject spam / coupon / dropshipping-style domain patterns
+        spam_patterns = (
+            "-gsale", "-sale-", "-deal", "-deals", "-shop-", "-buy-",
+            "-outlet", "-discount", "-cheap", "-clearance",
+            "salegoods", "hotdeals", "bigsale", "supersale",
+        )
+        if any(sp in domain for sp in spam_patterns):
+            continue
+
+        # v4.4: reject .gov / .edu unless partner is clearly a govt or educational body
+        name_lower = company_name.lower()
+        is_gov_or_edu_partner = any(kw in name_lower for kw in (
+            "government", "govt", "department of", "ministry of",
+            "university", "college", "institute of technology", "school of",
+        ))
+        if (domain.endswith(".gov") or ".gov." in domain
+                or domain.endswith(".edu") or ".edu." in domain
+                or domain.endswith(".mil")):
+            if not is_gov_or_edu_partner:
+                continue
+
         candidate_url = f"https://{domain}"
 
         # v3.8: verify the candidate really belongs to this company

@@ -306,6 +306,22 @@ STRICT ANTI-HALLUCINATION RULES:
 - Generic terms like "construction firms" or "Fortune 500 companies" — skip.
 - For each company, extract ONLY what is visible in the source — leave blank if not stated.
 
+v4.4 REJECT RULES (very important — most current data-quality issues come from these):
+- REJECT PRODUCTS / SOFTWARE / TECHNOLOGIES — these are NOT companies:
+  * Examples: "SAP Hana", "SAP Ariba", "Microsoft Office", "Salesforce Marketing Cloud",
+    "AWS S3", "Google Cloud Storage", "Windows Server", "Oracle Database"
+  * If the name is a product feature, module, or SKU of a parent brand,
+    output ONLY the parent brand ONCE (e.g., "SAP Hana" + "SAP Ariba" → output "SAP" once).
+- REJECT INVESTORS / VENTURE CAPITAL FIRMS unless the source EXPLICITLY calls them
+  a "strategic partner" or a "channel partner" (funding is not partnership).
+  * Reject: "HG Ventures", "Sequoia Capital", "Andreessen Horowitz", "GV" (Google Ventures)
+- REJECT LAW FIRMS, PR AGENCIES, RECRUITERS — these are vendors, not partners.
+- REJECT GOVERNMENT AGENCIES unless the source is a case study / customer story
+  (e.g., "Department of Transportation" is a customer if named in a case study,
+  but reject if it just appears in a legal footer).
+- DEDUP AT PARENT-BRAND LEVEL — if you see "SAP Ariba" AND "SAP Hana" in the same
+  source, output just one entry named "SAP".
+
 CONFIDENCE TAGGING (very important for data quality):
 - confidence = "high"   → both the company name AND its logo/website are visible in the source (e.g., a partner-tile with logo+link)
 - confidence = "medium" → the company name is clearly mentioned (e.g., in a customer quote or press release) but no website link is visible
