@@ -244,6 +244,14 @@ _DIRECTORY_HINTS = (
     "yellowpages", "yell.com", "hoovers.com", "d-b.net", "dnb.com",
     "companycheck", "companieshouse", "endole.co.uk", "corporationwiki",
     "buzzfile", "ownership.com", "leadar.io", "sagentia.com",
+    # v4.6: industry-directory / trade-portal domains that leaked through
+    # (e.g., glassglobal.com was picked as "Carlex Glass" website)
+    "glassglobal.com", "glassonline.com", "glassmagazine.com",
+    "constructionreview", "constructiondive.com",
+    "logisticsmgmt.com", "logisticsviewpoints",
+    "industryweek.com", "industrytoday.com",
+    "prnewswire", "businesswire", "prweb.com",
+    "trade.gov", "trademap.org", "importgenius", "panjiva",
 )
 
 

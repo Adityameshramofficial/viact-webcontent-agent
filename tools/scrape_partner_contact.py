@@ -517,6 +517,20 @@ def _normalize_phone(raw: str) -> str:
     if len(digits_only) < 7 or len(digits_only) > 15:
         return ""
 
+    # v4.6: Reject raw digit blobs — real phone numbers on websites always have
+    # SOME formatting (+ prefix, spaces, dashes, parens, or dots).
+    # A bare 9-15 digit string with no separators is almost always JSON/JS/asset
+    # data leakage (e.g., 285121676, 42382906589366).
+    has_format = any(c in cleaned for c in "+ -().")
+    if not has_format:
+        # Allow ONLY exact US-style 10 digits (area code 2-9) or 11 (1 + area code 2-9)
+        if not (
+            (len(digits_only) == 10 and digits_only[0] in "23456789")
+            or (len(digits_only) == 11 and digits_only[0] == "1"
+                and digits_only[1] in "23456789")
+        ):
+            return ""
+
     # Reject if digits look like a year, date, or product code
     if re.fullmatch(r"20\d{2}", digits_only):
         return ""
