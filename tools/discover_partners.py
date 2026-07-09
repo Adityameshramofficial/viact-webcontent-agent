@@ -322,6 +322,33 @@ v4.4 REJECT RULES (very important — most current data-quality issues come from
 - DEDUP AT PARENT-BRAND LEVEL — if you see "SAP Ariba" AND "SAP Hana" in the same
   source, output just one entry named "SAP".
 
+v4.7 VIACT-RELEVANCE FILTER (CRITICAL — this is the final BD-quality gate):
+The output list will be used by viAct.ai's BD team for outreach.
+viAct is an AI-powered CONSTRUCTION SITE SAFETY and video analytics platform.
+Their ideal partner / customer looks like ONE of:
+  ✓ Construction: general contractors, developers, EPC, sub-contractors, MEP firms
+  ✓ Engineering / architecture / BIM / digital twin / 3D reality-capture firms
+  ✓ Real estate / infrastructure developers (highways, tunnels, mines, oil & gas facilities)
+  ✓ EHS (Environment, Health, Safety) consulting or software companies
+  ✓ Site documentation, drone / photo progress tracking, project management for construction
+  ✓ Wearable tech / IoT / video-analytics vendors serving construction or heavy industry
+  ✓ Facility management or industrial safety (large fixed sites: plants, warehouses)
+
+REJECT companies clearly outside this market:
+  ✗ Retail, e-commerce, consumer brands (Macy's, Dick's, Albertsons, Saks, Walmart)
+  ✗ CPG / food / beverage / grocery (Clorox, Pepsi, Coca-Cola, Kraft)
+  ✗ Automotive OEMs / auto parts (Piston Automotive, Ford, Toyota, Carlex Glass)
+  ✗ Insurance carriers (Tokio Marine — unless clearly construction-insurance specific)
+  ✗ Pure logistics / freight / shipping / ports (DP World, APM Terminals, Ceva, Maersk)
+  ✗ Cold storage / warehouse-only ops (Americold, Lineage Logistics)
+  ✗ Banks / investment firms / hedge funds
+  ✗ Generic enterprise software (Salesforce, HubSpot, Zendesk — no construction angle)
+  ✗ Restaurants, hotels, hospitality
+  ✗ Healthcare providers / hospitals (unless explicitly building/facility safety focused)
+
+For each company, set `viact_relevant` = "yes" only if it fits an inclusion category above.
+On borderline / unclear cases, set "no" (better to miss one than pollute the sheet).
+
 CONFIDENCE TAGGING (very important for data quality):
 - confidence = "high"   → both the company name AND its logo/website are visible in the source (e.g., a partner-tile with logo+link)
 - confidence = "medium" → the company name is clearly mentioned (e.g., in a customer quote or press release) but no website link is visible
@@ -337,7 +364,8 @@ OUTPUT FORMAT (strict JSON):
       "description": "...",
       "website": "...",
       "country": "...",
-      "confidence": "high" | "medium"
+      "confidence": "high" | "medium",
+      "viact_relevant": "yes" | "no"
     }}
   ]
 }}
@@ -364,6 +392,7 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
         data = json.loads(raw)
         companies = data.get("companies", [])
         cleaned = []
+        dropped_irrelevant = 0
         for c in companies:
             if not isinstance(c, dict) or not c.get("name", "").strip():
                 continue
@@ -371,7 +400,19 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
             if conf not in ("high", "medium"):
                 continue  # drop "low" or unknown
             c["confidence"] = conf
+
+            # v4.7: viAct-relevance filter — drop partners that don't fit
+            # construction / EHS / industrial-safety BD profile
+            relevance = (c.get("viact_relevant") or "").lower().strip()
+            if relevance == "no":
+                dropped_irrelevant += 1
+                continue
+            # If field missing (older prompt / LLM slip), keep the row —
+            # relevance filter is best-effort, not a hard requirement.
+
             cleaned.append(c)
+        if dropped_irrelevant:
+            print(f"  [extract] dropped {dropped_irrelevant} viAct-irrelevant partners")
         return cleaned
     except Exception as e:
         print(f"  [extract] LLM failed: {e}")
