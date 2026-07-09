@@ -322,32 +322,53 @@ v4.4 REJECT RULES (very important — most current data-quality issues come from
 - DEDUP AT PARENT-BRAND LEVEL — if you see "SAP Ariba" AND "SAP Hana" in the same
   source, output just one entry named "SAP".
 
-v4.7 VIACT-RELEVANCE FILTER (CRITICAL — this is the final BD-quality gate):
+v4.8 VIACT-RELEVANCE FILTER (CRITICAL — this is the final BD-quality gate):
 The output list will be used by viAct.ai's BD team for outreach.
-viAct is an AI-powered CONSTRUCTION SITE SAFETY and video analytics platform.
-Their ideal partner / customer looks like ONE of:
-  ✓ Construction: general contractors, developers, EPC, sub-contractors, MEP firms
-  ✓ Engineering / architecture / BIM / digital twin / 3D reality-capture firms
-  ✓ Real estate / infrastructure developers (highways, tunnels, mines, oil & gas facilities)
-  ✓ EHS (Environment, Health, Safety) consulting or software companies
-  ✓ Site documentation, drone / photo progress tracking, project management for construction
-  ✓ Wearable tech / IoT / video-analytics vendors serving construction or heavy industry
-  ✓ Facility management or industrial safety (large fixed sites: plants, warehouses)
+viAct is an AI-powered INDUSTRIAL SAFETY + video analytics platform (CCTV +
+computer vision + AI bounding boxes) serving 5 industry verticals:
+  Construction, Manufacturing, Mining, Oil & Gas, Logistics.
+Target buyers: EHS Directors, HSE Managers, Plant Managers, Safety Officers
+at industrial enterprises anywhere in the world (APAC focus).
 
-REJECT companies clearly outside this market:
-  ✗ Retail, e-commerce, consumer brands (Macy's, Dick's, Albertsons, Saks, Walmart)
-  ✗ CPG / food / beverage / grocery (Clorox, Pepsi, Coca-Cola, Kraft)
-  ✗ Automotive OEMs / auto parts (Piston Automotive, Ford, Toyota, Carlex Glass)
-  ✗ Insurance carriers (Tokio Marine — unless clearly construction-insurance specific)
-  ✗ Pure logistics / freight / shipping / ports (DP World, APM Terminals, Ceva, Maersk)
-  ✗ Cold storage / warehouse-only ops (Americold, Lineage Logistics)
-  ✗ Banks / investment firms / hedge funds
-  ✗ Generic enterprise software (Salesforce, HubSpot, Zendesk — no construction angle)
-  ✗ Restaurants, hotels, hospitality
-  ✗ Healthcare providers / hospitals (unless explicitly building/facility safety focused)
+INCLUDE (set viact_relevant="yes") any company that owns, operates, or serves
+physical industrial sites where worker safety, PPE compliance, or equipment
+monitoring matters:
+  ✓ Construction: general contractors, developers, EPC, sub-contractors, MEP
+  ✓ Manufacturing plants of ANY kind — automotive parts (Piston Automotive),
+    glass (NSG Group), CPG bottling / packaging (Clorox, Pepsi, Coca-Cola
+    plants), chemicals, textiles, electronics, food processing (Canfisco)
+  ✓ Mining, quarrying, aggregate, cement, steel, heavy metals
+  ✓ Oil & Gas: upstream (offshore, drilling), midstream (pipelines), downstream
+    (refineries, petrochem)
+  ✓ Logistics: fulfillment warehouses (Amazon, Walmart DCs), 3PL (Verst, Ceva),
+    ports & terminals (DP World, APM Terminals, Port of Virginia),
+    cold storage (Americold, Lineage Logistics)
+  ✓ Engineering / BIM / digital twin / 3D reality-capture serving industry
+  ✓ Real estate / infrastructure developers (highways, tunnels, dams, airports)
+  ✓ EHS (Environment, Health, Safety) consulting or software
+  ✓ Site documentation, drone / photo / video progress-tracking
+  ✓ Wearable tech / IoT / edge-camera vendors for industrial workers
+  ✓ Loading-dock / material-handling / heavy-equipment vendors (Rite Hite)
+  ✓ Facility management at large fixed industrial sites
 
-For each company, set `viact_relevant` = "yes" only if it fits an inclusion category above.
-On borderline / unclear cases, set "no" (better to miss one than pollute the sheet).
+REJECT (set viact_relevant="no") companies clearly OUTSIDE industrial-safety AI:
+  ✗ Retail STORES (physical shops or e-commerce) — Macy's, Dick's, Albertsons,
+    Saks, Home Depot, Michaels, Lowe's, CVS retail pharmacies. NOTE: retail
+    warehouses/DCs are IN-scope, but store-only chains are OUT.
+  ✗ Banks / investment firms / VC / hedge funds (NewRoad Capital)
+  ✗ Insurance carriers (Tokio Marine) — unless construction-insurance specific
+  ✗ Hospitality / hotels / restaurants / travel (Hotel SAAS, Amadeus)
+  ✗ Generic enterprise SaaS with no industrial hook (Salesforce, HubSpot,
+    Zendesk, Sage accounting, Eclipse IDE, WordPress plugins like Elementor,
+    Piotnet, FluentAffiliate, Vbout, FlowMattic, BitFlows)
+  ✗ Consumer product / gadget makers (MTech knives, Whitestone accessories)
+  ✗ Telecom carriers (Ericsson-as-carrier — but Ericsson industrial IoT is OK)
+  ✗ Labor unions (UAW Union)
+  ✗ Healthcare providers / hospitals / clinics (unless facility-safety focused)
+  ✗ Media / news / marketing agencies
+
+On borderline / unclear cases (e.g., "MSI" — too ambiguous), set "no"
+(better to miss one than pollute the sheet).
 
 CONFIDENCE TAGGING (very important for data quality):
 - confidence = "high"   → both the company name AND its logo/website are visible in the source (e.g., a partner-tile with logo+link)
