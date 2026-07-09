@@ -2236,13 +2236,25 @@ def _norm_domain_for_dedup(website: str) -> str:
 
 
 def _norm_name_for_dedup(name: str) -> str:
-    """Lowercase + strip suffixes — same logic as discover_partners._norm_name."""
+    """Lowercase + strip suffixes — same logic as discover_partners._norm_name.
+
+    v4.9: also returns the space-collapsed variant so 'Rite Hite' and 'RiteHite'
+    match. Caller stores both forms in the dedup set; input is checked against
+    both. Reduces duplicate-partner rows caused by whitespace variance.
+    """
     import re as _re
     n = name.lower().strip()
     n = _re.sub(r"[,\.]", "", n)
     n = _re.sub(r"\b(inc|llc|ltd|limited|corp|corporation|co|gmbh|pvt|private)\b", "", n)
     n = _re.sub(r"\s+", " ", n).strip()
     return n
+
+
+def _norm_name_collapsed(name: str) -> str:
+    """v4.9: strip ALL non-alphanumeric — matches 'RiteHite' with 'Rite Hite'."""
+    import re as _re
+    n = _norm_name_for_dedup(name)
+    return _re.sub(r"[^a-z0-9]+", "", n)
 
 
 def _ensure_partner_columns(service, sheet_id: str, tab_name: str) -> None:
@@ -2290,6 +2302,10 @@ def _read_existing_partners(service, sheet_id: str, tab_name: str) -> tuple[set,
                 domains.add(d)
         if name:
             names.add(_norm_name_for_dedup(name))
+            # v4.9: also add the space-collapsed form for whitespace-variant dedup
+            collapsed = _norm_name_collapsed(name)
+            if collapsed:
+                names.add(collapsed)
     return domains, names
 
 
@@ -2378,11 +2394,15 @@ def push_partners(competitor_tab: str, partners: list[dict], sheet_id: str = "")
         website = (p.get("website") or "").strip()
         norm_d = _norm_domain_for_dedup(website)
         norm_n = _norm_name_for_dedup(name)
+        norm_n_collapsed = _norm_name_collapsed(name)  # v4.9
 
         # Dedup: domain first (stronger signal), then name
         if norm_d and norm_d in existing_domains:
             continue
         if norm_n in existing_names:
+            continue
+        # v4.9: catch whitespace-variant duplicates (Rite Hite vs RiteHite)
+        if norm_n_collapsed and norm_n_collapsed in existing_names:
             continue
 
         new_rows.append([
@@ -2403,6 +2423,8 @@ def push_partners(competitor_tab: str, partners: list[dict], sheet_id: str = "")
         if norm_d:
             existing_domains.add(norm_d)
         existing_names.add(norm_n)
+        if norm_n_collapsed:
+            existing_names.add(norm_n_collapsed)  # v4.9
 
     if not new_rows:
         return 0

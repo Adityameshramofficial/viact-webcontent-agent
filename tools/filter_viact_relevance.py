@@ -112,9 +112,85 @@ def _classify(client, name, description, website):
             return "unknown", f"llm error: {e2}"
 
 
+def _filter_one_tab(client, service, sheet_id, tab, dry_run=False):
+    """Classify + delete non-relevant rows in a single tab. Returns (kept, dropped)."""
+    try:
+        result = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=f"{tab}!A:C",
+        ).execute()
+    except Exception as e:
+        print(f"  ERROR reading {tab}: {e}")
+        return 0, 0
+    values = result.get("values", [])
+    if not values or len(values) < 2:
+        print(f"  {tab}: empty — skip")
+        return 0, 0
+    print(f"  {tab}: {len(values) - 1} data rows")
+
+    to_delete = []
+    kept = 0
+    for idx, row in enumerate(values):
+        if idx == 0:
+            continue
+        if not row:
+            continue
+        name = row[0].strip() if len(row) > 0 else ""
+        desc = row[1].strip() if len(row) > 1 else ""
+        website = row[2].strip() if len(row) > 2 else ""
+        if not name:
+            continue
+
+        verdict, reason = _classify(client, name, desc, website)
+        if verdict == "no":
+            to_delete.append((idx, name))
+        else:
+            kept += 1
+        time.sleep(0.15)
+
+    if not to_delete:
+        print(f"    {tab}: {kept} kept, 0 dropped")
+        return kept, 0
+
+    if dry_run:
+        print(f"    {tab}: {kept} kept, {len(to_delete)} would be dropped (dry-run)")
+        return kept, len(to_delete)
+
+    # Delete rows bottom-up
+    meta = service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    tab_sheet_id = None
+    for s in meta.get("sheets", []):
+        if s["properties"]["title"] == tab:
+            tab_sheet_id = s["properties"]["sheetId"]
+            break
+    if tab_sheet_id is None:
+        print(f"    ERROR: tab {tab} not in metadata — skipped delete")
+        return kept, 0
+
+    to_delete.sort(key=lambda x: -x[0])
+    requests = [{
+        "deleteDimension": {
+            "range": {
+                "sheetId": tab_sheet_id,
+                "dimension": "ROWS",
+                "startIndex": idx,
+                "endIndex": idx + 1,
+            }
+        }
+    } for idx, _ in to_delete]
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id,
+        body={"requests": requests},
+    ).execute()
+    print(f"    {tab}: {kept} kept, {len(to_delete)} dropped")
+    return kept, len(to_delete)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("tab", help="Competitor tab name, e.g., Voxel")
+    parser.add_argument("tab", nargs="?", help="Competitor tab name, e.g., Voxel")
+    parser.add_argument("--all", action="store_true",
+                        help="Run on every Track-status competitor tab")
     parser.add_argument("--dry-run", action="store_true",
                         help="Classify only, do not delete")
     args = parser.parse_args()
@@ -125,7 +201,31 @@ def main():
     sheet_id = get_env("PARTNER_SHEET_ID")
     service = get_sheets_service()
 
-    # Read cols A (Name), B (Description), C (Website)
+    if args.all:
+        # v4.9: batch mode — process every Track-status competitor tab
+        from push_to_sheets import read_tracked_competitors
+        tracked = read_tracked_competitors()
+        if not tracked:
+            print("No Track-status competitors — nothing to do.")
+            return
+        print(f"=== Batch filter across {len(tracked)} Track-status tabs ===")
+        total_kept = total_dropped = 0
+        for t in tracked:
+            tab = t.get("name", "").strip()
+            if not tab:
+                continue
+            print(f"\n[{tab}]")
+            k, d = _filter_one_tab(client, service, sheet_id, tab, dry_run=args.dry_run)
+            total_kept += k
+            total_dropped += d
+        print(f"\n=== TOTAL: {total_kept} kept, {total_dropped} dropped across {len(tracked)} tabs ===")
+        return
+
+    if not args.tab:
+        print("ERROR: specify a tab name or use --all")
+        sys.exit(1)
+
+    # Single-tab mode (verbose per-row output)
     result = service.spreadsheets().values().get(
         spreadsheetId=sheet_id,
         range=f"{args.tab}!A:C",

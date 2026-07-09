@@ -37,6 +37,38 @@ Safety Officers.
 
 ## Changelog
 
+### v4.9 — Whitespace-variant dedup + batch filter + cross-vendor detector
+
+**Why**: (a) `Rite Hite` and `RiteHite` both landed in Voxel — dedup was
+case+suffix aware but not whitespace-collapsing. (b) v4.8 filter was only run
+on Voxel — Autodesk, Procore, Cryotos, Openspace, Matterport, ClickUp,
+Trimble, Intenseye, Protex, and others still carried pre-filter noise.
+(c) A partner appearing across multiple competitor tabs is a strong buying
+signal — no way to see this before.
+
+**What**:
+1. `_norm_name_collapsed()` in `tools/push_to_sheets.py` — strips ALL
+   non-alphanumeric characters. Dedup set now stores both the "clean-with-
+   spaces" and "collapsed" forms. Rejects whitespace-variant duplicates on
+   push.
+2. `filter_viact_relevance.py --all` — batch mode iterates every Track-
+   status competitor tab, classifies each row, deletes non-relevant ones.
+3. `tools/detect_cross_tab_leads.py` — reads all competitor tabs, finds
+   partners appearing in 2+ tabs, writes a new `Cross-Vendor Leads` tab
+   with columns Company Name | Website | Email | Also In | Signal Strength
+   ("MEDIUM" for 2 tabs, "HIGH" for 3, "VERY HIGH" for 4+). Uses collapsed-
+   name matching so whitespace variants merge.
+
+**Files**:
+- `tools/push_to_sheets.py` — dedup normalization
+- `tools/filter_viact_relevance.py` — `--all` batch mode
+- `tools/detect_cross_tab_leads.py` (new)
+
+**Ran on**: 16 Track-status competitor tabs. Also generated `Cross-Vendor
+Leads` tab.
+
+---
+
 ### v4.8 — Correct viAct scope (5 verticals, not just construction)
 
 **Why**: v4.7 filter was too narrow — treated viAct as construction-only.
