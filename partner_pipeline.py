@@ -23,7 +23,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
 
 from discover_partners import COMPETITOR_MAP, discover_partners
-from enrich_partners import enrich_tab
+from enrich_partners import enrich_tab, _find_website_via_search
 from push_to_sheets import push_partners, push_competitors, read_tracked_competitors
 
 
@@ -98,6 +98,29 @@ def run_one(slug: str, name_override: str = "", domain_override: str = "",
         log("  No partners discovered.")
         return {"slug": slug, "discovered": 0, "appended": 0, "error": None}
 
+    # v4.5: Discover partner websites BEFORE pushing to sheet, so rows appear
+    # complete (Name + Description + Website) at push time. This matches the
+    # canonical sequence: name → description → website → email → rest.
+    actual_domain = domain_override or (
+        COMPETITOR_MAP.get(slug, {}).get("domain", "")
+    )
+    log(f"  [Stage 4] Discovering websites for {len(rows)} partners...")
+    website_hits = 0
+    for i, r in enumerate(rows, 1):
+        if r.get("website"):
+            continue
+        found = _find_website_via_search(
+            r.get("name", ""),
+            competitor_domain=actual_domain,
+            context_hint=r.get("description", ""),
+        )
+        if found:
+            r["website"] = found
+            website_hits += 1
+        if i % 5 == 0 or i == len(rows):
+            log(f"    [{i}/{len(rows)}] websites found so far: {website_hits}")
+    log(f"  [Stage 4] {website_hits}/{len(rows)} websites discovered before push")
+
     try:
         appended = push_partners(tab, rows)
         log(f"  Sheet: {appended} new row(s) appended (of {len(rows)} discovered)")
@@ -110,11 +133,7 @@ def run_one(slug: str, name_override: str = "", domain_override: str = "",
     # This runs on the exact rows we just pushed (plus any older blank ones).
     log(f"  [Agent 3] Enriching contacts for '{tab}'...")
     try:
-        # domain_override is the competitor's own domain from the slug lookup;
-        # for ad-hoc competitors we use domain_override argument directly.
-        actual_domain = domain_override or (
-            COMPETITOR_MAP.get(slug, {}).get("domain", "")
-        )
+        # `actual_domain` already computed above for Stage 4 website discovery.
         enrich_result = enrich_tab(
             tab,
             competitor_domain=actual_domain,
