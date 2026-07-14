@@ -77,6 +77,9 @@ PLACEHOLDER_LOCAL_PARTS = {
     "flast", "f.last", "flastname",
     "doej", "doejohn", "doej.smith", "d.oe",
     "fname.lname", "f.l",
+    # v4.9.1: leaked in Procore run — "firstlast" concatenated pattern
+    "firstlast", "first.last", "firstname.last", "first.lastname",
+    "lastname.firstname", "firstinitial", "last.first",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
