@@ -1,10 +1,20 @@
 {
-  "total_pages": 136,
-  "this_week_pages": 4,
+  "total_pages": 138,
+  "this_week_pages": 6,
   "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-14",
+  "last_run_date": "2026-07-15",
   "latest_topics": [
+    {
+      "date": "2026-07-15",
+      "topic": "How AI-Enabled CCTV is Revolutionizing Construction Site Safety: A Gui",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-15",
+      "topic": "Construction Site Safety Risks Remain High",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-14",
       "topic": "Construction Site Safety in Singapore",
@@ -19,19 +29,35 @@
       "date": "2026-07-13",
       "topic": "Construction Site Safety: AI Surveillance",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-13",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-10",
-      "topic": "How AI is Revolutionizing Construction Site Safety and Reducing Worker",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-15",
+      "topic": "How AI-Enabled CCTV is Revolutionizing Construction Site Safety: A Gui",
+      "content_type": "Blog",
+      "meta_title": "How AI-Enabled CCTV is Revolutionizing Construction Site Safety: Singapore ",
+      "meta_desc": "Enhance site safety and reduce incidents with AI-powered CCTV monitoring in Singapore and UAE construction sites",
+      "keyword": "AI-enabled CCTV construction site safety",
+      "subheadline": "Enhance site safety and reduce incidents with AI-powered CCTV monitoring",
+      "problem": "Construction sites are inherently hazardous, with high risks of accidents and injuries. In Singapore and the UAE, regulatory bodies have implemented strict guidelines to ensure site safety, but incide",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "The Singapore MOM requires construction sites to implement safety measures to prevent accidents and injuries, including ",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-15",
+      "topic": "Construction Site Safety Risks Remain High",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation Using AI | viAct",
+      "meta_desc": "viAct's AI-powered construction site safety automation solution reduces risks, improves compliance, and saves costs.",
+      "keyword": "Construction Site Safety Automation Using AI",
+      "subheadline": "According to Singapore's MOM, 10.3% of construction workers are injured on site annually.",
+      "problem": "Construction site accidents are a major concern, with 10.3% of workers injured annually in Singapore (MOM). The risk of injury or fatality is high, and companies face significant financial and reputat",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Using AI?",
+      "faq_a": "MOM WSH Act requires construction site operators to implement safety measures to reduce risks.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-14",
       "topic": "Construction Site Safety in Singapore",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require for construction site safety?",
       "faq_a": "MOM requires safety measures for construction sites",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-14",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Site Safety",
-      "meta_desc": "Reduce construction site risks with viAct's real-time monitoring and automated alerts.",
-      "keyword": "construction site safety automation",
-      "subheadline": "90% of construction sites experience safety incidents, costing $2.5M+ per project.",
-      "problem": "Construction sites face high risks, with 50% TRIR and 65% LTI rates, affecting 32,000+ workers globally.",
-      "faq_q": "What does Singapore MOM require for Real-Time Construction Site Safety Automation Solutions?",
-      "faq_a": "Regular safety audits and risk assessments.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-13",
-      "topic": "Construction Site Safety: AI Surveillance",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety: AI Surveillance",
-      "meta_desc": "AI-powered surveillance tech reduces construction site injury risks",
-      "keyword": "construction site safety",
-      "subheadline": "Reducing risks with AI-powered tech",
-      "problem": "Construction sites face high injury risks",
-      "faq_q": "What does Singapore MOM require regarding construction site safety?",
-      "faq_a": "Employers must ensure worker safety.",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-14T11:48:55.797008+05:30"
+  "generated_at": "2026-07-15T11:50:45.508815+05:30"
 }
