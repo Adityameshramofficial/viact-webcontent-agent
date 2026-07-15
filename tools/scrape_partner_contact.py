@@ -80,6 +80,9 @@ PLACEHOLDER_LOCAL_PARTS = {
     # v4.9.1: leaked in Procore run — "firstlast" concatenated pattern
     "firstlast", "first.last", "firstname.last", "first.lastname",
     "lastname.firstname", "firstinitial", "last.first",
+    # v4.9.2: leaked in Autodesk run — "jane d" / "jane e" concat patterns
+    "janed", "janee", "janes", "janeb", "janep",
+    "johnd", "johne", "johns", "johnp", "johnb",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
