@@ -2220,6 +2220,7 @@ PARTNER_COLUMNS = [
     "Email Source",      # I — scraped | tavily | pattern_verified | whois
     "Discovered Via",    # J — A1:sitemap | A2:homepage | A3:patterns | A4:site-search | A5:news | A6:customers
     "Discovered At",     # K — YYYY-MM-DD
+    "Relationship",      # L — v4.11: Customer | Channel Partner | Integration | Unknown
 ]
 
 
@@ -2417,6 +2418,7 @@ def push_partners(competitor_tab: str, partners: list[dict], sheet_id: str = "")
             (p.get("email_source") or "").strip(),       # Email Source
             p.get("discovered_via", ""),
             today_str,
+            (p.get("relationship") or "Unknown").strip(),  # v4.11 Relationship
         ])
 
         # Update local sets so duplicates within the same batch get dropped too

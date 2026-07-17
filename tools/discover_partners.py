@@ -393,6 +393,24 @@ CONFIDENCE TAGGING (very important for data quality):
 
 Only output "high" and "medium". Never output "low".
 
+v4.11 RELATIONSHIP CLASSIFICATION (add per company):
+Classify each company by HOW it appears in the source relative to {competitor_name}:
+- "Customer" — source explicitly indicates the company USES {competitor_name}'s
+  product. Signals: case study, testimonial, customer story, "our customer",
+  "chose us", "trusted by", client logo wall, "used by", success story.
+- "Channel Partner" — the company RESELLS, distributes, or delivers
+  {competitor_name}'s product. Signals: reseller, distributor, authorized
+  partner, channel partner, VAR (value-added reseller), sales partner,
+  systems integrator, implementation partner, "certified partner".
+- "Integration" — technology / API partner. Signals: technology partner,
+  integration, "works with", "integrates with", API partner, app marketplace
+  listing on {competitor_name}'s side.
+- "Unknown" — the relationship is not clearly stated in the source.
+
+If a company appears BOTH as customer and partner, prefer "Customer"
+(strongest BD signal — they actively use the product, so viAct can pitch as
+alternative).
+
 OUTPUT FORMAT (strict JSON):
 {{
   "companies": [
@@ -402,7 +420,8 @@ OUTPUT FORMAT (strict JSON):
       "website": "...",
       "country": "...",
       "confidence": "high" | "medium",
-      "viact_relevant": "yes" | "no"
+      "viact_relevant": "yes" | "no",
+      "relationship": "Customer" | "Channel Partner" | "Integration" | "Unknown"
     }}
   ]
 }}
@@ -456,6 +475,12 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
             if not has_desc and not has_web:
                 dropped_irrelevant += 1
                 continue
+
+            # v4.11: normalize relationship field
+            rel = (c.get("relationship") or "").strip()
+            if rel not in ("Customer", "Channel Partner", "Integration", "Unknown"):
+                rel = "Unknown"
+            c["relationship"] = rel
 
             cleaned.append(c)
         if dropped_irrelevant:
