@@ -163,6 +163,21 @@ def _verify_website_belongs_to_company(url: str, company_name: str,
             if hint_has and page_has_bad and not page_has_good:
                 return False
 
+        # v4.10: reject if page appears to be about an INDIVIDUAL PERSON
+        # (politician, artist, blogger) rather than a company.
+        # Root cause: "Lodha" (real estate company) matched "mangalprabhatlodha.com"
+        # which is the chairman's personal politician site. Same for other founder-
+        # named sites that get mistaken for the company.
+        personal_signals = [
+            "personal blog", "my website", "about me", "member of parliament",
+            "mla of", "mp of", "senator", "author of", "artist", "musician",
+            "portfolio site", "instagram influencer", "youtube channel",
+            "born in", "born on", "date of birth", "biography of", "biografia",
+        ]
+        page_lower_full = page_blob
+        if any(sig in page_lower_full for sig in personal_signals):
+            return False
+
     # Any other case (including domain-match + hint present) → LLM check.
     # The hint's purpose is to catch namesakes, so always let LLM look.
 
@@ -236,6 +251,14 @@ _NOT_A_WEBSITE_DOMAIN = {
     "zoominfo.com", "rocketreach.co", "hunter.io", "snov.io",
     "apollo.io", "leadiq.com", "signalhire.com", "clearbit.com",
     "kaspr.io", "cognism.com", "seamless.ai",
+    # v4.10: app-store / marketplace / reverse-listing URLs
+    # These are where a company is LISTED, not their own site.
+    "aptoide.com", "aptoide.co", "apps.apple.com", "play.google.com",
+    "microsoft.com/store", "chrome.google.com/webstore",
+    "marketplace.procore.com", "marketplace.atlassian.com",
+    "appsource.microsoft.com", "appexchange.salesforce.com",
+    "workspace.google.com/marketplace", "shopify.com/apps",
+    "wordpress.org/plugins", "chromewebstore.google.com",
 }
 
 # v3.7.1: expanded — many company-lookup / registry sites gave false positives

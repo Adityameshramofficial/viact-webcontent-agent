@@ -306,6 +306,22 @@ STRICT ANTI-HALLUCINATION RULES:
 - Generic terms like "construction firms" or "Fortune 500 companies" — skip.
 - For each company, extract ONLY what is visible in the source — leave blank if not stated.
 
+v4.10 REVERSE-LISTING DETECTION (critical — avoids picking up competitor's own
+integration platforms as their partners):
+- If the source content mentions the competitor is "available on", "listed on",
+  "integrated with", or "part of the marketplace of" a platform, DO NOT extract
+  that platform as a partner. Examples:
+    * "OpticVyu available on Procore Marketplace" → Procore is NOT OpticVyu's
+      partner; OpticVyu is listed there. SKIP Procore.
+    * "Available on Autodesk Construction Cloud" → SKIP Autodesk.
+    * "Salesforce AppExchange listing" → SKIP Salesforce.
+    * "Microsoft Azure Marketplace" → SKIP Microsoft.
+- These platforms are ECOSYSTEM listings where the COMPETITOR is the seller,
+  not the buyer. They represent reverse relationships and pollute the BD list.
+- Signal phrases to watch: "available on", "listed on", "find us on",
+  "download from", "app store", "marketplace listing", "certified integration",
+  "AppExchange", "app directory".
+
 v4.4 REJECT RULES (very important — most current data-quality issues come from these):
 - REJECT PRODUCTS / SOFTWARE / TECHNOLOGIES — these are NOT companies:
   * Examples: "SAP Hana", "SAP Ariba", "Microsoft Office", "Salesforce Marketing Cloud",
@@ -430,6 +446,16 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
                 continue
             # If field missing (older prompt / LLM slip), keep the row —
             # relevance filter is best-effort, not a hard requirement.
+
+            # v4.10: Drop low-confidence rows — if BOTH description AND website
+            # are missing, the partner name has no context. These pollute the
+            # sheet with empty rows (e.g., "Spacematrix", "Lisual", "GMR" with
+            # nothing else). Confidence signal was too weak to trust.
+            has_desc = bool((c.get("description") or "").strip())
+            has_web = bool((c.get("website") or "").strip())
+            if not has_desc and not has_web:
+                dropped_irrelevant += 1
+                continue
 
             cleaned.append(c)
         if dropped_irrelevant:
