@@ -306,21 +306,11 @@ STRICT ANTI-HALLUCINATION RULES:
 - Generic terms like "construction firms" or "Fortune 500 companies" — skip.
 - For each company, extract ONLY what is visible in the source — leave blank if not stated.
 
-v4.10 REVERSE-LISTING DETECTION (critical — avoids picking up competitor's own
-integration platforms as their partners):
-- If the source content mentions the competitor is "available on", "listed on",
-  "integrated with", or "part of the marketplace of" a platform, DO NOT extract
-  that platform as a partner. Examples:
-    * "OpticVyu available on Procore Marketplace" → Procore is NOT OpticVyu's
-      partner; OpticVyu is listed there. SKIP Procore.
-    * "Available on Autodesk Construction Cloud" → SKIP Autodesk.
-    * "Salesforce AppExchange listing" → SKIP Salesforce.
-    * "Microsoft Azure Marketplace" → SKIP Microsoft.
-- These platforms are ECOSYSTEM listings where the COMPETITOR is the seller,
-  not the buyer. They represent reverse relationships and pollute the BD list.
-- Signal phrases to watch: "available on", "listed on", "find us on",
-  "download from", "app store", "marketplace listing", "certified integration",
-  "AppExchange", "app directory".
+v4.13 NOTE ON MARKETPLACE / INTEGRATION LISTINGS:
+Reversing an earlier v4.10 rule — "OpticVyu is available on Autodesk
+Construction Cloud" means Autodesk IS an integration partner of OpticVyu.
+DO extract those platforms as Integration partners (marketplaces + app
+stores create genuine partnerships).
 
 v4.4 REJECT RULES (very important — most current data-quality issues come from these):
 - REJECT PRODUCTS / SOFTWARE / TECHNOLOGIES — these are NOT companies:
@@ -393,38 +383,40 @@ CONFIDENCE TAGGING (very important for data quality):
 
 Only output "high" and "medium". Never output "low".
 
-v4.12 CHANNEL-PARTNER-ONLY FILTER (CRITICAL — this is a hard requirement):
-Extract ONLY companies that are CHANNEL PARTNERS of {competitor_name}.
-DO NOT extract Customers, Integration partners, or any other relationship.
+v4.13 PARTNER-ONLY FILTER (CRITICAL — this is a hard requirement):
+Extract ONLY companies that have a formal BUSINESS PARTNERSHIP with
+{competitor_name}. There are TWO valid partner types:
 
-INCLUDE (set relationship = "Channel Partner") ONLY IF the source explicitly
-indicates the company SELLS, RESELLS, DISTRIBUTES, IMPLEMENTS, or DELIVERS
-{competitor_name}'s product to end customers. Signals:
-  ✓ "reseller", "authorized reseller", "value-added reseller (VAR)"
+TYPE A — CHANNEL PARTNER (reseller / distributor / SI):
+  ✓ "reseller", "authorized reseller", "VAR"
   ✓ "distributor", "authorized distributor"
   ✓ "channel partner", "sales partner", "referral partner"
-  ✓ "systems integrator", "SI partner", "implementation partner"
-  ✓ "delivery partner", "certified partner", "gold/silver/platinum partner"
-  ✓ Section header "Our Partners", "Partner Program", "Become a Partner",
-    "Find a Partner"
+  ✓ "systems integrator", "implementation partner", "delivery partner"
+  ✓ "certified partner", "gold/silver/platinum partner"
+  → set relationship = "Channel Partner"
 
-REJECT (DO NOT extract) if the company is any of these:
-  ✗ CUSTOMER — mentioned in a case study, customer story, testimonial,
-    logo wall, "our customer", "chose us", "trusted by", "used by",
-    success story. Even if mentioned as "customer" and "partner" together,
-    if the primary relationship is USER of the product, REJECT.
-  ✗ INTEGRATION — API partner, technology partner, "works with",
-    "integrates with", app marketplace listing.
-  ✗ INVESTOR / VC — funding relationship is not a channel partnership.
+TYPE B — INTEGRATION PARTNER (technology / marketplace / API):
+  ✓ "technology partner", "integration partner", "app partner"
+  ✓ "works with X", "integrates with X", "certified for X"
+  ✓ "Available on X Marketplace", "X App Store", "X AppExchange"
+    (BOTH sides count: if OpticVyu is listed on Autodesk Construction Cloud,
+     THEN Autodesk IS a partner. Do NOT reject this as reverse-listing.)
+  ✓ Section header "Integrations", "Technology Partners", "Our Ecosystem"
+  → set relationship = "Integration"
+
+REJECT (DO NOT extract) any of these:
+  ✗ CUSTOMER — case study, customer story, testimonial, logo wall,
+    "our customer", "chose us", "trusted by", success story, "used by".
+    Customers BUY the product; partners SELL / RESELL / INTEGRATE with it.
+  ✗ INVESTOR / VC — funding is not partnership.
   ✗ EMPLOYEES / ADVISORS / BOARD.
-  ✗ ECOSYSTEM MENTIONS — "used by companies in Fortune 500", generic mentions.
+  ✗ ECOSYSTEM MENTIONS — "used by Fortune 500", generic mentions.
 
-If unclear whether the company is a Channel Partner or something else,
-REJECT (do not include in output). Only include high-confidence Channel
-Partners. Better to output ZERO companies than to include non-partners.
+If unclear whether it's a partner, REJECT. Better to output ZERO than to
+include a Customer by mistake.
 
 For each included company, set:
-  - "relationship": "Channel Partner"  (only allowed value)
+  - "relationship": "Channel Partner"  OR  "Integration"  (nothing else)
 
 OUTPUT FORMAT (strict JSON):
 {{
@@ -497,10 +489,10 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
                 rel = "Unknown"
             c["relationship"] = rel
 
-            # v4.12: HARD FILTER — only Channel Partners allowed through.
-            # User's explicit requirement: "bas partner chaiye, aur kuch nahi."
-            # Customers, Integrations, Unknowns are all dropped at extraction.
-            if rel != "Channel Partner":
+            # v4.13: HARD FILTER — only Partners (Channel + Integration) allowed.
+            # User's clarification: Autodesk on OpticVyu IS a partner (integration).
+            # Only Customers (who BUY the product) are excluded.
+            if rel not in ("Channel Partner", "Integration"):
                 dropped_irrelevant += 1
                 continue
 
