@@ -207,13 +207,138 @@ def _discover_via_homepage(domain: str) -> list[str]:
 
 # ── Source A & B: Firecrawl page scrape ───────────────────────────────────────
 
+def _extract_partner_logos_from_html(url: str) -> list[tuple[str, str]]:
+    """
+    v4.14: Extract partner company names from image alt tags near "Our Partners"
+    sections. Many partner pages show partners as LOGOS (image alt), not text.
+
+    Example: Softdesigners' /trusted-partners page has JS tabs (Technology
+    Partner / Implementation Partner / Channel Partner) each showing partner
+    LOGOS. Text extraction misses these; image alt tags capture them.
+
+    Returns list of (company_name_from_alt, section_type) tuples.
+    section_type ∈ {Technology Partner, Implementation Partner,
+                    Channel Partner, Integration Partner, Partner}.
+    Empty list if nothing found or page unreachable.
+    """
+    import re as _re2
+    try:
+        r = requests.get(
+            url,
+            headers={"User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )},
+            timeout=10,
+            allow_redirects=True,
+        )
+        if r.status_code != 200 or not r.text:
+            return []
+        html = r.text
+    except Exception:
+        return []
+
+    html_lower = html.lower()
+    section_patterns = [
+        (r"technology\s*partner", "Technology Partner"),
+        (r"implementation\s*partner", "Implementation Partner"),
+        (r"channel\s*partner", "Channel Partner"),
+        (r"integration\s*partner", "Integration Partner"),
+        (r"resell(?:er|ing)?\s*partner", "Channel Partner"),
+        (r"solution\s*partner", "Integration Partner"),
+        (r"our\s+partners", "Partner"),
+        (r"trusted\s+partners", "Partner"),
+        (r"strategic\s+partner", "Channel Partner"),
+    ]
+
+    # Junk alt-text patterns (generic, non-company)
+    junk_alts = {"logo", "image", "icon", "photo", "picture", "banner",
+                 "arrow", "menu", "search", "close", "hamburger", "next",
+                 "prev", "star", "check", "tick", "cross", "play"}
+
+    # v4.14: for accurate section labeling, find ALL section markers first,
+    # then for each img alt tag map to the CLOSEST PRECEDING section marker.
+    section_markers: list[tuple[int, str]] = []  # [(position, type)]
+    for pattern, section_type in section_patterns:
+        for m in _re2.finditer(pattern, html_lower):
+            section_markers.append((m.start(), section_type))
+    if not section_markers:
+        return []
+    section_markers.sort()
+
+    # Only consider img tags AFTER the first partner marker (skip page-header logos)
+    first_marker = section_markers[0][0]
+    results: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    for m in _re2.finditer(r'<img[^>]+alt="([^"]{2,80})"', html, _re2.IGNORECASE):
+        img_pos = m.start()
+        if img_pos < first_marker:
+            continue  # before any partner section — skip
+
+        # Find closest preceding section marker
+        section_type = "Partner"
+        for pos, sec in section_markers:
+            if pos <= img_pos:
+                section_type = sec
+            else:
+                break
+
+        # Only include if img is within 2500 chars of its section marker
+        # (otherwise it's probably in a different section like Clients)
+        latest_marker_pos = max(pos for pos, _ in section_markers if pos <= img_pos)
+        if img_pos - latest_marker_pos > 2500:
+            continue
+
+        alt = m.group(1).strip()
+        if not alt:
+            continue
+        # Strip WordPress image ID suffixes
+        alt_clean = _re2.sub(r"-e\d{5,}$", "", alt)
+        alt_clean = _re2.sub(
+            r"[-_\s]+(logo|png|jpg|svg|removebg[-_a-z0-9]*|preview[-_a-z0-9]*|\d)$",
+            "", alt_clean, flags=_re2.IGNORECASE,
+        ).strip("-_ ")
+
+        if not alt_clean or alt_clean.lower() in junk_alts:
+            continue
+        if len(alt_clean) < 2 or len(alt_clean) > 60:
+            continue
+        if _re2.fullmatch(r"client\s*\d+", alt_clean, _re2.IGNORECASE):
+            continue
+
+        key = alt_clean.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append((alt_clean, section_type))
+
+    return results
+
+
 def _scrape_urls(urls: list[str]) -> list[dict]:
-    """Scrape each URL via existing scrape_url. Return list of {url, markdown}."""
+    """Scrape each URL via existing scrape_url. Return list of {url, markdown}.
+
+    v4.14: also extract partner logos (img alt tags) from raw HTML and inject
+    them into the markdown as a STRONG PARTNER SIGNALS block. Fixes the case
+    where partner sections use image-only layouts (Softdesigners, many
+    small-vendor sites) that Firecrawl/Jina flatten and lose.
+    """
     results = []
     for u in urls:
         md = scrape_url(u, max_chars=8000)
         if md and len(md) > 200:
-            results.append({"url": u, "markdown": md})
+            item = {"url": u, "markdown": md}
+            # v4.14: image-alt partner extraction
+            logo_partners = _extract_partner_logos_from_html(u)
+            if logo_partners:
+                lines = ["", "--- v4.14 STRONG PARTNER SIGNALS "
+                         "(image alt tags in partner sections) ---"]
+                for alt, sec in logo_partners:
+                    lines.append(f"- {alt} [{sec}]")
+                lines.append("--- END STRONG PARTNER SIGNALS ---", )
+                item["markdown"] = "\n".join(lines) + "\n\n" + item["markdown"]
+            results.append(item)
     return results
 
 
@@ -305,6 +430,22 @@ STRICT ANTI-HALLUCINATION RULES:
 - Do NOT invent companies. If you are not 100% sure a name is a real company mentioned in the source, skip it.
 - Generic terms like "construction firms" or "Fortune 500 companies" — skip.
 - For each company, extract ONLY what is visible in the source — leave blank if not stated.
+
+v4.14 STRONG PARTNER SIGNALS BLOCK:
+If the CONTENT starts with a section titled
+"--- v4.14 STRONG PARTNER SIGNALS (image alt tags in partner sections) ---",
+those are HIGH-CONFIDENCE partner names extracted from IMAGE LOGOS on the
+page's "Our Partners" section. TREAT AS PARTNERS with maximum confidence.
+
+Each line looks like:  - {Company Name} [{Section Type}]
+Map section type to relationship as follows:
+  - "Technology Partner" or "Integration Partner" → relationship = "Integration"
+  - "Implementation Partner", "Channel Partner", "Reseller Partner",
+    "Strategic Partner", "Partner" → relationship = "Channel Partner"
+
+Include ALL companies listed in the STRONG PARTNER SIGNALS block, even if
+they don't appear elsewhere in the content. These are the authoritative
+partner list. Set confidence = "high" for all of them.
 
 v4.13 NOTE ON MARKETPLACE / INTEGRATION LISTINGS:
 Reversing an earlier v4.10 rule — "OpticVyu is available on Autodesk
