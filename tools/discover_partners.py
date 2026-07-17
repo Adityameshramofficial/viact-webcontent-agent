@@ -437,7 +437,7 @@ If the CONTENT starts with a section titled
 those are HIGH-CONFIDENCE partner names extracted from IMAGE LOGOS on the
 page's "Our Partners" section. TREAT AS PARTNERS with maximum confidence.
 
-Each line looks like:  - {Company Name} [{Section Type}]
+Each line looks like:  - {{Company Name}} [{{Section Type}}]
 Map section type to relationship as follows:
   - "Technology Partner" or "Integration Partner" → relationship = "Integration"
   - "Implementation Partner", "Channel Partner", "Reseller Partner",
