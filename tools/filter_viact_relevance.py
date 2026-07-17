@@ -27,6 +27,17 @@ FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 CLASSIFY_PROMPT = """You are classifying a company for viAct.ai's BD outreach.
 
+v4.12 REQUIREMENT — CHANNEL PARTNER ONLY:
+Only keep companies that are CHANNEL PARTNERS (resellers, distributors,
+VARs, systems integrators, delivery partners) of a competitor.
+Reject Customers, Integrations, Ecosystem mentions.
+Even industry-relevant industrial-safety customers should be REJECTED.
+Only reseller/distributor/channel-partner relationships pass.
+
+If the company appears to be a CUSTOMER (uses the product) rather than a
+partner (sells the product), output "no".
+
+
 viAct = AI-powered INDUSTRIAL SAFETY + video analytics platform
 (CCTV + computer vision + AI bounding boxes) serving 5 verticals:
   Construction, Manufacturing, Mining, Oil & Gas, Logistics.

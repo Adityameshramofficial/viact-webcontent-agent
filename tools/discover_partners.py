@@ -393,23 +393,38 @@ CONFIDENCE TAGGING (very important for data quality):
 
 Only output "high" and "medium". Never output "low".
 
-v4.11 RELATIONSHIP CLASSIFICATION (add per company):
-Classify each company by HOW it appears in the source relative to {competitor_name}:
-- "Customer" — source explicitly indicates the company USES {competitor_name}'s
-  product. Signals: case study, testimonial, customer story, "our customer",
-  "chose us", "trusted by", client logo wall, "used by", success story.
-- "Channel Partner" — the company RESELLS, distributes, or delivers
-  {competitor_name}'s product. Signals: reseller, distributor, authorized
-  partner, channel partner, VAR (value-added reseller), sales partner,
-  systems integrator, implementation partner, "certified partner".
-- "Integration" — technology / API partner. Signals: technology partner,
-  integration, "works with", "integrates with", API partner, app marketplace
-  listing on {competitor_name}'s side.
-- "Unknown" — the relationship is not clearly stated in the source.
+v4.12 CHANNEL-PARTNER-ONLY FILTER (CRITICAL — this is a hard requirement):
+Extract ONLY companies that are CHANNEL PARTNERS of {competitor_name}.
+DO NOT extract Customers, Integration partners, or any other relationship.
 
-If a company appears BOTH as customer and partner, prefer "Customer"
-(strongest BD signal — they actively use the product, so viAct can pitch as
-alternative).
+INCLUDE (set relationship = "Channel Partner") ONLY IF the source explicitly
+indicates the company SELLS, RESELLS, DISTRIBUTES, IMPLEMENTS, or DELIVERS
+{competitor_name}'s product to end customers. Signals:
+  ✓ "reseller", "authorized reseller", "value-added reseller (VAR)"
+  ✓ "distributor", "authorized distributor"
+  ✓ "channel partner", "sales partner", "referral partner"
+  ✓ "systems integrator", "SI partner", "implementation partner"
+  ✓ "delivery partner", "certified partner", "gold/silver/platinum partner"
+  ✓ Section header "Our Partners", "Partner Program", "Become a Partner",
+    "Find a Partner"
+
+REJECT (DO NOT extract) if the company is any of these:
+  ✗ CUSTOMER — mentioned in a case study, customer story, testimonial,
+    logo wall, "our customer", "chose us", "trusted by", "used by",
+    success story. Even if mentioned as "customer" and "partner" together,
+    if the primary relationship is USER of the product, REJECT.
+  ✗ INTEGRATION — API partner, technology partner, "works with",
+    "integrates with", app marketplace listing.
+  ✗ INVESTOR / VC — funding relationship is not a channel partnership.
+  ✗ EMPLOYEES / ADVISORS / BOARD.
+  ✗ ECOSYSTEM MENTIONS — "used by companies in Fortune 500", generic mentions.
+
+If unclear whether the company is a Channel Partner or something else,
+REJECT (do not include in output). Only include high-confidence Channel
+Partners. Better to output ZERO companies than to include non-partners.
+
+For each included company, set:
+  - "relationship": "Channel Partner"  (only allowed value)
 
 OUTPUT FORMAT (strict JSON):
 {{
@@ -481,6 +496,13 @@ def _extract_companies(content: str, competitor_name: str, source_type: str) -> 
             if rel not in ("Customer", "Channel Partner", "Integration", "Unknown"):
                 rel = "Unknown"
             c["relationship"] = rel
+
+            # v4.12: HARD FILTER — only Channel Partners allowed through.
+            # User's explicit requirement: "bas partner chaiye, aur kuch nahi."
+            # Customers, Integrations, Unknowns are all dropped at extraction.
+            if rel != "Channel Partner":
+                dropped_irrelevant += 1
+                continue
 
             cleaned.append(c)
         if dropped_irrelevant:
