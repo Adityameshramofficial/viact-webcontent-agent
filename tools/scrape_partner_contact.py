@@ -22,7 +22,7 @@ No API keys required. Just needs GROQ_API_KEY (already configured) for address e
 import os
 import re
 import sys
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, unquote
 
 import requests
 
@@ -83,6 +83,9 @@ PLACEHOLDER_LOCAL_PARTS = {
     # v4.9.2: leaked in Autodesk run — "jane d" / "jane e" concat patterns
     "janed", "janee", "janes", "janeb", "janep",
     "johnd", "johne", "johns", "johnp", "johnb",
+    # v4.14.3: leaked in Oracle NetSuite via MaintainX — "J A Doe" middle-initial
+    "jadoe", "jbdoe", "jcdoe", "jddoe", "jedoe",
+    "jasmith", "jbsmith", "jcsmith",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
@@ -250,8 +253,10 @@ def _extract_emails(html: str) -> list[str]:
 
     # mailto: links — use a tight character class that excludes MORE junk
     # (previously `[^"\'\s?]+` allowed `)`, `>`, `,`, etc. — root cause of bad emails)
+    # URL-decode to strip percent-encoded whitespace like `mailto:%20sales@x.com`
+    # (Pelco's site had a leading %20 that landed in the sheet as `%20sales@…`).
     for m in re.finditer(r'mailto:([^\s"\'<>?)(,;#&{}]+)', html):
-        found.append(m.group(1))
+        found.append(unquote(m.group(1)))
 
     # Cloudflare data-cfemail="hex_encoded"
     for m in re.finditer(r'data-cfemail="([a-f0-9]+)"', html, flags=re.IGNORECASE):
