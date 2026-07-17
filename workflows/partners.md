@@ -25,7 +25,14 @@ User's confirmed sequence — every improvement must respect this order:
 | 5 | Collect **Email** — website first, then footer, then Facebook / LinkedIn, then DDG, then WHOIS | 5-tier cascade | `tools/scrape_partner_contact.py::scrape_contact` |
 | 6 | Fill **remaining fields**: Phone, Address, Country | LLM + regex + TLD map | `tools/fill_missing_fields.py` |
 
-**Sheet schema** (Company Name | Description | Website | Phone Number | Email | Address | Country) — all 7 fields must land populated.
+**Sheet schema** — 8 user-visible columns:
+Company Name | Description | Website | Phone Number | Email | Address | Country | **Relationship** (v4.11 — Customer / Channel Partner / Integration / Unknown).
+Internal columns after: Status, Email Source, Discovered Via, Discovered At.
+
+**Partner definition (v4.13)** — only two relationship types are extracted;
+Customers are explicitly REJECTED:
+- **Channel Partner** — reseller, distributor, VAR, systems integrator
+- **Integration** — technology / API / marketplace partnership
 
 **viAct scope** (confirmed from `workflows/viact-web-design.md` +
 `workflows/industry_page.md`): AI industrial safety + video analytics
@@ -36,6 +43,193 @@ Safety Officers.
 ---
 
 ## Changelog
+
+### v4.14.1 — Bugfix: escape curly braces in EXTRACT_PROMPT example
+
+**Why**: v4.14 shipped with an unescaped example line
+`Each line looks like: - {Company Name} [{Section Type}]`. Python's
+`.format()` treated `{Company Name}` as a template placeholder and raised
+`KeyError('Company Name')` — NeoEHS / VIS Systems / Pelco chain all failed
+with "DISCOVERY FAILED: 'Company Name'".
+
+**What**: Doubled the braces so they render as literal `{ }` in the final
+prompt: `- {{Company Name}} [{{Section Type}}]`.
+
+**Files**:
+- `tools/discover_partners.py` — one-char fix in EXTRACT_PROMPT
+
+---
+
+### v4.14 — Image-alt partner extraction (catches logo-only partner sections)
+
+**Why**: Many partner pages show partners as LOGOS with JS tabs
+(Softdesigners is the poster child — Technology Partner / Implementation
+Partner / Channel Partner tabs each hiding image logos). Firecrawl / Jina
+flatten these to plain text, losing alt tags. v4.13 missed all 6 real
+Softdesigners partners (Intel, Microsoft, Wayindia, TSSPL, Botaxis,
+Duragen) and returned zero.
+
+**What**:
+1. `_extract_partner_logos_from_html(url)` — fetches raw HTML via `requests`,
+   finds section markers (`Technology Partner`, `Implementation Partner`,
+   `Channel Partner`, `Integration Partner`, `Reseller Partner`,
+   `Our Partners`, `Trusted Partners`, `Strategic Partner`), and for each
+   `<img alt="X">` after the first marker maps to the CLOSEST PRECEDING
+   section marker. Cleans WordPress image ID suffixes (`-e12345678`,
+   `-logo`, `-png`, `-removebg-preview-1`). Rejects junk alts
+   (`logo`, `icon`, `Client 1`, etc.).
+2. `_scrape_urls()` — after scraping each URL, injects a
+   `--- v4.14 STRONG PARTNER SIGNALS ---` block at the top of the markdown
+   with the extracted logo list.
+3. `EXTRACT_PROMPT` — recognizes the STRONG PARTNER SIGNALS block as
+   authoritative. Maps section type → relationship:
+   `Technology / Integration Partner` → `Integration`;
+   `Implementation / Channel / Reseller / Strategic / Partner` → `Channel Partner`.
+
+Verified on Softdesigners: all 6 partners extracted with correct sub-
+classification, matching the user's screenshots exactly.
+
+**Files**:
+- `tools/discover_partners.py` — logo helper, `_scrape_urls` injection,
+  EXTRACT_PROMPT signals block
+
+---
+
+### v4.13 — Partner = Channel Partner OR Integration (not just Channel)
+
+**Why**: v4.12 was too narrow — only Channel Partners passed the filter.
+But Autodesk on OpticVyu IS a partner (integration via Autodesk Construction
+Cloud), just not a reseller. Marketplace / integration listings ARE
+partnerships. User correction: "Autodesk and Executive Eye Inc. ARE
+partners, extract them like these."
+
+**What**:
+1. `EXTRACT_PROMPT` — v4.13 block defines TWO partner types:
+   TYPE A = Channel Partner (reseller/distributor/VAR/SI),
+   TYPE B = Integration (marketplace/API/tech partner including
+   "OpticVyu available on Autodesk Construction Cloud" style listings).
+   Only Customers are rejected.
+2. `_extract_companies()` — HARD FILTER now accepts
+   `relationship in {"Channel Partner", "Integration"}`.
+3. Removed v4.10 REVERSE-LISTING DETECTION (was wrongly rejecting
+   legitimate integration partnerships). Replaced with a note explaining
+   marketplace listings ARE partnerships.
+4. Restored Autodesk row on OpticVyu tab (relationship = Integration).
+
+**Files**:
+- `tools/discover_partners.py`
+
+---
+
+### v4.12 — Channel Partners ONLY (superseded by v4.13)
+
+**Why**: User's explicit scope: "bass hame partner chaiye baki kuch nahi
+chaiye yaad rakho bas parters". Only Channel Partners (resellers,
+distributors) should appear.
+
+**What**: EXTRACT_PROMPT CHANNEL-PARTNER-ONLY FILTER; hard-filter
+`_extract_companies()` to reject anything except `Channel Partner`.
+`filter_viact_relevance.py` CLASSIFY_PROMPT gets a v4.12 requirement note.
+
+**Superseded by v4.13** — Integration partners were incorrectly rejected;
+v4.13 broadens to include them.
+
+**Files**:
+- `tools/discover_partners.py`
+- `tools/filter_viact_relevance.py`
+
+---
+
+### v4.11 — Relationship column (Customer / Channel Partner / Integration / Unknown)
+
+**Why**: Manager audit surfaced naming confusion — tabs are called
+"partners" but most rows are actually the competitor's CUSTOMERS (L&T on
+OpticVyu tab, Skanska on Openspace tab). Sheet should be honest about
+what each row IS.
+
+**What**:
+1. `EXTRACT_PROMPT` — RELATIONSHIP CLASSIFICATION block. LLM tags each
+   company as `Customer` / `Channel Partner` / `Integration` / `Unknown`.
+2. `_extract_companies()` — normalizes the relationship field.
+3. `PARTNER_COLUMNS` — appended "Relationship" as column L. Existing rows
+   unaffected (new column shows up via `_ensure_partner_columns()` on
+   next tab update).
+4. `push_partners()` — writes `p["relationship"]` at column L.
+
+Zero new API cost — classification piggybacks on existing LLM extraction.
+
+**Files**:
+- `tools/discover_partners.py`
+- `tools/push_to_sheets.py`
+
+**Note**: This version allowed all 4 relationship types. v4.12/v4.13
+narrow the extraction to just Channel Partner + Integration.
+
+---
+
+### v4.10 — 4 targeted fixes from OpticVyu tab audit
+
+**Why**: OpticVyu tab audit surfaced 4 recurring data quality bugs:
+(a) Procore/Autodesk appearing as OpticVyu partners — actually OpticVyu is
+LISTED on their marketplaces (reverse relationship).
+(b) Lodha (real-estate co) matched `mangalprabhatlodha.com` (chairman's
+politician personal site) — namesake trap.
+(c) Executive Eye Inc website set to `aptoide.co` (an app-store link).
+(d) Names like Spacematrix, Lisual, GMR extracted with NO description AND
+NO website — pure noise.
+
+**What**:
+1. `EXTRACT_PROMPT` — REVERSE-LISTING DETECTION block (**later reverted
+   in v4.13** — marketplace listings ARE partnerships).
+2. `_NOT_A_WEBSITE_DOMAIN` — added app-store / marketplace domains:
+   `aptoide.com`, `aptoide.co`, `apps.apple.com`, `play.google.com`,
+   `marketplace.procore.com`, `appexchange.salesforce.com`,
+   `appsource.microsoft.com`, `workspace.google.com/marketplace`,
+   `shopify.com/apps`, `wordpress.org/plugins`.
+3. `_verify_website_belongs_to_company()` — reject if page metadata
+   contains personal-site signals: "MLA of", "member of parliament",
+   "author of", "artist", "personal blog", "born on/in".
+4. `_extract_companies()` — drop rows where BOTH description AND website
+   are missing (name-only rows have insufficient confidence).
+
+Cleanup: 8 bad rows removed from OpticVyu (Procore, Autodesk, Lodha,
+Executive Eye, Spacematrix, Lisual, GMR, Rhenus Logistics).
+
+**Files**:
+- `tools/discover_partners.py`
+- `tools/enrich_partners.py`
+
+---
+
+### v4.9.2 — janed/johne placeholder patterns
+
+**Why**: Autodesk enrichment leaked `janed@populous.com` — the "jane +
+first-letter" concat pattern (janeD, janeE, janeS, janeB, janeP,
+johnD, etc.) wasn't in earlier filters.
+
+**What**: Additions to `PLACEHOLDER_LOCAL_PARTS` — janed, janee, janes,
+janeb, janep, johnd, johne, johns, johnp, johnb. Also cleared the
+leaked bad email from Autodesk (Populous row).
+
+**Files**:
+- `tools/scrape_partner_contact.py`
+
+---
+
+### v4.9.1 — firstlast/first.last placeholder patterns
+
+**Why**: Procore enrichment leaked `firstlast@unitedrentals.com` — the
+concatenated "firstlast" pattern wasn't in v4.4's flast/f.last filter.
+
+**What**: Added `firstlast`, `first.last`, `firstname.last`,
+`first.lastname`, `lastname.firstname`, `last.first`, `firstinitial`
+to `PLACEHOLDER_LOCAL_PARTS`. Also cleared the leaked bad email from
+Procore's United Rentals row.
+
+**Files**:
+- `tools/scrape_partner_contact.py`
+
+---
 
 ### v4.9 — Whitespace-variant dedup + batch filter + cross-vendor detector
 
