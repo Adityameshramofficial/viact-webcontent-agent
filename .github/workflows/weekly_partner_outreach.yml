@@ -2,7 +2,7 @@ name: Daily Partner Outreach (Agent 11)
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # Every day at 1:00 AM UTC = 6:30 AM IST
+    - cron: '0 1 * * 1-5'   # Mon-Fri only, 1:00 AM UTC = 6:30 AM IST (weekends skip)
   workflow_dispatch:       # Manual trigger button in GitHub Actions tab
 
 jobs:
