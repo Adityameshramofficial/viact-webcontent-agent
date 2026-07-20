@@ -1,10 +1,15 @@
 {
-  "total_pages": 142,
-  "this_week_pages": 10,
-  "today_pages": 2,
+  "total_pages": 143,
+  "this_week_pages": 1,
+  "today_pages": 1,
   "total_dedup": 56,
-  "last_run_date": "2026-07-17",
+  "last_run_date": "2026-07-20",
   "latest_topics": [
+    {
+      "date": "2026-07-20",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-17",
       "topic": "What Is AI-Enabled CCTV in Construction? A Guide for Singapore Constru",
@@ -24,14 +29,22 @@
       "date": "2026-07-16",
       "topic": "Construction Site Safety Risks Remain High",
       "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-15",
-      "topic": "How AI-Enabled CCTV is Revolutionizing Construction Site Safety: A Gui",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-20",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation Solutions | viAct",
+      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety automation solutions.",
+      "keyword": "Construction Site Safety Automation",
+      "subheadline": "According to Singapore's MOM, construction sites pose significant risks to workers.",
+      "problem": "Construction sites pose significant risks to workers, with high rates of incidents and injuries, affecting over 32,000 workers globally.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Solutions?",
+      "faq_a": "MOM requires construction sites to implement safety measures to reduce risks.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-17",
       "topic": "What Is AI-Enabled CCTV in Construction? A Guide for Singapore Constru",
@@ -57,21 +70,8 @@
       "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
       "faq_a": "MOM WSH Act emphasizes safety but lacks automation mandates.",
       "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-16",
-      "topic": "How AI is Revolutionizing Construction Site Safety and Compliance: A G",
-      "content_type": "Blog",
-      "meta_title": "How AI is Revolutionizing Construction Site Safety and Compliance: Singapor",
-      "meta_desc": "Enhance site safety and compliance with AI-powered solutions, reducing incidents and improving regulatory adherence",
-      "keyword": "AI construction site safety",
-      "subheadline": "Enhance site safety and compliance with AI-powered solutions, reducing incidents and improving regulatory adherence",
-      "problem": "Construction sites in Singapore and UAE face significant safety and compliance challenges, with high incident rates and regulatory fines, impacting project timelines and costs",
-      "faq_q": "What does Singapore MOM require regarding construction site safety and compliance?",
-      "faq_a": "The MOM WSH Act requires construction sites to implement safety measures to reduce incidents and ensure compliance.",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-17T11:53:30.187237+05:30"
+  "generated_at": "2026-07-20T12:24:22.106935+05:30"
 }
