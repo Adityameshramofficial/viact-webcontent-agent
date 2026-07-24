@@ -1,10 +1,20 @@
 {
-  "total_pages": 147,
-  "this_week_pages": 5,
-  "today_pages": 1,
+  "total_pages": 149,
+  "this_week_pages": 7,
+  "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-23",
+  "last_run_date": "2026-07-24",
   "latest_topics": [
+    {
+      "date": "2026-07-24",
+      "topic": "Construction Site Safety: A Guide to Surveillance Tech",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-24",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-23",
       "topic": "Real-Time Safety Risks",
@@ -19,19 +29,35 @@
       "date": "2026-07-21",
       "topic": "Construction Site Safety Through AI Surveillance",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-21",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-20",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-24",
+      "topic": "Construction Site Safety: A Guide to Surveillance Tech",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety: A Guide to Surveillance Tech",
+      "meta_desc": "Surveillance tech improves construction site safety and reduces incidents.",
+      "keyword": "construction site safety",
+      "subheadline": "Surveillance tech improves site safety and reduces incidents.",
+      "problem": "Construction sites face high injury rates and fatality risks.",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "Employers must ensure worker safety.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-24",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation with AI",
+      "meta_desc": "Reduce construction site risks with AI-powered safety automation.",
+      "keyword": "Construction Site Safety Automation with AI",
+      "subheadline": "Regulatory non-compliance costs lives and money.",
+      "problem": "Construction sites face high injury rates. Singapore's MOM reports 90% of incidents are preventable.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
+      "faq_a": "MOM requires employers to ensure a safe work environment.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-23",
       "topic": "Real-Time Safety Risks",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require for Real-Time Construction Site Safety Automation Solutions?",
       "faq_a": "MOM requires real-time safety monitoring.",
       "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-22",
-      "topic": "Construction Site Safety",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety: AI-Enabled CCTV",
-      "meta_desc": "AI-Enabled CCTV reduces construction site incidents by 90%",
-      "keyword": "AI-Enabled CCTV construction site safety",
-      "subheadline": "AI-Enabled CCTV reduces incidents by 90%",
-      "problem": "Construction sites face high incident rates.",
-      "faq_q": "What does Singapore MOM require regarding construction site safety?",
-      "faq_a": "Regular site inspections.",
-      "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-21",
-      "topic": "Construction Site Safety Through AI Surveillance",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety Through AI Surveillance",
-      "meta_desc": "AI surveillance tech reduces construction site incidents by 90%",
-      "keyword": "construction site safety",
-      "subheadline": "AI tech reduces incidents by 90% in construction sites",
-      "problem": "Construction sites face high risk of accidents and injuries",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "Employers must ensure worker safety and provide a safe work environment",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-23T12:04:09.627968+05:30"
+  "generated_at": "2026-07-24T12:04:14.027451+05:30"
 }
