@@ -1,10 +1,20 @@
 {
-  "total_pages": 149,
-  "this_week_pages": 7,
+  "total_pages": 151,
+  "this_week_pages": 2,
   "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-24",
+  "last_run_date": "2026-07-27",
   "latest_topics": [
+    {
+      "date": "2026-07-27",
+      "topic": "Reducing Workplace Fatalities in Construction",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-27",
+      "topic": "Real-Time Safety Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-24",
       "topic": "Construction Site Safety: A Guide to Surveillance Tech",
@@ -19,19 +29,35 @@
       "date": "2026-07-23",
       "topic": "Real-Time Safety Risks",
       "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-22",
-      "topic": "Construction Site Safety",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-21",
-      "topic": "Construction Site Safety Through AI Surveillance",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-27",
+      "topic": "Reducing Workplace Fatalities in Construction",
+      "content_type": "Blog",
+      "meta_title": "Construction Safety: Reducing Fatalities with AI",
+      "meta_desc": "AI-powered safety monitoring reduces construction site risks",
+      "keyword": "construction safety",
+      "subheadline": "AI-powered safety monitoring is crucial for HSE teams",
+      "problem": "Workplace fatalities in construction are a significant concern",
+      "faq_q": "What does Singapore MOM require regarding construction safety?",
+      "faq_a": "Compliance with safety regulations",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-27",
+      "topic": "Real-Time Safety Risks",
+      "content_type": "Pillar",
+      "meta_title": "Real-Time Construction Safety",
+      "meta_desc": "Reduce construction site risks with viAct's real-time safety automation solutions.",
+      "keyword": "construction site safety automation",
+      "subheadline": "Construction sites face 65% LTI reduction challenges.",
+      "problem": "Construction sites face safety risks, affecting 32,000+ workers globally.",
+      "faq_q": "What does Singapore MOM require for construction sites?",
+      "faq_a": "MOM requires real-time safety monitoring.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-24",
       "topic": "Construction Site Safety: A Guide to Surveillance Tech",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction site safety?",
       "faq_a": "Employers must ensure worker safety.",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-24",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI",
-      "meta_desc": "Reduce construction site risks with AI-powered safety automation.",
-      "keyword": "Construction Site Safety Automation with AI",
-      "subheadline": "Regulatory non-compliance costs lives and money.",
-      "problem": "Construction sites face high injury rates. Singapore's MOM reports 90% of incidents are preventable.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
-      "faq_a": "MOM requires employers to ensure a safe work environment.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-23",
-      "topic": "Real-Time Safety Risks",
-      "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Site Safety Automation Solutions",
-      "meta_desc": "Reduce construction site risks with real-time monitoring and automated alerts.",
-      "keyword": "Real-Time Construction Site Safety Automation Solutions",
-      "subheadline": "Construction sites face 65% LTI reduction challenges.",
-      "problem": "Construction sites face safety risks, costing $2.5M+ per project.",
-      "faq_q": "What does Singapore MOM require for Real-Time Construction Site Safety Automation Solutions?",
-      "faq_a": "MOM requires real-time safety monitoring.",
-      "source": "Daily Auto-Run — Pillar"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-24T12:04:14.027451+05:30"
+  "generated_at": "2026-07-27T13:11:30.466039+05:30"
 }
