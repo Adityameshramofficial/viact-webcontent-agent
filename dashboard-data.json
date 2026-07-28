@@ -1,10 +1,20 @@
 {
-  "total_pages": 151,
-  "this_week_pages": 2,
+  "total_pages": 153,
+  "this_week_pages": 4,
   "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-27",
+  "last_run_date": "2026-07-28",
   "latest_topics": [
+    {
+      "date": "2026-07-28",
+      "topic": "Construction Site Safety Management: An AI Guide",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-28",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-27",
       "topic": "Reducing Workplace Fatalities in Construction",
@@ -19,19 +29,35 @@
       "date": "2026-07-24",
       "topic": "Construction Site Safety: A Guide to Surveillance Tech",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-24",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-23",
-      "topic": "Real-Time Safety Risks",
-      "content_type": "Pillar"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-28",
+      "topic": "Construction Site Safety Management: An AI Guide",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety Management: An AI Guide",
+      "meta_desc": "Improve construction site safety with AI technology in Singapore and UAE",
+      "keyword": "construction site safety management",
+      "subheadline": "Improving safety with AI technology in Singapore and UAE construction sites",
+      "problem": "Construction sites face high injury rates and costs.",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "Compliance with WSH Act regulations.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-28",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation Solutions - viAct",
+      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety monitoring and automated incident reporting",
+      "keyword": "Construction Site Safety Automation Solutions",
+      "subheadline": "90% of construction sites experience safety incidents, affecting 32,000+ workers globally.",
+      "problem": "Construction sites face high risks, with 90% experiencing safety incidents, affecting 32,000+ workers globally.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Solutions?",
+      "faq_a": "MOM requires construction sites to implement safety measures to prevent incidents",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-27",
       "topic": "Reducing Workplace Fatalities in Construction",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction safety?",
       "faq_a": "Compliance with safety regulations",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-27",
-      "topic": "Real-Time Safety Risks",
-      "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Safety",
-      "meta_desc": "Reduce construction site risks with viAct's real-time safety automation solutions.",
-      "keyword": "construction site safety automation",
-      "subheadline": "Construction sites face 65% LTI reduction challenges.",
-      "problem": "Construction sites face safety risks, affecting 32,000+ workers globally.",
-      "faq_q": "What does Singapore MOM require for construction sites?",
-      "faq_a": "MOM requires real-time safety monitoring.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-24",
-      "topic": "Construction Site Safety: A Guide to Surveillance Tech",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety: A Guide to Surveillance Tech",
-      "meta_desc": "Surveillance tech improves construction site safety and reduces incidents.",
-      "keyword": "construction site safety",
-      "subheadline": "Surveillance tech improves site safety and reduces incidents.",
-      "problem": "Construction sites face high injury rates and fatality risks.",
-      "faq_q": "What does Singapore MOM require regarding construction site safety?",
-      "faq_a": "Employers must ensure worker safety.",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-27T13:11:30.466039+05:30"
+  "generated_at": "2026-07-28T12:02:01.313157+05:30"
 }
