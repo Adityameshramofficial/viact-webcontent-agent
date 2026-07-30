@@ -1,10 +1,20 @@
 {
-  "total_pages": 155,
-  "this_week_pages": 6,
+  "total_pages": 157,
+  "this_week_pages": 8,
   "today_pages": 2,
   "total_dedup": 56,
-  "last_run_date": "2026-07-29",
+  "last_run_date": "2026-07-30",
   "latest_topics": [
+    {
+      "date": "2026-07-30",
+      "topic": "Construction Safety Trends",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-07-30",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-07-29",
       "topic": "Construction Site Safety: The AI Revolution",
@@ -19,19 +29,35 @@
       "date": "2026-07-28",
       "topic": "Construction Site Safety Management: An AI Guide",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-28",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-27",
-      "topic": "Reducing Workplace Fatalities in Construction",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-07-30",
+      "topic": "Construction Safety Trends",
+      "content_type": "Blog",
+      "meta_title": "Construction Safety Trends",
+      "meta_desc": "AI improves site safety and reduces risks",
+      "keyword": "construction safety",
+      "subheadline": "Improving site safety with AI",
+      "problem": "Construction sites face high injury rates",
+      "faq_q": "What does Singapore MOM require?",
+      "faq_a": "Compliance with WSH Act",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-07-30",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation with AI - viAct",
+      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety automation solutions",
+      "keyword": "Construction Site Safety Automation with AI",
+      "subheadline": "Regulatory non-compliance costs lives and money.",
+      "problem": "Construction sites face 90% risk reduction needs. 50% TRIR and 65% LTI reductions are required.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
+      "faq_a": "Compliance with MOM WSH Act",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-07-29",
       "topic": "Construction Site Safety: The AI Revolution",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction site safety?",
       "faq_a": "MOM requires regular safety audits and risk assessments.",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-29",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI",
-      "meta_desc": "Reduce construction site risks with AI-powered safety automation. Learn more about viAct's solutions.",
-      "keyword": "Construction Site Safety Automation with AI",
-      "subheadline": "According to Singapore's MOM, construction sites face significant safety risks.",
-      "problem": "Construction sites face high risks, with significant human and financial costs. According to the MOM WSH Act, these risks can be mitigated with proper safety measures.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
-      "faq_a": "MOM requires construction sites to implement safety measures to reduce risks",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-07-28",
-      "topic": "Construction Site Safety Management: An AI Guide",
-      "content_type": "Blog",
-      "meta_title": "Construction Site Safety Management: An AI Guide",
-      "meta_desc": "Improve construction site safety with AI technology in Singapore and UAE",
-      "keyword": "construction site safety management",
-      "subheadline": "Improving safety with AI technology in Singapore and UAE construction sites",
-      "problem": "Construction sites face high injury rates and costs.",
-      "faq_q": "What does Singapore MOM require regarding construction site safety?",
-      "faq_a": "Compliance with WSH Act regulations.",
-      "source": "Daily Auto-Run — Blog"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-29T12:07:53.532183+05:30"
+  "generated_at": "2026-07-30T12:06:47.462290+05:30"
 }
