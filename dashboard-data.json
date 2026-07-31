@@ -1,7 +1,7 @@
 {
   "total_pages": 157,
   "this_week_pages": 8,
-  "today_pages": 2,
+  "today_pages": 0,
   "total_dedup": 56,
   "last_run_date": "2026-07-30",
   "latest_topics": [
@@ -73,5 +73,5 @@
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-30T12:06:47.462290+05:30"
+  "generated_at": "2026-07-31T12:18:26.875993+05:30"
 }
