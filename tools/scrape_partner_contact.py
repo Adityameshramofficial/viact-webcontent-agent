@@ -86,6 +86,12 @@ PLACEHOLDER_LOCAL_PARTS = {
     # v4.14.3: leaked in Oracle NetSuite via MaintainX — "J A Doe" middle-initial
     "jadoe", "jbdoe", "jcdoe", "jddoe", "jedoe",
     "jasmith", "jbsmith", "jcsmith",
+    # v4.15.9: leaked in Propeller Aero / Autodesk row — "lastfirst" order variant
+    # (Autodesk sales page shows pattern "lastfirst@autodesk.com" as an example)
+    "lastfirst", "last.firstname", "lastname.first", "lname.fname",
+    "surname", "surname.name", "name.surname", "givenname",
+    "your.name", "yourname.lastname", "firstname.surname",
+    "initials", "user.name", "user.email", "employee",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
