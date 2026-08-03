@@ -69,6 +69,28 @@ NOISE_NAMES = {
     "google", "microsoft", "amazon", "aws", "amazon web services",
     "sap", "oracle", "salesforce", "gartner", "forrester",
     "wikipedia", "reddit", "medium", "techcrunch", "forbes",
+    # v4.15.12: generic productivity / CRM / BI / no-code SaaS that
+    # competitor sites list under "integrates with" but that are NOT
+    # BD-relevant industrial-safety partners for viAct. Leaked into
+    # Fluix ("Trello / Google Sheets / Pipedrive / Zapier / Airtable"),
+    # Observia AI ("Power BI / Tableau / Looker / Google Data Studio /
+    # Qlik") — same pattern in every deletion cycle.
+    "trello", "asana", "jira", "monday", "monday.com", "notion",
+    "airtable", "smartsheet", "coda", "clickup",
+    "zapier", "make", "integromat", "n8n", "pipedream",
+    "pipedrive", "hubspot", "zoho", "zoho crm", "freshworks", "freshsales",
+    "google sheets", "google docs", "google drive", "google forms",
+    "google workspace", "gmail", "google calendar", "google data studio",
+    "microsoft 365", "office 365", "onedrive", "sharepoint",
+    "microsoft teams", "teams", "outlook", "excel", "word", "powerpoint",
+    "power bi", "microsoft power bi", "tableau", "looker", "qlik",
+    "slack", "discord", "twist", "chanty",
+    "dropbox", "box", "box.com", "wetransfer",
+    "mailchimp", "sendgrid", "twilio", "constant contact",
+    "docusign", "hellosign", "adobe sign", "pandadoc",
+    "stripe", "paypal", "square", "razorpay",
+    "shopify", "wix", "squarespace", "wordpress",
+    "quickbooks", "xero", "sage", "netsuite",
 }
 
 # Source URLs from these domains produce garbage partner extractions
