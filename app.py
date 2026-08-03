@@ -361,12 +361,13 @@ _AGENT_NAV = [
     ("solutions",    "08", "Solutions Pages", "#ff6a3d"),
     ("blog",         "09", "Blog Writer",     "#e879f9"),
     ("meta_seo",     "10", "Meta / SEO",      "#38bdf8"),
+    ("partner",      "11", "Partner Outreach","#22d3ee"),
 ]
 if "agent_nav" not in st.session_state:
     st.session_state["agent_nav"] = "market_radar"
 _sel = st.session_state["agent_nav"]
 
-_nav_cols = st.columns(8, gap="small")
+_nav_cols = st.columns(9, gap="small")
 for (_key, _num, _name, _color), _col in zip(_AGENT_NAV, _nav_cols):
     _active = _sel == _key
     with _col:
@@ -3720,3 +3721,176 @@ elif _sel == "meta_seo":
         with _mtt4:
             st.markdown("<div style='color:#8b949e; font-size:0.82rem; margin-bottom:8px;'>Copy this entire block and paste into your Wix page's &lt;head&gt; custom code section.</div>", unsafe_allow_html=True)
             st.text_area("Ready-to-paste HTML", value=_mr.get("html_snippet", ""), height=420, key="meta_out_html")
+
+
+# =============================================================================
+# TAB — PARTNER OUTREACH (Agent 11)
+# Session state prefix: po_
+# =============================================================================
+elif _sel == "partner":
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(__file__), "tools"))
+
+    st.markdown(_html(
+        '<div style="margin-bottom:18px;">'
+        '<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:#22d3ee; margin-bottom:4px;">AGENT 11</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.3rem; color:#fff; margin-bottom:4px;">Partner Outreach — Competitor Partner Discovery</div>'
+        '<div style="font-family:\'Jost\',sans-serif; font-weight:300; font-size:0.88rem; color:#8b949e;">Auto-discovers competitors, extracts their partners, enriches with emails / websites / descriptions, and pushes BD-ready leads to the Partnership Leads Google Sheet.</div>'
+        '</div>'
+    ), unsafe_allow_html=True)
+
+    # Sheet link — big CTA at top
+    _po_sheet_id = os.getenv("PARTNER_SHEET_ID", "1Q2XJZ2STaCN94DK4JEnS1mHkrgILfFljjNCc1dy_5qw")
+    _po_sheet_url = f"https://docs.google.com/spreadsheets/d/{_po_sheet_id}/edit"
+    st.markdown(_html(
+        f'<a href="{_po_sheet_url}" target="_blank" style="display:block; text-decoration:none;">'
+        f'<div style="background:linear-gradient(135deg, #22d3ee 0%, #0891b2 100%); border-radius:10px; padding:14px 20px; margin-bottom:20px;">'
+        f'<div style="font-family:\'Oxanium\',sans-serif; font-size:0.55rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:rgba(0,0,0,0.65);">Google Sheet</div>'
+        f'<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.1rem; color:#fff; margin-top:3px;">Open Partnership Leads Sheet →</div>'
+        f'</div></a>'
+    ), unsafe_allow_html=True)
+
+    # Load dashboard data from the sheet
+    _po_load_ok = False
+    _po_error = ""
+    try:
+        from push_to_sheets import get_sheets_service
+        _po_svc = get_sheets_service()
+
+        # Get all tabs
+        _po_meta = _po_svc.spreadsheets().get(spreadsheetId=_po_sheet_id).execute()
+        _po_all_tabs = [s["properties"]["title"] for s in _po_meta.get("sheets", [])]
+
+        # Get Competitors tab
+        _po_comp_resp = _po_svc.spreadsheets().values().get(
+            spreadsheetId=_po_sheet_id, range="'Competitors'!A2:G",
+        ).execute()
+        _po_comp_rows = _po_comp_resp.get("values", [])
+
+        # Categorize competitors by Status
+        _po_tracked, _po_blank, _po_skip = [], [], []
+        for _r in _po_comp_rows:
+            while len(_r) < 7:
+                _r.append("")
+            _po_name = _r[0]
+            _po_website = _r[1]
+            _po_status = _r[6].strip()
+            _po_item = {"name": _po_name, "website": _po_website}
+            if _po_status == "Track":
+                _po_tracked.append(_po_item)
+            elif _po_status.lower() in ("skip", "done"):
+                _po_skip.append(_po_item)
+            else:
+                _po_blank.append(_po_item)
+
+        # Count partners per tracked tab
+        _po_partner_tabs = []
+        for _t in _po_tracked:
+            if _t["name"] in _po_all_tabs:
+                _resp = _po_svc.spreadsheets().values().get(
+                    spreadsheetId=_po_sheet_id, range=f"'{_t['name']}'!A2:A",
+                ).execute()
+                _n = len(_resp.get("values", []))
+                if _n:
+                    _po_partner_tabs.append({"name": _t["name"], "count": _n})
+
+        _po_total_partners = sum(_p["count"] for _p in _po_partner_tabs)
+        _po_load_ok = True
+    except Exception as _e:
+        _po_error = str(_e)
+
+    if not _po_load_ok:
+        st.error(f"Could not load sheet data: {_po_error[:200]}")
+    else:
+        # Top metrics
+        _pm1, _pm2, _pm3, _pm4 = st.columns(4, gap="small")
+        with _pm1:
+            st.markdown(_html(
+                f'<div style="background:#12121c; border:1px solid rgba(34,211,238,0.15); border-radius:8px; padding:14px;">'
+                f'<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; letter-spacing:2px; color:#22d3ee; text-transform:uppercase;">Tracked Competitors</div>'
+                f'<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.8rem; color:#fff; margin-top:3px;">{len(_po_tracked)}</div>'
+                f'</div>'
+            ), unsafe_allow_html=True)
+        with _pm2:
+            st.markdown(_html(
+                f'<div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:14px;">'
+                f'<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; letter-spacing:2px; color:#8b949e; text-transform:uppercase;">Pending Review</div>'
+                f'<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.8rem; color:#fff; margin-top:3px;">{len(_po_blank)}</div>'
+                f'</div>'
+            ), unsafe_allow_html=True)
+        with _pm3:
+            st.markdown(_html(
+                f'<div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:14px;">'
+                f'<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; letter-spacing:2px; color:#8b949e; text-transform:uppercase;">Partners Discovered</div>'
+                f'<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.8rem; color:#fff; margin-top:3px;">{_po_total_partners}</div>'
+                f'</div>'
+            ), unsafe_allow_html=True)
+        with _pm4:
+            st.markdown(_html(
+                f'<div style="background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:14px;">'
+                f'<div style="font-family:\'Oxanium\',sans-serif; font-size:0.52rem; letter-spacing:2px; color:#8b949e; text-transform:uppercase;">Skipped (0 Partners)</div>'
+                f'<div style="font-family:\'Jost\',sans-serif; font-weight:700; font-size:1.8rem; color:#fff; margin-top:3px;">{len(_po_skip)}</div>'
+                f'</div>'
+            ), unsafe_allow_html=True)
+
+        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
+        _pt1, _pt2, _pt3 = st.tabs(["📊 Partner Tabs", "🎯 Competitors", "⚙️ How It Works"])
+
+        # ── Tab 1: Partner tabs with counts ──────────────────────────────────
+        with _pt1:
+            if not _po_partner_tabs:
+                st.info("No competitor tabs with partners yet. The daily cron runs Mon-Fri at 6:30 AM IST.")
+            else:
+                st.markdown(f"<div style='color:#8b949e; font-size:0.82rem; margin-bottom:10px;'>{len(_po_partner_tabs)} tabs · sorted by partner count</div>", unsafe_allow_html=True)
+                _sorted = sorted(_po_partner_tabs, key=lambda x: -x["count"])
+                for _ptb in _sorted:
+                    _tab_url = f"{_po_sheet_url}#gid=0"
+                    st.markdown(_html(
+                        f'<div style="display:flex; justify-content:space-between; align-items:center; background:#12121c; border:1px solid rgba(255,255,255,0.05); border-radius:6px; padding:10px 14px; margin-bottom:6px;">'
+                        f'<div style="font-family:\'Jost\',sans-serif; font-weight:600; font-size:0.9rem; color:#e9ecf1;">{_t(_ptb["name"])}</div>'
+                        f'<div style="font-family:\'Oxanium\',sans-serif; font-weight:700; font-size:1rem; color:#22d3ee;">{_ptb["count"]}</div>'
+                        f'</div>'
+                    ), unsafe_allow_html=True)
+
+        # ── Tab 2: Competitors (Track / Pending / Skip) ──────────────────────
+        with _pt2:
+            _sub1, _sub2, _sub3 = st.tabs([f"Track ({len(_po_tracked)})", f"Pending ({len(_po_blank)})", f"Skip ({len(_po_skip)})"])
+            with _sub1:
+                for _c in _po_tracked:
+                    st.markdown(f"• **{_c['name']}** — {_c['website']}")
+            with _sub2:
+                if not _po_blank:
+                    st.info("No competitors awaiting Track/Skip decision.")
+                else:
+                    st.markdown(f"<div style='color:#8b949e; font-size:0.8rem; margin-bottom:8px;'>Mark these Track or Skip in the sheet.</div>", unsafe_allow_html=True)
+                    for _c in _po_blank[:50]:
+                        st.markdown(f"• {_c['name']} — {_c['website']}")
+                    if len(_po_blank) > 50:
+                        st.markdown(f"<div style='color:#8b949e; font-size:0.75rem;'>...and {len(_po_blank)-50} more (open sheet to see all)</div>", unsafe_allow_html=True)
+            with _sub3:
+                for _c in _po_skip:
+                    st.markdown(f"• ~~{_c['name']}~~ — {_c['website']}")
+
+        # ── Tab 3: How it works ──────────────────────────────────────────────
+        with _pt3:
+            st.markdown(_html(
+                '<div style="color:#c9d1d9; font-size:0.9rem; line-height:1.6;">'
+                '<b style="color:#22d3ee;">Daily Pipeline (6:30 AM IST, Mon-Fri):</b><br>'
+                '1. Rotates through Track-status competitors (1 per day)<br>'
+                '2. Discovers partners across 6 sources — sitemap, homepage, /partners, /integrations, news, case-studies<br>'
+                '3. Uses LLM (Groq) to classify + filter for viAct-relevant industrial-safety BD leads<br>'
+                '4. Discovers each partner\'s real website (canonical brand map + DDG + LLM verify)<br>'
+                '5. Scrapes emails (5-tier: website → footer → social → DDG → WHOIS)<br>'
+                '6. Fills descriptions / country / address via LLM<br>'
+                '7. Every Monday also runs Agent 1 (finds NEW competitors)<br>'
+                '<br>'
+                '<b style="color:#22d3ee;">Sheet Schema (per competitor tab):</b><br>'
+                'Company Name · Description · Website · Phone · Email · Address · Country · Status · Email Source · Discovered Via · Discovered At · Relationship<br>'
+                '<br>'
+                '<b style="color:#22d3ee;">Manual Actions in Sheet:</b><br>'
+                '• Mark competitor <b>Track</b>/<b>Skip</b> in Competitors tab (Status column)<br>'
+                '• Mark partner <b>Shortlist</b>/<b>Done</b> in individual competitor tabs<br>'
+                '• Add missing emails/phones manually — pipeline won\'t overwrite<br>'
+                '</div>'
+            ), unsafe_allow_html=True)
