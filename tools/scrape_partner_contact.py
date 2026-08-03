@@ -92,6 +92,11 @@ PLACEHOLDER_LOCAL_PARTS = {
     "surname", "surname.name", "name.surname", "givenname",
     "your.name", "yourname.lastname", "firstname.surname",
     "initials", "user.name", "user.email", "employee",
+    # v4.15.10: leaked in SafetyIQ Rite Hite row — "doe@" bare-surname pattern
+    # (email-finder sites and Wikipedia show "doe" as the canonical placeholder
+    # surname; almost never a real business contact)
+    "doe", "smith", "roe", "public", "bob", "alice",
+    "somebody.someone", "nobody", "anonymous",
 }
 
 # International phone number regex — allows +country code, spaces, dashes, parentheses.
