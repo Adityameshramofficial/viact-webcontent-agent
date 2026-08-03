@@ -1,77 +1,77 @@
 {
-  "total_pages": 157,
-  "this_week_pages": 8,
-  "today_pages": 0,
-  "total_dedup": 56,
-  "last_run_date": "2026-07-30",
+  "total_pages": 162,
+  "this_week_pages": 5,
+  "today_pages": 5,
+  "total_dedup": 59,
+  "last_run_date": "2026-08-03",
   "latest_topics": [
     {
-      "date": "2026-07-30",
-      "topic": "Construction Safety Trends",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-07-30",
-      "topic": "Construction Site Risks",
+      "date": "2026-08-03",
+      "topic": "Falling Object Hazards: A Construction Site Risk",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-07-29",
-      "topic": "Construction Site Safety: The AI Revolution",
+      "date": "2026-08-03",
+      "topic": "10-Step Guide to Implementing RSI Prevention",
       "content_type": "Blog"
     },
     {
-      "date": "2026-07-29",
-      "topic": "Construction Site Risks",
+      "date": "2026-08-03",
+      "topic": "Calculating ROI on Strain Detection Solutions: A Guide for APAC Constr",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-08-03",
+      "topic": "Singapore MOM Repetitive Strain Compliance: A Guide for Construction",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-08-03",
+      "topic": "Repetitive Strain Injuries in Construction",
       "content_type": "Pillar"
-    },
-    {
-      "date": "2026-07-28",
-      "topic": "Construction Site Safety Management: An AI Guide",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-07-30",
-      "topic": "Construction Safety Trends",
-      "content_type": "Blog",
-      "meta_title": "Construction Safety Trends",
-      "meta_desc": "AI improves site safety and reduces risks",
-      "keyword": "construction safety",
-      "subheadline": "Improving site safety with AI",
-      "problem": "Construction sites face high injury rates",
-      "faq_q": "What does Singapore MOM require?",
-      "faq_a": "Compliance with WSH Act",
-      "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-07-30",
-      "topic": "Construction Site Risks",
+      "date": "2026-08-03",
+      "topic": "Falling Object Hazards: A Construction Site Risk",
       "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI - viAct",
-      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety automation solutions",
-      "keyword": "Construction Site Safety Automation with AI",
-      "subheadline": "Regulatory non-compliance costs lives and money.",
-      "problem": "Construction sites face 90% risk reduction needs. 50% TRIR and 65% LTI reductions are required.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation with AI?",
-      "faq_a": "Compliance with MOM WSH Act",
-      "source": "Daily Auto-Run — Pillar"
+      "meta_title": "Falling Object Hazards | viAct",
+      "meta_desc": "Falling objects pose a significant threat to worker safety. Learn how viAct's AI-powered video analytics can help reduce construction site risks.",
+      "keyword": "Falling Object Hazards",
+      "subheadline": "According to Singapore's MOM, falling objects pose a significant threat to worker safety.",
+      "problem": "Falling objects pose a significant risk to construction workers, with the potential to cause severe injury or death.",
+      "faq_q": "What does Singapore MOM require for Falling Object Hazards?",
+      "faq_a": "Employers must ensure the safety of workers from falling objects",
+      "source": "Daily Auto-Run #86"
     },
     {
-      "date": "2026-07-29",
-      "topic": "Construction Site Safety: The AI Revolution",
+      "date": "2026-08-03",
+      "topic": "10-Step Guide to Implementing RSI Prevention",
       "content_type": "Blog",
-      "meta_title": "Construction Site Safety: The AI Revolution",
-      "meta_desc": "Discover how AI is improving construction site safety in Singapore and UAE",
-      "keyword": "construction site safety",
-      "subheadline": "Improving safety outcomes with AI technology in Singapore and UAE construction",
-      "problem": "Construction sites face high injury rates and significant safety challenges.",
-      "faq_q": "What does Singapore MOM require regarding construction site safety?",
-      "faq_a": "MOM requires regular safety audits and risk assessments.",
-      "source": "Daily Auto-Run — Blog"
+      "meta_title": "10-Step Guide to RSI Prevention",
+      "meta_desc": "Learn how to prevent Repetitive Strain Injuries in construction.",
+      "keyword": "RSI Prevention",
+      "subheadline": "Preventing Repetitive Strain Injuries in construction saves lives and reduces costs.",
+      "problem": "Repetitive Strain Injuries cost the construction industry millions.",
+      "faq_q": "What does Singapore MOM require regarding RSI?",
+      "faq_a": "Employers must prevent work-related injuries.",
+      "source": "Cluster #85-blog3"
+    },
+    {
+      "date": "2026-08-03",
+      "topic": "Calculating ROI on Strain Detection Solutions: A Guide for APAC Constr",
+      "content_type": "Blog",
+      "meta_title": "Calculating ROI on Strain Detection Solutions",
+      "meta_desc": "Learn how to quantify the value of strain detection in construction sites",
+      "keyword": "strain detection solutions",
+      "subheadline": "Learn how to quantify the value of strain detection in construction sites",
+      "problem": "Construction sites face high injury rates due to strain and fatigue.",
+      "faq_q": "What does Singapore MOM require regarding strain detection?",
+      "faq_a": "Employers must ensure workers' safety and health.",
+      "source": "Cluster #85-blog2"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-07-31T12:18:26.875993+05:30"
+  "generated_at": "2026-08-03T13:07:15.169170+05:30"
 }
