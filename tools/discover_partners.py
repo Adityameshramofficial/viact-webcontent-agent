@@ -32,7 +32,12 @@ from scrape_partner_contact import scrape_contact
 import requests
 
 PRIMARY_MODEL = "llama-3.3-70b-versatile"
-FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+# v4.15.3: was "meta-llama/llama-4-scout-17b-16e-instruct" — Groq
+# deprecated / removed the model. Every rate-limited call was silently
+# returning [] (the fallback raised 404, `_extract_companies`
+# swallowed it). Switched to llama-3.1-8b-instant: smaller, currently
+# available, and cheap-enough to burn through rate-limit backoff windows.
+FALLBACK_MODEL = "llama-3.1-8b-instant"
 
 # Slug → {name, domain, tab_name}. Tab name must match the sheet exactly.
 COMPETITOR_MAP: dict[str, dict] = {
@@ -239,16 +244,31 @@ def _extract_partner_logos_from_html(url: str) -> list[tuple[str, str]]:
         return []
 
     html_lower = html.lower()
+    # v4.15: strip HTML tags to same-length whitespace so inline tags (<em>,
+    # <span class="...">, <br/>) inside section headings don't break marker
+    # regex. Positions are preserved so the img-proximity check below still
+    # aligns with the original html string.
+    # Example: "<h2>Technology <em>Partnerships</em></h2>" — the raw
+    # html_lower has "<em>" between "technology" and "partnerships", so
+    # r"technology\s*partner" never matches. After normalization those tag
+    # characters become spaces and the regex fires.
+    html_norm = _re2.sub(r"<[^>]+>", lambda m: " " * len(m.group(0)), html_lower)
+    # v4.15: patterns end with `partner(?:s|ships?)?\b` so we match all
+    # variants (partner / partners / partnership / partnerships) but only
+    # at word boundaries — prevents the old `our\s+partners` from firing
+    # on the prose "Our partnerships aren't marketing badges..." and
+    # overriding the real "Technology Partnerships" heading nearby.
+    _P = r"partner(?:s|ships?)?\b"
     section_patterns = [
-        (r"technology\s*partner", "Technology Partner"),
-        (r"implementation\s*partner", "Implementation Partner"),
-        (r"channel\s*partner", "Channel Partner"),
-        (r"integration\s*partner", "Integration Partner"),
-        (r"resell(?:er|ing)?\s*partner", "Channel Partner"),
-        (r"solution\s*partner", "Integration Partner"),
-        (r"our\s+partners", "Partner"),
-        (r"trusted\s+partners", "Partner"),
-        (r"strategic\s+partner", "Channel Partner"),
+        (rf"\btechnology\s*{_P}",             "Technology Partner"),
+        (rf"\bimplementation\s*{_P}",         "Implementation Partner"),
+        (rf"\bchannel\s*{_P}",                "Channel Partner"),
+        (rf"\bintegration\s*{_P}",            "Integration Partner"),
+        (rf"\bresell(?:er|ing)?\s*{_P}",      "Channel Partner"),
+        (rf"\bsolution\s*{_P}",               "Integration Partner"),
+        (rf"\bour\s+{_P}",                    "Partner"),
+        (rf"\btrusted\s+{_P}",                "Partner"),
+        (rf"\bstrategic\s*{_P}",              "Channel Partner"),
     ]
 
     # Junk alt-text patterns (generic, non-company)
@@ -260,7 +280,7 @@ def _extract_partner_logos_from_html(url: str) -> list[tuple[str, str]]:
     # then for each img alt tag map to the CLOSEST PRECEDING section marker.
     section_markers: list[tuple[int, str]] = []  # [(position, type)]
     for pattern, section_type in section_patterns:
-        for m in _re2.finditer(pattern, html_lower):
+        for m in _re2.finditer(pattern, html_norm):  # v4.15: use tag-stripped
             section_markers.append((m.start(), section_type))
     if not section_markers:
         return []
@@ -271,28 +291,84 @@ def _extract_partner_logos_from_html(url: str) -> list[tuple[str, str]]:
     results: list[tuple[str, str]] = []
     seen: set[str] = set()
 
-    for m in _re2.finditer(r'<img[^>]+alt="([^"]{2,80})"', html, _re2.IGNORECASE):
+    # v4.15: prefer specific-type markers over generic "Partner" when both
+    # precede the same img within range. Fixes Clarion, where the prose
+    # "Our partnerships aren't marketing badges..." matches `our\s+partners`
+    # right after the real "Technology Partnerships" heading and would
+    # otherwise downgrade every logo to generic Channel Partner.
+    _SPECIFIC = {"Technology Partner", "Integration Partner",
+                 "Implementation Partner", "Channel Partner"}
+
+    # v4.15.2: track all h1/h2/h3 headings so the "partner section" ends at
+    # the NEXT major heading, not just after a fixed char distance. Stops
+    # case-study / customer-story sections from bleeding into the partner
+    # extraction when they happen to sit right below "Our Partners"
+    # (WorkVis has ~15 scene-description alts in its Case Studies grid
+    # immediately after the partner tiles — those were leaking through the
+    # 5000-char proximity gate).
+    heading_positions = sorted(
+        m.start() for m in _re2.finditer(r"<h[1-3]\b", html_lower)
+    )
+
+    # v4.15.2: widened alt max 80 → 250 chars so descriptive/SEO alt tags
+    # like "Code Red Safety company logo, a broken red letter C with the
+    # words..." are still captured. The company name is then peeled out of
+    # the descriptive text below.
+    for m in _re2.finditer(r'<img[^>]+alt="([^"]{2,250})"', html, _re2.IGNORECASE):
         img_pos = m.start()
         if img_pos < first_marker:
             continue  # before any partner section — skip
 
-        # Find closest preceding section marker
-        section_type = "Partner"
-        for pos, sec in section_markers:
-            if pos <= img_pos:
-                section_type = sec
-            else:
-                break
+        # Preceding markers within the proximity window
+        # (v4.15: bumped 2500 → 5000 — Clarion's Technology Partnerships card
+        # grid spreads 4 logos across ~4600 chars from the section heading,
+        # and the tighter limit dropped 3 of 4 valid partners.)
+        candidates = [(p, s) for p, s in section_markers
+                      if p <= img_pos and img_pos - p <= 5000]
+        if not candidates:
+            continue
 
-        # Only include if img is within 2500 chars of its section marker
-        # (otherwise it's probably in a different section like Clients)
-        latest_marker_pos = max(pos for pos, _ in section_markers if pos <= img_pos)
-        if img_pos - latest_marker_pos > 2500:
+        # Prefer specific-type marker; fall back to closest generic
+        specific = [(p, s) for p, s in candidates if s in _SPECIFIC]
+        if specific:
+            chosen_marker_pos, section_type = max(specific, key=lambda x: x[0])
+        else:
+            chosen_marker_pos, section_type = max(candidates, key=lambda x: x[0])
+
+        # v4.15.2: reject if a new h1/h2/h3 heading opens between the
+        # chosen marker and this img (offset +80 chars to skip the closing
+        # tag of the heading containing the marker itself). That new
+        # heading marks the end of the partner section.
+        next_heading = next(
+            (h for h in heading_positions
+             if h > chosen_marker_pos + 80 and h < img_pos),
+            None,
+        )
+        if next_heading is not None:
             continue
 
         alt = m.group(1).strip()
         if not alt:
             continue
+
+        # v4.15.2: reject people-photo alts ("Photo of X from Y", "Picture
+        # of ...") — these are team headshots inside a partner testimonial,
+        # not partner logos.
+        if _re2.match(r"^(photo|picture|image|headshot|portrait)\s+of\s+",
+                      alt, _re2.IGNORECASE):
+            continue
+
+        # v4.15.2: for long descriptive alts, peel out the company name.
+        # WorkVis pattern: "Code Red Safety company logo, a broken red
+        # letter..." → keep only the text BEFORE " logo" / " company logo".
+        if len(alt) > 60 and _re2.search(r"\blogo\b", alt, _re2.IGNORECASE):
+            m_name = _re2.match(
+                r"^(.+?)\s+(?:company\s+)?logo\b",
+                alt, _re2.IGNORECASE,
+            )
+            if m_name:
+                alt = m_name.group(1).strip(" ,.-—:")
+
         # Strip WordPress image ID suffixes
         alt_clean = _re2.sub(r"-e\d{5,}$", "", alt)
         alt_clean = _re2.sub(
@@ -552,6 +628,41 @@ REJECT (DO NOT extract) any of these:
   ✗ INVESTOR / VC — funding is not partnership.
   ✗ EMPLOYEES / ADVISORS / BOARD.
   ✗ ECOSYSTEM MENTIONS — "used by Fortune 500", generic mentions.
+
+v4.15.5 REJECT — CAPABILITY-CLAIM sections (learned from 2026-07-23 Observia audit):
+  ✗ Generic "we connect to your existing stack" grids: sections titled
+    "Connection with your entire stack", "Integrations & API access",
+    "Compatible with", "Works with your tools", "Effortlessly connect to"
+    that list tool logos WITHOUT any formal partnership language.
+    Example: Observia listed Enablon/Cority/Power BI/Tableau under
+    "Connection with your entire safety & ops stack, out of the box".
+    These are ONE-SIDED "our API can talk to X" claims — not partnerships.
+    ONLY extract if the SAME logos appear under an explicit "Technology
+    Partners", "Our Partners", "Certified Partners" heading, OR the
+    prose says "X partnered with", "X is our reseller/distributor",
+    "certified by X", "Available on X Marketplace".
+  ✗ TECHNICAL PROTOCOL / STANDARDS mentions: "OPC UA integration",
+    "MES systems we integrate with", "Plug-and-Play with barcode
+    scanners / Smart Torque Wrenches / Light Towers", "Single Sign-On
+    via Azure AD / Okta". These describe capabilities, not partners.
+    Example: Retrocausal's "MES / OPC UA / Plug-and-Play" section
+    showed Siemens (real partner via interview + booth) alongside SAP
+    and Rockwell (just MES vendors they can talk to) — only Siemens
+    was a real partnership.
+  ✗ MEDIA / PR relationships: if the only "partnership" evidence is
+    that competitor publishes press releases on X's news site, or X
+    covers the competitor in their media property (X is a trade
+    publication / news outlet), X is a MEDIA partner not a
+    tech/channel partner. Example: OpenEye + Syncomm Management
+    Group — Syncomm runs snnonline.com which republishes OpenEye
+    press releases; not an integration or reseller relationship.
+  ✗ BIG-BRAND CLOUD/HARDWARE PROVIDERS as generic ecosystem:
+    Microsoft, Google, AWS, Oracle, IBM listed as "we integrate with"
+    are almost NEVER formal partnerships (the big-brand still won't
+    know the vendor exists). Only extract if there's a named
+    partnership program (e.g., "NVIDIA Inception Program", "Intel
+    Partner Alliance", "Google Cloud for Startups", "AWS ISV
+    Accelerate Program") — the program NAME must appear verbatim.
 
 If unclear whether it's a partner, REJECT. Better to output ZERO than to
 include a Customer by mistake.

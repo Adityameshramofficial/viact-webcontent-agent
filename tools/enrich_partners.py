@@ -99,6 +99,103 @@ def _key_words(name: str) -> list[str]:
     return [w for w in words if len(w) >= 4 and w not in _CORP_SUFFIX]
 
 
+# v4.15.7: subdomains that indicate the URL is NOT a company's main marketing
+# site. When these appear, strip them and prefer the root domain instead.
+_JUNK_SUBDOMAINS = {
+    "shop", "store", "mystore", "market", "buy",
+    "download", "downloads", "download-center",
+    "app", "apps", "webapp", "mobile", "m",
+    "docs", "documentation", "help", "support", "kb", "faq",
+    "blog", "news", "press", "media",
+    "careers", "jobs", "work",
+    "investors", "ir", "investor",
+    "developer", "developers", "dev", "developer-portal",
+    "partners", "partner", "reseller", "resellers",
+    "community", "forum", "forums",
+    "cdn", "assets", "static", "images",
+}
+
+
+def _keyword_matches_domain_token(keyword: str, domain_part: str) -> bool:
+    """v4.15.7: match keyword at word boundaries in the domain.
+
+    Splits on `.` and `-`, then checks if `keyword` appears as a prefix
+    or suffix of any resulting token (not just as a random substring).
+
+    - keyword="milestone", domain="milestonesys.com"     → True  (prefix of "milestonesys")
+    - keyword="milestone", domain="mymilestonecard.net"  → False (substring, but neither prefix nor suffix)
+    - keyword="promise",   domain="promise.com"          → True  (exact token)
+    - keyword="promise",   domain="promiseshop.promise.com" → True (exact "promise" token)
+    """
+    tokens = [t for t in _re.split(r"[.-]", domain_part.lower()) if t]
+    for t in tokens:
+        if t == keyword or t.startswith(keyword) or t.endswith(keyword):
+            return True
+    return False
+
+
+# Common two-part TLDs where the eTLD+1 is 3 labels (.co.uk, .com.au, etc.)
+_TWO_PART_TLDS = {
+    "co.uk", "co.in", "co.jp", "co.kr", "co.nz", "co.za", "co.il", "co.id",
+    "com.au", "com.br", "com.mx", "com.sg", "com.hk", "com.tr", "com.tw",
+    "com.ar", "com.co", "com.pe", "com.ve", "com.my", "com.ph", "com.pk",
+    "org.uk", "gov.uk", "ac.uk", "net.au", "ne.jp", "or.jp",
+}
+
+
+def _strip_junk_subdomain(url: str) -> str:
+    """v4.15.7 / v4.15.7-b: reduce URL to its most likely root marketing domain.
+
+    Two-phase logic:
+      1. If host has 3+ labels AND the first label is a known junk
+         subdomain (shop/docs/careers/…), strip it. Handles the
+         infrastructure-subdomain case.
+      2. Regardless of that, if the host still has 3+ labels AND the
+         first label REPEATS or CONTAINS the second label (indicating
+         a brand-specific subdomain like promiseshop.promise.com or
+         milestone-events.milestone.com), strip the first label too.
+      3. Never touch www — that's the canonical redirect target.
+
+    - https://shop.example.com                → https://example.com
+    - https://promiseshop.promise.com         → https://promise.com
+    - https://milestone-events.milestone.com  → https://milestone.com
+    - https://www.example.com                 → unchanged
+    - https://example.com                     → unchanged
+    - https://mymilestonecard.net             → unchanged (no shared label)
+    """
+    m = _re.match(r"^(https?://)([^/]+)(.*)$", url)
+    if not m:
+        return url
+    scheme, host, rest = m.groups()
+    parts = host.lower().split(".")
+
+    def _rebuild(new_parts):
+        return f"{scheme}{'.'.join(new_parts)}{rest}"
+
+    if len(parts) < 3 or parts[0] == "www":
+        return url
+
+    # Phase 1: junk-subdomain list
+    if parts[0] in _JUNK_SUBDOMAINS:
+        return _strip_junk_subdomain(_rebuild(parts[1:]))  # recurse for chains
+
+    # Phase 2: brand-repeats itself in the subdomain
+    # (skip if we'd end up with a two-part public suffix — e.g. .co.uk)
+    tail_2 = ".".join(parts[-2:])
+    if tail_2 in _TWO_PART_TLDS and len(parts) < 4:
+        return url  # host is already brand.co.uk — leave alone
+    second_label = parts[1]
+    first_label = parts[0]
+    if len(second_label) >= 4 and (
+        first_label == second_label
+        or first_label.startswith(second_label)
+        or first_label.endswith(second_label)
+    ):
+        return _strip_junk_subdomain(_rebuild(parts[1:]))
+
+    return url
+
+
 def _verify_website_belongs_to_company(url: str, company_name: str,
                                         context_hint: str = "") -> bool:
     """
@@ -124,7 +221,10 @@ def _verify_website_belongs_to_company(url: str, company_name: str,
     h1 = meta["h1"].lower()
     desc = meta["description"].lower()
 
-    in_domain = any(w in domain_part for w in keys)
+    # v4.15.7: word-boundary domain match — "milestone" matches
+    # "milestonesys.com" (prefix of token) but NOT "mymilestonecard.net"
+    # (substring buried inside a single token).
+    in_domain = any(_keyword_matches_domain_token(w, domain_part) for w in keys)
     in_title = any(w in title for w in keys)
     in_h1 = any(w in h1 for w in keys)
     in_desc = any(w in desc for w in keys)
@@ -302,10 +402,102 @@ def _is_wrong_website(website: str, competitor_domain: str = "") -> bool:
     return False
 
 
+# v4.15.6: canonical domains for well-known enterprise brands. DDG search
+# for generic single-word names ("Milestone", "Bosch") returns junk like
+# mymilestonecard.net or bosch-retail-microsites — this map short-circuits
+# that risk. Match is case-insensitive on the normalized company name
+# (strips Inc/Ltd/LLC/Co/GmbH suffixes, punctuation). If a partner is on
+# this list, the search stage is skipped entirely.
+_CANONICAL_DOMAINS = {
+    # VMS / video surveillance
+    "milestone":                 "https://www.milestonesys.com/",
+    "milestone systems":         "https://www.milestonesys.com/",
+    "axis":                      "https://www.axis.com/",
+    "axis communications":       "https://www.axis.com/",
+    "network optix":             "https://www.networkoptix.com/",
+    "hanwha":                    "https://www.hanwhavision.com/",
+    "hanwha vision":             "https://www.hanwhavision.com/",
+    "hikvision":                 "https://www.hikvision.com/",
+    "dahua":                     "https://www.dahuasecurity.com/",
+    "genetec":                   "https://www.genetec.com/",
+    # Hardware / silicon
+    "nvidia":                    "https://www.nvidia.com/",
+    "intel":                     "https://www.intel.com/",
+    "dell":                      "https://www.dell.com/",
+    "dell technologies":         "https://www.dell.com/",
+    "hp":                        "https://www.hp.com/",
+    "hpe":                       "https://www.hpe.com/",
+    "hewlett packard enterprise":"https://www.hpe.com/",
+    "lenovo":                    "https://www.lenovo.com/",
+    "cisco":                     "https://www.cisco.com/",
+    "arm":                       "https://www.arm.com/",
+    "qualcomm":                  "https://www.qualcomm.com/",
+    "amd":                       "https://www.amd.com/",
+    "promise":                   "https://www.promise.com/",
+    "promise technology":        "https://www.promise.com/",
+    # Cloud / infrastructure
+    "microsoft":                 "https://www.microsoft.com/",
+    "google":                    "https://about.google/",
+    "google cloud":              "https://cloud.google.com/",
+    "aws":                       "https://aws.amazon.com/",
+    "amazon web services":       "https://aws.amazon.com/",
+    "oracle":                    "https://www.oracle.com/",
+    "ibm":                       "https://www.ibm.com/",
+    "vmware":                    "https://www.vmware.com/",
+    "ovhcloud":                  "https://www.ovhcloud.com/",
+    # Industrial / OT / MES
+    "siemens":                   "https://www.siemens.com/",
+    "sap":                       "https://www.sap.com/",
+    "rockwell":                  "https://www.rockwellautomation.com/",
+    "rockwell automation":       "https://www.rockwellautomation.com/",
+    "abb":                       "https://global.abb/",
+    "honeywell":                 "https://www.honeywell.com/",
+    "schneider electric":        "https://www.se.com/",
+    "bosch":                     "https://www.bosch.com/",
+    "robert bosch":              "https://www.bosch.com/",
+    "ge":                        "https://www.ge.com/",
+    "general electric":          "https://www.ge.com/",
+    "emerson":                   "https://www.emerson.com/",
+    # Construction / BIM / SaaS
+    "autodesk":                  "https://www.autodesk.com/",
+    "trimble":                   "https://www.trimble.com/",
+    "procore":                   "https://www.procore.com/",
+    "bentley":                   "https://www.bentley.com/",
+    "hexagon":                   "https://hexagon.com/",
+    "salesforce":                "https://www.salesforce.com/",
+    # EHS
+    "enablon":                   "https://www.enablon.com/",
+    "cority":                    "https://www.cority.com/",
+    "intelex":                   "https://www.intelex.com/",
+    "velocityehs":               "https://www.ehs.com/",
+    # BI / analytics
+    "power bi":                  "https://powerbi.microsoft.com/",
+    "microsoft power bi":        "https://powerbi.microsoft.com/",
+    "tableau":                   "https://www.tableau.com/",
+    "looker":                    "https://cloud.google.com/looker",
+    "qlik":                      "https://www.qlik.com/",
+}
+
+
+def _canonical_website_for(company_name: str) -> str:
+    """v4.15.6: return hardcoded canonical URL for well-known brands, or ''."""
+    if not company_name:
+        return ""
+    import re as _re2
+    n = company_name.lower().strip()
+    n = _re2.sub(r"[,\.]", "", n)
+    n = _re2.sub(r"\b(inc|llc|ltd|limited|corp|corporation|co|gmbh|pvt|private)\b", "", n)
+    n = _re2.sub(r"\s+", " ", n).strip()
+    return _CANONICAL_DOMAINS.get(n, "")
+
+
 def _find_website_via_search(company_name: str, competitor_domain: str = "",
                               context_hint: str = "") -> str:
     """
     v3.6/v3.7.2: Discover a company's own website via DDG search.
+    v4.15.6: Short-circuit via _CANONICAL_DOMAINS map for well-known brands
+    (Milestone, Bosch, NVIDIA, etc.) — DDG search returns junk sites for
+    generic single-word brand names.
 
     Args:
         company_name: The name to search for.
@@ -320,6 +512,14 @@ def _find_website_via_search(company_name: str, competitor_domain: str = "",
     """
     if not company_name:
         return ""
+
+    # v4.15.6: canonical map short-circuit — avoids DDG-junk for generic
+    # single-word brand names like "Milestone" (was returning
+    # mymilestonecard.net), "Bosch" (regional retail microsites),
+    # "Promise" (promiseshop.promise.com).
+    canonical = _canonical_website_for(company_name)
+    if canonical:
+        return canonical
 
     # v3.7.2: extract 3-6 meaningful words from description as disambiguation
     hint = ""
@@ -388,6 +588,14 @@ def _find_website_via_search(company_name: str, competitor_domain: str = "",
                 continue
 
         candidate_url = f"https://{domain}"
+
+        # v4.15.7: if the candidate has a junk subdomain (shop., docs.,
+        # careers., ...), try the root domain FIRST. Prefer root over
+        # subdomain to avoid promiseshop.promise.com type ranking noise.
+        root_candidate = _strip_junk_subdomain(candidate_url)
+        if root_candidate != candidate_url:
+            if _verify_website_belongs_to_company(root_candidate, company_name, context_hint):
+                return root_candidate
 
         # v3.8: verify the candidate really belongs to this company
         if _verify_website_belongs_to_company(candidate_url, company_name, context_hint):
@@ -485,8 +693,22 @@ def enrich_tab(tab: str, competitor_domain: str = "",
     rows = _read_partner_rows(service, sheet_id, tab)
     emit(f"[{tab}] {len(rows)} data row(s) found")
 
-    # Column letters for PARTNER_COLUMNS
-    col_letters = {name: _col_letter(i) for i, name in enumerate(PARTNER_COLUMNS)}
+    # v4.15.4: build col_letters from the tab's ACTUAL header row, not
+    # hardcoded PARTNER_COLUMNS. Legacy tabs (e.g. Observia AI, AvidBeam)
+    # were created before v4.11 and have Status at col D + Phone Number
+    # at col E + Email at col F — the opposite of the current schema.
+    # Writing via PARTNER_COLUMNS positions would land emails in Phone
+    # column and phones in Status column on those tabs. `fill_missing`
+    # already does this correctly; enrich now matches. Falls back to
+    # PARTNER_COLUMNS positions if the header is missing (fresh tab).
+    header_resp = service.spreadsheets().values().get(
+        spreadsheetId=sheet_id, range=f"'{tab}'!1:1",
+    ).execute()
+    actual_header = header_resp.get("values", [[]])[0]
+    if actual_header:
+        col_letters = {name: _col_letter(i) for i, name in enumerate(actual_header)}
+    else:
+        col_letters = {name: _col_letter(i) for i, name in enumerate(PARTNER_COLUMNS)}
 
     to_process = []
     for row in rows:

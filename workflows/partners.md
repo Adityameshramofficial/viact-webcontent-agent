@@ -44,6 +44,443 @@ Safety Officers.
 
 ## Changelog
 
+### v4.15.7 — Word-boundary domain matching + subdomain root-preference
+
+**Why**: v4.15.6 canonical map covers ~60 well-known brands, but any
+partner name outside that list still went through DDG search + LLM
+verify, and both stages were too lenient:
+
+1. **Substring domain match**: `_verify_website_belongs_to_company`
+   accepted `mymilestonecard.net` as valid for the partner "Milestone"
+   because `"milestone" in "mymilestonecard.net"` is `True`. The keyword
+   was buried in the middle of a token — the "milestone" in that
+   domain has nothing to do with Milestone Systems.
+2. **Subdomain preference missing**: DDG for "Promise Technology" ranks
+   `promiseshop.promise.com` (the reseller shop) above `promise.com`.
+   The candidate loop verified the shop URL first and stopped, so the
+   root marketing site never got a chance.
+
+**What**:
+1. Added `_keyword_matches_domain_token(kw, domain)` — splits domain on
+   `.` and `-`, then requires `kw` to be an exact token OR a prefix /
+   suffix of a token. `milestone` matches `milestonesys` (prefix) but
+   NOT `mymilestonecard` (buried substring). Replaced the substring
+   check in `_verify_website_belongs_to_company`.
+2. Added `_strip_junk_subdomain(url)` with two phases:
+   - **Phase 1**: strip known infrastructure subdomains (`shop.`,
+     `docs.`, `careers.`, `download.`, `blog.`, `investors.`, `dev.`,
+     `partners.`, ~25 entries).
+   - **Phase 2**: strip when the first label REPEATS or CONTAINS the
+     second label — catches brand-shop patterns like
+     `promiseshop.promise.com` → `promise.com` and
+     `milestone-events.milestone.com` → `milestone.com`. Respects
+     two-part TLDs (`.co.uk`, `.com.au`) so it doesn't strip
+     `brand.co.uk` down to `co.uk`.
+3. In `_find_website_via_search`, the stripped root URL is verified
+   FIRST for every candidate — root wins whenever it also passes
+   `_verify_website_belongs_to_company`. Falls back to the original
+   subdomain URL if root fails.
+
+**Test cases** (all passing):
+
+| Input | Expected | Reason |
+|-------|----------|--------|
+| kw=milestone, domain=milestonesys.com | ✓ accept | prefix of token |
+| kw=milestone, domain=mymilestonecard.net | ✗ reject | buried substring |
+| url=promiseshop.promise.com | → promise.com | brand repeat |
+| url=shop.example.com | → example.com | junk subdomain |
+| url=docs.help.company.com | → company.com | chained strip |
+| url=mymilestonecard.net | unchanged | no shared label |
+| url=brand.co.uk | unchanged | two-part TLD |
+
+**Sheet actions taken** (manually fixed during today's audit):
+- AvidBeam / Milestone: `mymilestonecard.net` → `milestonesys.com`
+- AvidBeam / Promise Technology: `promiseshop.promise.com` → `promise.com`
+- AvidBeam / Bosch: `bosch.us` → `bosch.com`
+- AvidBeam / FBX Solutions: added missing `https://` scheme
+
+Future runs will get these right at write-time, no manual patch needed.
+
+**Files**:
+- `tools/enrich_partners.py` — new `_JUNK_SUBDOMAINS` set (~25 hosts),
+  `_TWO_PART_TLDS` set (~25 entries), `_keyword_matches_domain_token`
+  helper, `_strip_junk_subdomain` helper, updated
+  `_verify_website_belongs_to_company` (word-boundary check) and
+  `_find_website_via_search` (root-first verify)
+
+---
+
+### v4.15.6 — Canonical-domain map for enterprise brands (fixes Milestone → mymilestonecard.net type junk)
+
+**Why**: DDG search for generic single-word brand names ("Milestone",
+"Bosch", "Promise") often ranks marketing microsites, retail
+subdomains, or completely unrelated squatter domains above the real
+corporate site. Concrete cases from AvidBeam tab audit:
+
+- `Milestone` → `mymilestonecard.net` (a *credit-card* site — nothing
+  to do with Milestone Systems VMS)
+- `Bosch` → `bosch.us` (US retail regional; AvidBeam is a global
+  Netherlands-based vendor — should be `bosch.com`)
+- `Promise Technology` → `promiseshop.promise.com` (shop subdomain,
+  not the main product site)
+- `FBX Solutions` → `fbxsolutions.co.uk/` (missing `https://` scheme)
+
+The existing `_verify_website_belongs_to_company` LLM check should
+catch these but doesn't always — the LLM sometimes accepts a page
+just because the brand name appears somewhere on it. Better to
+short-circuit for known brands entirely.
+
+**What**: Added `_CANONICAL_DOMAINS` dict + `_canonical_website_for()`
+helper at the top of `_find_website_via_search`. If the partner's
+name (after light normalization — strip Inc/Ltd/Corp/etc., collapse
+whitespace, lowercase) matches a key in the map, return that URL
+directly and skip DDG entirely. Coverage: ~60 brands across VMS,
+silicon/hardware, cloud, industrial/MES, construction/SaaS, EHS,
+BI/analytics — the ones most likely to appear as competitor
+partners AND most likely to trip DDG.
+
+Unknown vendors still fall through to the existing DDG + LLM
+verification path — no regression.
+
+**Sheet actions taken** (already applied):
+- AvidBeam / Milestone: `mymilestonecard.net` → `milestonesys.com`
+- AvidBeam / Promise Technology: `promiseshop.promise.com` → `promise.com`
+- AvidBeam / Bosch: `bosch.us` → `bosch.com`
+- AvidBeam / FBX Solutions: `fbxsolutions.co.uk/` → `https://fbxsolutions.co.uk/`
+
+**Files**:
+- `tools/enrich_partners.py` — new `_CANONICAL_DOMAINS` dict (~60
+  entries), `_canonical_website_for()` normalization helper, and
+  short-circuit at the top of `_find_website_via_search`
+
+---
+
+### v4.15.5 — EXTRACT_PROMPT reject rules for capability-claims, MES/protocol mentions, media/PR relationships, big-brand ecosystem noise
+
+**Why**: 2026-07-23 partner-quality audit of six competitor tabs
+(Observia AI, AvidBeam, Retrocausal, Clarion, AegisVision, WorkVis,
+OpenEye) surfaced a whole class of false positives the v4.13
+partner/customer filter didn't catch. Deletion counts by tab:
+
+- **Observia AI: 10 → 0** — every row (5 EHS platforms + 5 BI tools)
+  came from a section titled "Connection with your entire safety & ops
+  stack, out of the box" / "Effortlessly connect Observia with your
+  existing systems". Zero named partnerships, zero press releases —
+  just a one-sided "our API can push to X" capability grid. viAct's
+  BD team cannot sell to Enablon / Cority / Power BI / Tableau
+  because those are either competing EHS platforms or generic
+  data-viz tools with no partnership program.
+- **Retrocausal: 3 → 1** — SAP and Rockwell were pulled from a
+  "Manufacturing Execution Systems / OPC UA / Plug-and-Play common
+  tools" block. That block listed Siemens (legitimate — Retrocausal
+  CEO interview + booth at Siemens Realize Live) alongside SAP,
+  Rockwell, Azure AD, Okta, QRadar as "systems we integrate with".
+  Only Siemens had actual partnership evidence outside the technical
+  compatibility list.
+- **OpenEye: 11 → 5** — earlier v4.15.x pass already stripped 5
+  customer-story rows (schools / retail / brewery / credit union).
+  Today's audit removed Syncomm Management Group after DDG search
+  showed the only OpenEye↔Syncomm evidence is press-release
+  cross-posting on snnonline.com (Syncomm's trade-media property).
+  That's a media/PR relationship, not tech/channel.
+
+Net across 6 tabs: 40 → 25 verified partners.
+
+**What**: Added five new REJECT categories to `EXTRACT_PROMPT` in
+`tools/discover_partners.py`, keyed as "v4.15.5":
+
+1. **CAPABILITY-CLAIM sections** — reject logos under headers like
+   "Connection with your entire stack", "Compatible with", "Works
+   with your tools", "Effortlessly connect to" unless the same names
+   also appear under an explicit "Technology Partners / Our Partners /
+   Certified Partners" heading, OR the prose uses partnership
+   language ("partnered with", "reseller", "certified by", "Available
+   on X Marketplace").
+2. **TECHNICAL PROTOCOL / STANDARDS mentions** — reject entries in
+   "OPC UA integration", "MES systems we integrate with",
+   "Plug-and-Play with X / Y / Z", "SSO via Azure AD / Okta"
+   sections. These describe technical capability, not partnership.
+3. **MEDIA / PR relationships** — reject when the only evidence is
+   competitor publishing content on X's news site or X being a trade
+   publication that covers the competitor. Syncomm-style case.
+4. **BIG-BRAND CLOUD / HARDWARE PROVIDERS** — reject Microsoft /
+   Google / AWS / Oracle / IBM as "we integrate with X" unless the
+   source names a specific partnership program verbatim (e.g.,
+   "NVIDIA Inception Program", "Intel Partner Alliance", "Google
+   Cloud for Startups", "AWS ISV Accelerate Program"). Clarion's 4
+   partners pass this rule; a bare "Powered by AWS" mention would not.
+5. Reinforced the general "if unclear, REJECT" rule with concrete
+   examples from today's audit so the LLM has anchor cases to
+   generalize from.
+
+**Sheet actions taken** (already applied by the audit script — no
+extra migration needed):
+
+- Deleted 10 rows from Observia AI tab (empty tab now)
+- Deleted SAP + Rockwell Automation from Retrocausal
+- Deleted Syncomm Management Group from OpenEye
+- All 25 remaining partners are source-verified against a formal
+  "partner"/"integration" section OR a named press release / joint
+  case study / verifiable third-party partnership evidence.
+
+**Files**:
+- `tools/discover_partners.py` — appended v4.15.5 REJECT rules block
+  to `EXTRACT_PROMPT` (~40 lines, between the existing v4.13 REJECT
+  list and the "If unclear, REJECT" close-out)
+
+---
+
+### v4.15.4 — Header-aware column writes in enrich_partners (unbreaks legacy tabs)
+
+**Why**: The Partnership Leads sheet has two co-existing column schemas.
+Tabs created before v4.11 (Observia AI, AvidBeam, and several others)
+put **Status at col D, Phone Number at col E, Email at col F**. Tabs
+created v4.11+ (Retrocausal, OpenEye, Clarion, AegisVision, WorkVis,
+etc.) put **Phone Number at D, Email at E, Status at H** — the current
+`PARTNER_COLUMNS`. `enrich_partners.enrich_tab` built `col_letters`
+from the hardcoded `PARTNER_COLUMNS` positions, so on a legacy tab
+`col_letters["Email"]` resolved to `E` — the Phone Number column.
+Every scraped email would land in the phone slot, and every scraped
+phone would land in the Status slot. Row reads were already
+header-based (via `_read_partner_rows`) so the bug was silent — the
+next read would just see the wrong-column values as blank and try to
+enrich them again.
+
+Symptom that finally caught it: on the 2026-07-23 batch enrichment of
+Observia AI and AvidBeam we started auditing whether phone values had
+leaked into the Email column. They hadn't yet, only because most
+legacy rows had been populated before this code path shipped — but
+any new write into those tabs was primed to corrupt them.
+
+**What**: Rewrote the col_letters construction in `enrich_tab` to read
+the tab's actual header row first and index off THAT, mirroring what
+`fill_missing_fields.fill_tab` has done since v3.5. Falls through to
+`PARTNER_COLUMNS` positions only if the header row is empty (fresh
+tab about to be seeded by `push_partners`, which will overwrite the
+header anyway).
+
+**Files**:
+- `tools/enrich_partners.py` — replaced the hardcoded PARTNER_COLUMNS
+  block at the top of `enrich_tab` with a header-fetch + dynamic
+  col_letters build
+
+---
+
+### v4.15.3 — Swap dead Groq fallback model (llama-4-scout → llama-3.1-8b-instant)
+
+**Why**: Groq deprecated / removed
+`meta-llama/llama-4-scout-17b-16e-instruct` from its hosted catalog. Every
+time `llama-3.3-70b-versatile` hit its rate-limit and the code fell
+through to the fallback, the request 404'd. In `discover_partners.py`
+the 404 was silently swallowed by `_extract_companies` (which returns
+`[]` on any exception), so partner discovery would just quietly return
+zero results during a rate-limit window — indistinguishable from a real
+"no partners found" outcome. `discover_competitors.py` had the same
+dead fallback with no user-visible signal.
+
+**What**: Switched `FALLBACK_MODEL` in both files to
+`llama-3.1-8b-instant` — smaller, currently available on Groq, and
+cheap enough to burn through rate-limit backoff windows without
+draining the daily token budget. Model choice matches what Agent 11
+already uses elsewhere for lightweight extraction paths.
+
+**Files**:
+- `tools/discover_competitors.py` — line 38 `FALLBACK_MODEL` swap +
+  inline comment
+- `tools/discover_partners.py` — line ~37 `FALLBACK_MODEL` swap with
+  explanation of the silent-swallow bug it fixed
+
+---
+
+### v4.15.2 — Descriptive alt-text support + section-end heading boundary (WorkVis fix)
+
+**Why**: Batch partner discovery for the six 2026-07-23 competitors
+returned 0 partners on WorkVis, but the site's homepage clearly shows
+`<h3>Our Partners</h3>` with logos for **Industrial Scientific** and
+**Code Red Safety**. Three separate issues combined to kill the run:
+
+1. **Alt-max too short.** The alt on Code Red Safety's logo is a full
+   accessibility sentence ("Code Red Safety company logo, a broken red
+   letter C with the words Code Red Safety under the C." — ~100 chars).
+   The old 80-char ceiling filtered it entirely.
+2. **No company-name extraction from descriptive alts.** Even after
+   bumping the max, an alt like "X company logo, ..." would land in the
+   sheet verbatim instead of "X".
+3. **Section had no end.** Right below Our Partners, WorkVis's page has
+   an `Our Customers` case-study grid with ~15 scene-description alts
+   ("Blue USS letter with Blue Circle around them...", "Blue and Green
+   triangles..."). Because those imgs sit within 5000 chars of the
+   partner marker, the v4.15 proximity gate was silently including them.
+   People-photo alts ("Photo of Bart Peetermans from Code Red Safety")
+   were also leaking through as fake partners.
+
+**What**:
+1. Bumped the alt-text max from 80 → 250 chars in the img regex.
+2. For long alts containing the word "logo", peel the company name out
+   of the descriptive text (`^(.+?)\s+(?:company\s+)?logo\b` — captures
+   "Code Red Safety" from "Code Red Safety company logo, ...").
+3. Reject alts that start with `Photo of / Picture of / Image of /
+   Headshot of / Portrait of` — those are always team/testimonial
+   headshots, never partner logos.
+4. **Section-end via next heading.** Track all `<h1>|<h2>|<h3>`
+   positions and, for each img, reject if a new heading opens between
+   the chosen partner marker (+80 char offset to skip the closing tag
+   of the heading that contains the marker) and the img. WorkVis's
+   `<h3>Our Customers</h3>` at pos 99511 now correctly ends the
+   partner section that started at 97459.
+5. Fixed the heading-position scan to use `html_lower` (not the
+   tag-stripped `html_norm`) — the tag-stripped version has no `<`
+   characters left, so the initial version silently found zero
+   headings and did nothing.
+
+Verified:
+- WorkVis: 2 partners (Industrial + Code Red Safety) — no false
+  positives from the Our Customers grid (was 5, incl. 3 false).
+- Clarion: still 4/4 (NVIDIA, Intel, OVHCloud, Google Cloud) — the
+  section between "Technology Partnerships" heading and the next h1/h2/h3
+  is empty of intervening headings, so nothing regresses.
+
+**Data-quality caveat**: WorkVis's own alt attribute for the Industrial
+Scientific tile only says `alt="Industrial"` (not the full name). We
+extract what the source gives — the sheet row was manually filled with
+the correct "Industrial Scientific".
+
+**Files**:
+- `tools/discover_partners.py` — `_extract_partner_logos_from_html`:
+  alt max 250, descriptive-alt company extraction, people-photo skip,
+  next-heading section boundary, heading scan uses html_lower
+
+---
+
+### v4.15.1 — Agent 1 discovery-query expansion (unblocks saturated pool)
+
+**Why**: Discovery pool saturated at ~78 known competitors — the 5
+original queries all targeted "construction / PPE / EHS" and repeatedly
+surfaced the same G2 / Capterra alternatives lists. First re-run after
+saturation returned only 1 new competitor (Everguard.ai). viAct's buyer
+base spans 5 verticals — Construction, Manufacturing, Mining, Oil & Gas,
+Logistics — plus APAC / Middle East / European regional markets, all of
+which were under-queried.
+
+**What**: Added 12 vertical- and region-specific queries to
+`DISCOVERY_QUERIES` in `tools/discover_competitors.py`:
+
+- 6 vertical (mining hazard detection, oil & gas refinery, warehouse
+  PPE, manufacturing plant CV, port/terminal/shipyard, APAC industrial)
+- 6 regional / product-cut (Europe, Middle East, India/SEA, fall
+  detection scaffolding, forklift-pedestrian collision warning,
+  drowsiness/fatigue detection)
+
+Second run with the expanded list yielded 6 new competitors in one
+session (Everguard.ai, AegisVision, WorkVis, Surveillant, OpenEye,
+SafetyWorx365) — 6× the pre-expansion yield. LLM proposals jumped from
+15 → 22 across the two runs.
+
+**Data-quality note**: `AegisVision` (aegisvision.ai) may collide with
+Clarion.ai's own product "Aegis Vision AI" — worth a manual check
+before marking Status=Track. Otherwise the classifier / post-filter
+worked as designed.
+
+**Files**:
+- `tools/discover_competitors.py` — 12 lines added to `DISCOVERY_QUERIES`
+
+---
+
+### v4.15 — Section-marker robustness in image-alt extractor (Clarion.ai fix)
+
+**Why**: The 2026-07-22 daily run on Clarion.ai returned 0 partners even
+though the site's `/ai-company/#partnerships` page clearly lists 4
+technology partners (NVIDIA Inception, Intel Partner Alliance, OVHCloud
+Startup Program, Google Cloud for Startups). Root cause was three
+separate weaknesses in `_extract_partner_logos_from_html`:
+
+1. **Inline HTML tags broke the section regex.** Clarion's heading is
+   `<h2 class="sh dark">Technology <em>Partnerships</em></h2>`. The old
+   pattern `r"technology\s*partner"` was applied to raw `html_lower`, so
+   the `<em>` tag between "technology" and "partnerships" prevented any
+   match and no STRONG PARTNER SIGNALS block was ever emitted.
+2. **Proximity limit too tight.** Clarion's Technology Partnerships
+   card grid spreads the 4 logos across ~4600 chars from the heading.
+   The old 2500-char limit dropped 3 of 4 valid partners.
+3. **Prose match downgraded specific section.** The paragraph
+   "Our partnerships aren't marketing badges..." matched the generic
+   `our\s+partners` pattern right after the real "Technology
+   Partnerships" heading, and being closer to the imgs, it overrode
+   the specific type — every logo would have been labeled generic
+   "Partner" (→ Channel Partner) instead of Integration.
+
+**What**:
+1. Normalize HTML tags to same-length whitespace before running section
+   regex (`html_norm = re.sub(r'<[^>]+>', lambda m: ' ' * len(m.group(0)), html_lower)`).
+   Positions are preserved so the img-proximity check still aligns
+   with the original html.
+2. Bumped the img↔marker proximity limit from 2500 → 5000 chars.
+3. Rewrote all section patterns to end with `partner(?:s|ships?)?\b`
+   at word boundaries — matches partner / partners / partnership /
+   partnerships as whole words, no longer fires on "partnering" verb
+   forms.
+4. When multiple markers precede the same img, prefer a specific-type
+   marker (Technology / Integration / Implementation / Channel) over
+   the generic "Partner" fallback. Falls through to the closest
+   generic only if no specific one is in range.
+
+Verified on `https://clarion.ai/ai-company/`: all 4 partners now
+extracted with `Technology Partner` label → mapped to Integration by
+`EXTRACT_PROMPT`. The 4 rows were also back-filled manually to the
+`Clarion` tab in the Partnership Leads sheet.
+
+**Files**:
+- `tools/discover_partners.py` — `_extract_partner_logos_from_html`:
+  tag-stripped `html_norm`, updated `section_patterns` with word
+  boundaries and plural variants, specific-over-generic marker
+  selection, proximity bumped to 5000
+
+---
+
+### v4.14.3 — Placeholder-email patterns for "J A Doe" middle-initial concat
+
+**Why**: The Oracle NetSuite (via MaintainX) run leaked
+`jadoe@example.com` into the sheet — a demo/placeholder generated from
+the "J. A. Doe" middle-initial style ("First Middle Last" flattened to
+`jadoe`). The v4.9.x placeholder blocklist covered `firstlast`,
+`f.last`, `janed`, `johnd` etc. but not the middle-initial concat
+variants. `_clean_email` therefore accepted `jadoe@…` as a real
+address.
+
+**What**: Added a 2-line block of middle-initial placeholder prefixes
+to `PLACEHOLDER_PREFIXES` in `tools/scrape_partner_contact.py`:
+
+- `jadoe`, `jbdoe`, `jcdoe`, `jddoe`, `jedoe` — "J{A,B,C,D,E} Doe"
+- `jasmith`, `jbsmith`, `jcsmith` — "J{A,B,C} Smith"
+
+Any email whose local-part starts with these prefixes is now rejected
+by `_clean_email`, same path as the older `flast` / `firstlast` /
+`janed` / `johnd` rules.
+
+**Files**:
+- `tools/scrape_partner_contact.py` — 3 lines added to
+  `PLACEHOLDER_PREFIXES` (lines 86–88) with the incident comment
+
+---
+
+### v4.14.2 — Bugfix: URL-decode `mailto:` captures (kills leading `%20` in emails)
+
+**Why**: Pelco's partners page had `mailto:%20sales@action-cs.com` (a leading
+URL-encoded space). The mailto regex captured `%20sales@action-cs.com`
+literally. `_clean_email` never percent-decoded it, and `%` is a valid
+email local-part character per RFC — so the format check passed and the
+sheet ended up with `%20sales@action-cs.com` as the contact email.
+
+**What**: Wrap each `mailto:` match in `urllib.parse.unquote()` before
+appending. The `%20` becomes a real space, `_clean_email`'s existing
+`.strip()` removes it, and the resulting email is written correctly.
+Added `unquote` to the `urllib.parse` import.
+
+**Files**:
+- `tools/scrape_partner_contact.py` — 2 lines in `_extract_emails` + 1 import
+
+---
+
 ### v4.14.1 — Bugfix: escape curly braces in EXTRACT_PROMPT example
 
 **Why**: v4.14 shipped with an unescaped example line

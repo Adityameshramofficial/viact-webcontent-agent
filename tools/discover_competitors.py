@@ -35,7 +35,7 @@ from utils import get_env, scrape_url
 import requests
 
 PRIMARY_MODEL = "llama-3.3-70b-versatile"
-FALLBACK_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+FALLBACK_MODEL = "llama-3.1-8b-instant"  # v4.15.3: llama-4-scout removed from Groq
 
 VIACT_DESCRIPTION = (
     "viAct is an AI computer-vision safety-monitoring platform for construction, "
@@ -48,13 +48,42 @@ VALID_CATEGORIES = {
     "compliance_checklist", "project_management",
 }
 
-# Tavily queries — deliberately varied to catch different niches
+# Tavily queries — deliberately varied to catch different niches.
+# v4.15.1: added 6 vertical-specific queries because the original 5 all
+# targeted construction/PPE and the discovery pool saturated at ~78 known
+# competitors. Mining / Oil & Gas / Logistics / Manufacturing / APAC
+# vendors are equally in-scope for viAct's 5-industry buyer base.
 DISCOVERY_QUERIES = [
     "viact.ai competitors alternatives AI construction safety",
     "best AI computer vision safety monitoring construction software",
     "EHS software AI vision worker safety platforms",
     "construction site AI monitoring PPE detection platforms",
     "AI video analytics workplace safety vendors",
+    # v4.15.1 — vertical expansion beyond construction
+    "AI computer vision safety monitoring mining hazard detection",
+    "oil gas refinery worker safety AI video monitoring",
+    "warehouse worker safety AI camera PPE detection",
+    "manufacturing plant safety computer vision monitoring platform",
+    "port terminal shipyard AI safety monitoring vendors",
+    "APAC industrial worker safety AI startup platform",
+    # v4.15.1 — regional + product-category deep cuts
+    "European construction safety AI monitoring startup vendors",
+    "Middle East industrial HSE AI video analytics vendors",
+    "India Southeast Asia AI construction safety platforms",
+    "AI fall detection scaffolding safety monitoring software",
+    "AI forklift pedestrian collision warning warehouse safety",
+    "AI drowsiness fatigue detection industrial workers platform",
+    # v4.15.8 — untapped verticals + adjacent safety niches
+    "AI utility power grid worker safety monitoring vendors",
+    "AI rail transit safety monitoring computer vision platform",
+    "AI marine port shipyard worker safety camera vendors",
+    "AI pharma food manufacturing safety monitoring platform",
+    "AI steel foundry metal plant worker safety vendors",
+    "AI drone inspection industrial site safety platform",
+    "OSHA compliance automation AI safety software vendors",
+    "smart helmet wearable industrial worker safety startup",
+    "AI robotic collision safety monitoring warehouse startup",
+    "AI heat stress ergonomic industrial worker monitoring",
 ]
 
 # Reviewsite / news / non-competitor domains — never treat these as competitors
@@ -65,6 +94,16 @@ BLACKLIST_DOMAINS = {
     "wikipedia.org", "reddit.com", "quora.com", "google.com", "microsoft.com",
     "salesforce.com", "amazon.com", "aws.amazon.com", "cloudflare.com",
     "viact.ai", "viact.com",
+    # v4.15.8 — SEO / AI-tool directories that the classifier keeps mistaking
+    # for the vendor's real site (produces `Observia.ai → seektool.ai/ai/observia-ai`
+    # and `AI Cover → saashub.com/ai-cover` — the tool name is real, the
+    # website is a third-party listing).
+    "seektool.ai", "saashub.com", "producthunt.com", "aitools.fyi",
+    "futuretools.io", "theresanaiforthat.com", "toolify.ai", "aitoolhunt.com",
+    "aitools.inc", "aitoolsdirectory.com", "aigear.io", "insidr.ai",
+    "startupstash.com", "sourceforge.net", "alternativeto.net",
+    "crozdesk.com", "goodfirms.co", "clutch.co", "designrush.com",
+    "owler.com", "zoominfo.com", "growjo.com", "6sense.com",
 }
 
 
@@ -183,6 +222,15 @@ STRICT RULES:
 - Assign a category to each: ai_vision | wearables_iot | site_documentation | compliance_checklist | project_management.
 - Description: 1 short sentence about what they do (from the evidence, don't invent).
 
+v4.15.8 HARD-REJECT (learned from 2026-07-23 hallucination incident):
+- REJECT AI chatbots / companion apps / conversational AI (Replika, Character.ai, Pi, Poe) — NOT industrial safety even though they use "AI".
+- REJECT custom software / IT consultancies who happen to build safety projects (RaftLabs, ThinkPalm-style shops) — one-off project work, not a product.
+- REJECT AI-tool directories / catalog sites (seektool.ai, saashub.com, aitools.fyi, futuretools.io, toolify.ai, sourceforge, alternativeto).
+- REJECT curated lists ("A curated list of HSE software...") — those are the directory ENTRIES, not vendors.
+- REJECT if you are not 100% sure the URL exists — do NOT invent plausible-sounding domains. If the evidence doesn't spell out the exact URL, leave website blank and the row will be dropped by post-filter.
+- REJECT AI content generators / marketing writers / SEO tools that mention "safety" only tangentially.
+- If uncertain whether the company matches viAct's scope, REJECT. Better to output ZERO than to include a chatbot.
+
 ALREADY-KNOWN competitors to EXCLUDE (do NOT include these in output):
 {known_list}
 
@@ -199,10 +247,16 @@ EVIDENCE:
 
 
 def _classify_competitors(evidence: str, known: set[str]) -> list[dict]:
+    # v4.15.8: evidence truncated to 9000 chars (was 16000). With 27 discovery
+    # queries × 10 results each + G2/Capterra scrapes, total evidence blows
+    # past 100 KB and the classifier request exceeds Groq's TPM ceiling —
+    # llama-3.3-70b RPM cap gets hit → fallback llama-3.1-8b-instant fails
+    # on 6000 TPM cap. 9 KB fits both model tiers with headroom for the
+    # known-competitor list.
     prompt = CLASSIFIER_PROMPT_TEMPLATE.format(
         viact_description=VIACT_DESCRIPTION,
         known_list=", ".join(sorted(known)) if known else "(none)",
-        evidence=evidence[:16000],
+        evidence=evidence[:5500],
     )
     try:
         raw = _groq_call(prompt, max_tokens=3500)
@@ -226,11 +280,17 @@ def _norm_domain(website: str) -> str:
 
 
 def _norm_name(name: str) -> str:
+    """v4.15.8: aggressive normalization so 'Observia.ai' == 'Observia AI'.
+    Also drops the .ai/.io/.com trailing pseudo-suffix that AI-tool startups
+    tack onto their brand ("Observia.ai" and "Observia" collide)."""
     n = name.lower().strip()
-    n = re.sub(r"[,\.]", "", n)
+    n = re.sub(r"[,\.]", " ", n)
     n = re.sub(r"\b(inc|llc|ltd|limited|corp|corporation|co|gmbh|pvt|private)\b", "", n)
+    n = re.sub(r"\b(ai|io|app|tech|technologies|systems|group|labs|solutions)\b", "", n)
     n = re.sub(r"\s+", " ", n).strip()
-    return n
+    # Also collapse all non-alphanumeric so "Observia AI" and "ObservIA-ai" match
+    n_collapsed = re.sub(r"[^a-z0-9]+", "", n)
+    return n_collapsed if n_collapsed else n
 
 
 def _load_known_competitors() -> tuple[set[str], set[str]]:
@@ -275,6 +335,24 @@ def _load_known_competitors() -> tuple[set[str], set[str]]:
     return known_names, known_domains
 
 
+def _domain_resolves(domain: str, timeout: float = 3.0) -> bool:
+    """v4.15.8: quick DNS check — does this domain actually resolve?
+    Rejects LLM-hallucinated URLs like safeguardvision.ai / gemini3.io /
+    aicover.com that look plausible but don't exist. Under Groq TPM
+    pressure the fallback model llama-3.1-8b-instant hallucinates
+    company URLs; without a resolution check they land in the sheet
+    and pollute the tracked list."""
+    import socket
+    if not domain:
+        return False
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.gethostbyname(domain)
+        return True
+    except Exception:
+        return False
+
+
 def _post_filter(candidates: list[dict], known_names: set[str],
                  known_domains: set[str]) -> list[dict]:
     """Final safety net after LLM classification."""
@@ -300,6 +378,16 @@ def _post_filter(candidates: list[dict], known_names: set[str],
         if n_name in known_names or n_domain in known_domains:
             continue
         if n_name in seen_names or n_domain in seen_domains:
+            continue
+
+        # v4.15.8: DNS resolution check — rejects LLM-hallucinated domains.
+        # Was learned the hard way on 2026-07-23: classifier ran under
+        # TPM-pressure fallback (llama-3.1-8b-instant), returned 6 candidates
+        # (NWarch AI, AI Cover, Brandwise, Replika, SafeGuard Vision AI,
+        # Gemini 3), 5 of them with URLs that don't even DNS-resolve, and
+        # the 6th (Replika) was a romantic AI chatbot — none industrial safety.
+        if not _domain_resolves(n_domain):
+            print(f"    [post-filter] REJECT {name!r} — {n_domain!r} does not resolve (LLM hallucination)")
             continue
 
         # Category sanity
