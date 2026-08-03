@@ -176,17 +176,32 @@ def _html_to_text(html: str, max_chars: int = 6000) -> str:
     return text.strip()[:max_chars]
 
 
-def _summarize_llm(name: str, website: str, text: str) -> dict:
+def _summarize_llm(name: str, website: str, text: str,
+                   competitor_context: str = "") -> dict:
     """
     Ask Groq to extract description, address, country from scraped text.
     Uses fast 8B model first; falls back to 70B if the fast one is rate-limited.
     Anti-hallucination: instruct model to leave fields empty if not visible.
+
+    v4.15.11: competitor_context — short phrase like "listed as a partner of
+    Fluix, an EHS / digital documentation platform for field operations".
+    Prevents Drax-style namesake disasters where `_find_website_via_search`
+    resolves to a wrong-industry page (music group / restaurant / dating app)
+    and the LLM cheerfully writes "New Zealand music group" as the description
+    of what was supposed to be an executive-search firm.
     """
     from groq import Groq
     client = Groq(api_key=get_env("GROQ_API_KEY"))
+    context_line = (
+        f'Context: {name} is {competitor_context}. If the text below is '
+        f'CLEARLY about an unrelated industry (music, dating, fashion, hotel, '
+        f'restaurant, entertainment, personal blog) that does not match this '
+        f'context, leave description EMPTY — do NOT guess.\n\n'
+    ) if competitor_context else ""
     prompt = (
         f'Extract these facts about the company "{name}" (website: {website}) '
         f'from the text below.\n\n'
+        f'{context_line}'
         f'Reply STRICTLY as JSON with these keys:\n'
         f'  description: one short line (max 15 words) describing what the company does\n'
         f'  address: office/HQ address if visible, else empty\n'
@@ -286,6 +301,31 @@ def fill_tab(tab: str, dry_run: bool = False, progress=None) -> dict:
     fills = {"descriptions": 0, "phones": 0, "addresses": 0, "countries": 0}
     skipped = 0
 
+    # v4.15.11: look up competitor context so the LLM description generator
+    # knows what industry the partner is expected to be in. Prevents Drax-
+    # style namesake disasters where a partner's website resolves to an
+    # unrelated brand (NZ music group) and the LLM writes an off-topic
+    # description. Reads Competitors tab's Description column for this tab.
+    competitor_context = ""
+    try:
+        comp_resp = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id, range="'Competitors'!A2:D",
+        ).execute()
+        for _r in comp_resp.get("values", []):
+            if _r and _r[0].strip() == tab:
+                _comp_cat = _r[2].strip() if len(_r) > 2 else ""
+                _comp_desc = _r[3].strip() if len(_r) > 3 else ""
+                _bits = []
+                if _comp_desc:
+                    _bits.append(f"a listed partner of {tab}")
+                    _bits.append(_comp_desc[:180])
+                elif _comp_cat:
+                    _bits.append(f"a listed partner of {tab} ({_comp_cat})")
+                competitor_context = " — ".join(_bits)
+                break
+    except Exception:
+        pass  # non-fatal; LLM just runs without extra context
+
     for i, row in enumerate(all_rows[1:], start=2):
         pad = row + [""] * (len(header) - len(row))
         name = pad[header.index("Company Name")].strip()
@@ -334,7 +374,8 @@ def fill_tab(tab: str, dry_run: bool = False, progress=None) -> dict:
         # LLM for description / address / country
         if any(m in missing for m in ("description", "address", "country")):
             text = _html_to_text(html)
-            result = _summarize_llm(name, website, text)
+            result = _summarize_llm(name, website, text,
+                                     competitor_context=competitor_context)
 
             if "description" in missing and result.get("description"):
                 if not dry_run:
