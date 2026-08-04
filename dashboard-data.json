@@ -1,77 +1,77 @@
 {
-  "total_pages": 162,
-  "this_week_pages": 5,
+  "total_pages": 167,
+  "this_week_pages": 10,
   "today_pages": 5,
-  "total_dedup": 59,
-  "last_run_date": "2026-08-03",
+  "total_dedup": 62,
+  "last_run_date": "2026-08-04",
   "latest_topics": [
     {
-      "date": "2026-08-03",
-      "topic": "Falling Object Hazards: A Construction Site Risk",
+      "date": "2026-08-04",
+      "topic": "Reducing Workplace Accidents in Construction",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-08-04",
+      "topic": "Construction Site Risks",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-08-03",
-      "topic": "10-Step Guide to Implementing RSI Prevention",
+      "date": "2026-08-04",
+      "topic": "Calculating ROI on RSI Prevention Measures: A Guide for APAC Construct",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-03",
-      "topic": "Calculating ROI on Strain Detection Solutions: A Guide for APAC Constr",
+      "date": "2026-08-04",
+      "topic": "Singapore MOM Guidelines for RSI Prevention: A Guide for Construction",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-03",
-      "topic": "Singapore MOM Repetitive Strain Compliance: A Guide for Construction",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-08-03",
-      "topic": "Repetitive Strain Injuries in Construction",
+      "date": "2026-08-04",
+      "topic": "Repetitive Strain Injuries: A Construction Site Risk",
       "content_type": "Pillar"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-08-03",
-      "topic": "Falling Object Hazards: A Construction Site Risk",
+      "date": "2026-08-04",
+      "topic": "Reducing Workplace Accidents in Construction",
+      "content_type": "Blog",
+      "meta_title": "Reducing Workplace Accidents in Construction",
+      "meta_desc": "AI solutions for a safer construction site",
+      "keyword": "construction site safety",
+      "subheadline": "AI solutions for a safer construction site",
+      "problem": "Construction sites face high accident rates.",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "MOM requires compliance with the WSH Act.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-08-04",
+      "topic": "Construction Site Risks",
       "content_type": "Pillar",
-      "meta_title": "Falling Object Hazards | viAct",
-      "meta_desc": "Falling objects pose a significant threat to worker safety. Learn how viAct's AI-powered video analytics can help reduce construction site risks.",
-      "keyword": "Falling Object Hazards",
-      "subheadline": "According to Singapore's MOM, falling objects pose a significant threat to worker safety.",
-      "problem": "Falling objects pose a significant risk to construction workers, with the potential to cause severe injury or death.",
-      "faq_q": "What does Singapore MOM require for Falling Object Hazards?",
-      "faq_a": "Employers must ensure the safety of workers from falling objects",
-      "source": "Daily Auto-Run #86"
+      "meta_title": "Construction Site Safety Automation | viAct",
+      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety automation solutions.",
+      "keyword": "Construction Site Safety Automation",
+      "subheadline": "According to Singapore's MOM, construction sites face high risks of accidents and injuries.",
+      "problem": "Construction sites face 65% Lost Time Injury rate and 50% Total Recordable Incident Rate, affecting 32,000+ workers globally.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Using AI?",
+      "faq_a": "MOM requires construction sites to implement safety measures to reduce risks.",
+      "source": "Daily Auto-Run — Pillar"
     },
     {
-      "date": "2026-08-03",
-      "topic": "10-Step Guide to Implementing RSI Prevention",
+      "date": "2026-08-04",
+      "topic": "Calculating ROI on RSI Prevention Measures: A Guide for APAC Construct",
       "content_type": "Blog",
-      "meta_title": "10-Step Guide to RSI Prevention",
-      "meta_desc": "Learn how to prevent Repetitive Strain Injuries in construction.",
-      "keyword": "RSI Prevention",
-      "subheadline": "Preventing Repetitive Strain Injuries in construction saves lives and reduces costs.",
-      "problem": "Repetitive Strain Injuries cost the construction industry millions.",
-      "faq_q": "What does Singapore MOM require regarding RSI?",
-      "faq_a": "Employers must prevent work-related injuries.",
-      "source": "Cluster #85-blog3"
-    },
-    {
-      "date": "2026-08-03",
-      "topic": "Calculating ROI on Strain Detection Solutions: A Guide for APAC Constr",
-      "content_type": "Blog",
-      "meta_title": "Calculating ROI on Strain Detection Solutions",
-      "meta_desc": "Learn how to quantify the value of strain detection in construction sites",
-      "keyword": "strain detection solutions",
-      "subheadline": "Learn how to quantify the value of strain detection in construction sites",
-      "problem": "Construction sites face high injury rates due to strain and fatigue.",
-      "faq_q": "What does Singapore MOM require regarding strain detection?",
-      "faq_a": "Employers must ensure workers' safety and health.",
-      "source": "Cluster #85-blog2"
+      "meta_title": "Calculating ROI on RSI Prevention Measures",
+      "meta_desc": "Learn how to calculate ROI on RSI prevention measures in APAC construction",
+      "keyword": "RSI prevention measures",
+      "subheadline": "Learn how to calculate the return on investment for Repetitive Strain Injury prevention measures in construction",
+      "problem": "Construction sites face significant costs due to Repetitive Strain Injuries (RSI).",
+      "faq_q": "What does Singapore MOM require regarding RSI prevention?",
+      "faq_a": "Employers must provide a safe working environment and prevent RSI.",
+      "source": "Cluster #86-blog2"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-08-03T13:07:15.169170+05:30"
+  "generated_at": "2026-08-04T12:09:26.691598+05:30"
 }
