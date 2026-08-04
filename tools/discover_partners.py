@@ -69,6 +69,24 @@ NOISE_NAMES = {
     "google", "microsoft", "amazon", "aws", "amazon web services",
     "sap", "oracle", "salesforce", "gartner", "forrester",
     "wikipedia", "reddit", "medium", "techcrunch", "forbes",
+    # v4.15.13: video surveillance / camera / VMS giants that treat
+    # cold outreach as a SALES enquiry (not partnership). Motorola
+    # replied to a partnership email today saying "understanding your
+    # requirements … about our Pelco/Avigilon VSA solutions" — i.e.
+    # sales-qualified inbound, not partnership. Same risk with every
+    # camera/VMS giant below.
+    "motorola", "motorola solutions", "pelco", "avigilon", "watchguard",
+    "axis", "axis communications",
+    "bosch", "bosch security", "bosch security systems", "robert bosch",
+    "hikvision", "hikvision digital technology",
+    "dahua", "dahua technology",
+    "hanwha", "hanwha vision", "hanwha techwin", "samsung security",
+    "genetec", "uniview",
+    "verkada", "ring", "wyze", "arlo",
+    "cisco meraki", "meraki",
+    "eagle eye networks", "eagle eye",
+    "flir", "flir systems",
+    "i-pro", "i-pro americas", "panasonic i-pro",
     # v4.15.12: generic productivity / CRM / BI / no-code SaaS that
     # competitor sites list under "integrates with" but that are NOT
     # BD-relevant industrial-safety partners for viAct. Leaked into
@@ -650,6 +668,21 @@ REJECT (DO NOT extract) any of these:
   ✗ INVESTOR / VC — funding is not partnership.
   ✗ EMPLOYEES / ADVISORS / BOARD.
   ✗ ECOSYSTEM MENTIONS — "used by Fortune 500", generic mentions.
+
+v4.15.13 REJECT — VIDEO SURVEILLANCE / CAMERA / VMS GIANTS
+(learned from 2026-07-23 Motorola incident: our BD outreach was replied to
+as a SALES enquiry, not a partnership one, because Motorola/Pelco/Avigilon
+compete with viAct in AI-vision security):
+  ✗ Motorola Solutions and its brands (Pelco, Avigilon, WatchGuard)
+  ✗ Camera hardware giants: Axis Communications, Bosch Security,
+    Hikvision, Dahua, Hanwha Vision (aka Samsung / Hanwha Techwin),
+    Uniview, FLIR, i-PRO (Panasonic)
+  ✗ VMS platforms with their own AI: Genetec, Milestone (borderline),
+    Eagle Eye Networks
+  ✗ Cloud video-surveillance competitors: Verkada, Rhombus, Meraki
+  ✗ Consumer cameras: Ring, Wyze, Arlo
+These are viAct's direct competitors OR too-large-to-partner giants.
+Their sales teams treat inbound BD as product-purchase enquiries.
 
 v4.15.5 REJECT — CAPABILITY-CLAIM sections (learned from 2026-07-23 Observia audit):
   ✗ Generic "we connect to your existing stack" grids: sections titled
