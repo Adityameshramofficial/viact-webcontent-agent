@@ -85,8 +85,25 @@ NOISE_NAMES = {
     "verkada", "ring", "wyze", "arlo",
     "cisco meraki", "meraki",
     "eagle eye networks", "eagle eye",
-    "flir", "flir systems",
+    "flir", "flir systems", "teledyne flir",
     "i-pro", "i-pro americas", "panasonic i-pro",
+    "rhombus", "rhombus systems", "puretech systems",
+    "cognyte", "hivewatch", "amag", "lenel", "lenels2", "onguard",
+    "hexagon physical security",
+    "idemia", "nec", "panasonic", "samsung", "samsung techwin",
+    "arrow electronics", "amdocs", "atos", "verizon business",
+    # v4.15.14: viAct direct competitors (AI vision safety) — appear on other
+    # competitor sites as partners, but partnering with them makes no sense
+    "zeroeyes", "avathon",
+    # v4.15.14: too-big-corp outreach targets — contact form only, never respond
+    "boeing", "bmw", "pepsi", "coca-cola", "coca cola", "rwe",
+    "accenture", "informatica", "lenovo",
+    "sgre", "siemens gamesa", "sgre siemens gamesa renewable",
+    "utc", "utc climate controls security",
+    # v4.15.14: industry associations — not partnership candidates
+    "toronto construction association", "associated construction contractors",
+    "firestop contractors international", "ottawa construction association",
+    "league of champions", "fcia",
     # v4.15.12: generic productivity / CRM / BI / no-code SaaS that
     # competitor sites list under "integrates with" but that are NOT
     # BD-relevant industrial-safety partners for viAct. Leaked into
