@@ -34,6 +34,26 @@ Customers are explicitly REJECTED:
 - **Channel Partner** — reseller, distributor, VAR, systems integrator
 - **Integration** — technology / API / marketplace partnership
 
+**BD-outreach goal (v4.15.15 clarification from manager 2026-07-23)**:
+The `new emails` aggregated outreach list should be built from
+**Channel Partner rows ONLY**. Manager said verbatim: *"Hume kharidna
+thodi hai — partners dhundh rahe hai"* (we're not buying, we're looking
+for resellers who can sell viAct too).
+- ✓ Include: named channel partners / authorized resellers / systems
+  integrators / VARs / distributors (small-to-mid regional services
+  companies whose whole business is reselling third-party software —
+  REVTech, SICA, Inforica are the archetype)
+- ✗ Exclude from outreach list even if extracted correctly:
+  - Integration-type tech partners that are themselves solution vendors
+    (BriefCam, SafetyIQ, Autodesk, Fieldwire, other AI vision / EHS
+    software companies) — they compete with viAct, they won't resell it
+  - Camera / VMS giants (Motorola, Bosch, Axis, Hikvision, Genetec,
+    Milestone, Verkada, ...) — they treat cold BD as sales enquiries
+  - Mega-corp customers (BMW, Boeing, Coca-Cola, RWE, ports, logistics)
+    — they buy, they don't resell
+  - Industry associations (construction associations, chambers) — not
+    businesses that resell software
+
 **viAct scope** (confirmed from `workflows/viact-web-design.md` +
 `workflows/industry_page.md`): AI industrial safety + video analytics
 platform serving **5 verticals** — Construction, Manufacturing, Mining,

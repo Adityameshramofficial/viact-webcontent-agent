@@ -686,6 +686,32 @@ REJECT (DO NOT extract) any of these:
   ✗ EMPLOYEES / ADVISORS / BOARD.
   ✗ ECOSYSTEM MENTIONS — "used by Fortune 500", generic mentions.
 
+v4.15.15 BD-OUTREACH GOAL (manager clarification 2026-07-23):
+The Partnership Leads sheet feeds viAct's channel-development team, not
+sales. Their goal is: FIND COMPETITOR X's RESELLERS/INTEGRATORS/VARs so
+viAct can approach them and say "you already sell X, add viAct to your
+portfolio". This means the row must be a company whose BUSINESS MODEL
+is RESELLING/INTEGRATING/INSTALLING third-party software — NOT a
+company that BUILDS its own product.
+
+For BD-outreach ranking:
+  ✓✓ HIGHEST VALUE: named channel partner / authorized reseller /
+     systems integrator / VAR / value-added distributor (e.g., REVTech,
+     SICA, Inforica for AegisVision) — these are small-to-mid regional
+     services companies whose whole business is reselling other people's
+     software
+  ✓  MEDIUM: tech integration partners where the partner's product
+     CLEARLY complements (not overlaps with) viAct — e.g., a camera
+     hardware certification. Keep in the per-competitor tab but do NOT
+     surface in the aggregated outreach list unless explicitly wanted.
+  ✗  WORST-CASE: another AI vision / safety / EHS software vendor
+     listed as a "technology partner" of the competitor. These are
+     viAct's competitors themselves and treat cold outreach as sales
+     enquiries (Motorola incident 2026-07-23).
+
+The manager said verbatim: "Hume kharidna thodi hai — partners dhundh
+rahe hai" (we're not buying, we're looking for resellers).
+
 v4.15.13 REJECT — VIDEO SURVEILLANCE / CAMERA / VMS GIANTS
 (learned from 2026-07-23 Motorola incident: our BD outreach was replied to
 as a SALES enquiry, not a partnership one, because Motorola/Pelco/Avigilon
