@@ -1,77 +1,77 @@
 {
-  "total_pages": 167,
-  "this_week_pages": 10,
-  "today_pages": 5,
-  "total_dedup": 62,
-  "last_run_date": "2026-08-04",
+  "total_pages": 176,
+  "this_week_pages": 19,
+  "today_pages": 9,
+  "total_dedup": 65,
+  "last_run_date": "2026-08-05",
   "latest_topics": [
     {
-      "date": "2026-08-04",
-      "topic": "Reducing Workplace Accidents in Construction",
+      "date": "2026-08-05",
+      "topic": "Construction Site Safety in 2026",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-04",
+      "date": "2026-08-05",
       "topic": "Construction Site Risks",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-08-04",
-      "topic": "Calculating ROI on RSI Prevention Measures: A Guide for APAC Construct",
+      "date": "2026-08-05",
+      "topic": "10-Step Guide to Preventing Workplace Strains: A Guide for APAC Constr",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-04",
-      "topic": "Singapore MOM Guidelines for RSI Prevention: A Guide for Construction",
+      "date": "2026-08-05",
+      "topic": "Calculating ROI on Musculoskeletal Injury Prevention: A Guide for APAC",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-04",
-      "topic": "Repetitive Strain Injuries: A Construction Site Risk",
-      "content_type": "Pillar"
+      "date": "2026-08-05",
+      "topic": "Understanding Singapore MOM Regulations for Musculoskeletal Safety",
+      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-08-04",
-      "topic": "Reducing Workplace Accidents in Construction",
+      "date": "2026-08-05",
+      "topic": "Construction Site Safety in 2026",
       "content_type": "Blog",
-      "meta_title": "Reducing Workplace Accidents in Construction",
-      "meta_desc": "AI solutions for a safer construction site",
+      "meta_title": "Construction Site Safety in 2026",
+      "meta_desc": "AI improves construction site safety.",
       "keyword": "construction site safety",
-      "subheadline": "AI solutions for a safer construction site",
-      "problem": "Construction sites face high accident rates.",
+      "subheadline": "AI improves safety in construction sites.",
+      "problem": "Construction sites face safety risks.",
       "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires compliance with the WSH Act.",
+      "faq_a": "Compliance with the MOM WSH Act.",
       "source": "Daily Auto-Run — Blog"
     },
     {
-      "date": "2026-08-04",
+      "date": "2026-08-05",
       "topic": "Construction Site Risks",
       "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation | viAct",
-      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety automation solutions.",
-      "keyword": "Construction Site Safety Automation",
-      "subheadline": "According to Singapore's MOM, construction sites face high risks of accidents and injuries.",
-      "problem": "Construction sites face 65% Lost Time Injury rate and 50% Total Recordable Incident Rate, affecting 32,000+ workers globally.",
-      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Using AI?",
-      "faq_a": "MOM requires construction sites to implement safety measures to reduce risks.",
+      "meta_title": "Real-Time Construction Site Safety",
+      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety solutions.",
+      "keyword": "construction site safety",
+      "subheadline": "Regulatory non-compliance costs lives and money.",
+      "problem": "Construction sites face high risks, with 90% of sites experiencing accidents. Singapore's MOM and UAE's OSHAD regulate safety.",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "Regular safety audits and risk assessments.",
       "source": "Daily Auto-Run — Pillar"
     },
     {
-      "date": "2026-08-04",
-      "topic": "Calculating ROI on RSI Prevention Measures: A Guide for APAC Construct",
+      "date": "2026-08-05",
+      "topic": "10-Step Guide to Preventing Workplace Strains: A Guide for APAC Constr",
       "content_type": "Blog",
-      "meta_title": "Calculating ROI on RSI Prevention Measures",
-      "meta_desc": "Learn how to calculate ROI on RSI prevention measures in APAC construction",
-      "keyword": "RSI prevention measures",
-      "subheadline": "Learn how to calculate the return on investment for Repetitive Strain Injury prevention measures in construction",
-      "problem": "Construction sites face significant costs due to Repetitive Strain Injuries (RSI).",
-      "faq_q": "What does Singapore MOM require regarding RSI prevention?",
-      "faq_a": "Employers must provide a safe working environment and prevent RSI.",
-      "source": "Cluster #86-blog2"
+      "meta_title": "10-Step Guide to Preventing Workplace Strains",
+      "meta_desc": "Preventing workplace strains in APAC construction with a 10-step guide.",
+      "keyword": "workplace strain prevention",
+      "subheadline": "Preventing workplace strains is crucial for HSE teams to ensure worker safety and reduce costs.",
+      "problem": "Workplace strains pose a significant risk to worker safety and construction project timelines.",
+      "faq_q": "What does Singapore MOM require regarding workplace strain prevention?",
+      "faq_a": "MOM requires compliance with workplace safety regulations.",
+      "source": "Cluster #88-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-08-04T12:09:26.691598+05:30"
+  "generated_at": "2026-08-05T12:08:30.465373+05:30"
 }
