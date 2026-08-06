@@ -64,6 +64,64 @@ Safety Officers.
 
 ## Changelog
 
+### v4.15.16 — Channel Partner Discovery mode (BD-outreach target extraction)
+
+**Why**: 2026-07-23 session showed the manager's actual BD ask is not
+"find any partner of any competitor". It is: *"find REGIONAL SYSTEMS
+INTEGRATORS / VARs / AUTHORIZED RESELLERS of viAct's competitors so we
+can approach them and offer them viAct alongside the competitor product
+they already sell."*
+
+The existing `discover_partners.py` pipeline extracts everything a
+competitor lists as a "partner" — which is 80% wrong for this ask (tech
+integrations, customers, competing solution vendors, mega-corps, ad
+listings). All prior v4.15.x fixes tightened the FILTER; this ships a
+new DISCOVERY MODE that goes at the problem from the reseller side:
+for each Track competitor, DDG-search "authorized reseller / certified
+partner / systems integrator [competitor]", then filter DDG results
+through NOISE_NAMES + TRADE_PUB_BLOG_HOSTS + DNS + blog-title triggers.
+
+Session result of the manual version of this: 32 verified regional
+resellers appended to the "Channel Partners (Manual)" outreach tab
+(SITECH x6, BuildingPoint x3, GRAITEC, MicroCAD 3D, DataStew, Premise
+One, Safe & Sound, IdentiSys, FortressGT, JCS UK, ADC KY, and more).
+
+**What**: New tool `tools/discover_channel_partners.py`:
+
+- `find_channel_partners_for(competitor_name, competitor_domain)` —
+  runs 4 DDG queries with formal reseller-terminology templates;
+  filters TRADE_PUB_BLOG_HOSTS (26 entries: ASMAG, Channel Drive,
+  VAR Insights, source/security-informed trade pubs, LinkedIn,
+  marketplaces, review sites, Apple-reseller sites, blog articles);
+  filters BLOG_TITLE_TRIGGERS (14 patterns: "top 10", "vs.", "default
+  password", "how to", "review", etc.); NOISE_NAMES from
+  `discover_partners.py` (60+ entries: surveillance giants, competing
+  solution providers, mega-corps, generic SaaS, industry associations);
+  DNS-verifies each candidate; guesses country from ccTLD; returns
+  deduped list of {name, website, email_guess, country,
+  resells_competitor}.
+- `append_to_channel_partners_tab(entries, tab)` — auto-creates the
+  target tab with 9-column schema, dedups against existing rows by
+  email + normalized name, appends new entries.
+- `run_channel_partner_discovery()` — iterates over all
+  Track-status competitors (via existing `read_tracked_competitors()`).
+
+CLI: `python partner_pipeline.py --find-channel-partners`
+
+**Sheet contract**: `Channel Partners (Manual)` tab, 9 columns:
+Company Name | Description | Website | Phone Number | Email | Address |
+Country | Status | **Resells (Competitor)**
+
+The last column is the killer feature — BD team sees at a glance which
+competitor each reseller carries, so outreach can be tailored: *"You
+already sell Trimble/Autodesk/Genetec — add viAct to your portfolio."*
+
+**Files**:
+- `tools/discover_channel_partners.py` — new module (~220 lines)
+- `partner_pipeline.py` — new `--find-channel-partners` CLI flag + routing
+
+---
+
 ### v4.15.7 — Word-boundary domain matching + subdomain root-preference
 
 **Why**: v4.15.6 canonical map covers ~60 well-known brands, but any

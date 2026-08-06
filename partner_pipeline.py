@@ -13,7 +13,7 @@ Usage:
     python partner_pipeline.py --all
     python partner_pipeline.py --all-agents
 
-Workflow doc: workflows/partner_outreach.md
+Workflow doc: workflows/partners.md (authoritative Agent 11 spec + changelog)
 """
 import argparse
 import os
@@ -207,6 +207,12 @@ def main():
                             "via free stack (Jina + Groq 8B). Doesn't re-scrape email if already there.")
     group.add_argument("--fill-missing-all", action="store_true",
                        help="Fill missing fields across all Track-status tabs.")
+    group.add_argument("--find-channel-partners", action="store_true",
+                       help="v4.15.16 — BD-outreach mode: for every Track-status competitor, "
+                            "search DDG for 'authorized reseller / certified partner / systems "
+                            "integrator [competitor]' and append verified regional resellers "
+                            "to the 'Channel Partners (Manual)' tab. This is what the manager "
+                            "actually wants — pure reseller candidates for viAct to approach.")
     parser.add_argument("--overwrite", action="store_true",
                        help="For --enrich / --enrich-all: also re-scrape rows that already have "
                             "Email filled (useful after strict-validation upgrade).")
@@ -227,6 +233,14 @@ def main():
     # ── --discover-competitors ────────────────────────────────────────────────
     if args.discover_competitors:
         run_agent1()
+        return
+
+    # ── --find-channel-partners (v4.15.16 BD-outreach) ────────────────────────
+    if args.find_channel_partners:
+        from discover_channel_partners import run_channel_partner_discovery
+        log("=== v4.15.16 — Channel Partner Discovery (BD outreach mode) ===")
+        n = run_channel_partner_discovery()
+        log(f"Total new channel partners added: {n}")
         return
 
     # ── --enrich (Agent 3 alone on one tab) ───────────────────────────────────
