@@ -192,11 +192,27 @@ def find_channel_partners_for(competitor_name: str,
             clean_name = _clean_title(title)
             if _norm_name(clean_name) in NOISE_NAMES:
                 continue
+            # v4.15.17: also check name-substring for compound noise
+            # ("Motorola Solutions Partner", "Bosch Security Reseller" etc.)
+            name_low = clean_name.lower()
+            if any(nn in name_low for nn in NOISE_NAMES if len(nn) >= 6):
+                continue
             # Filter: URL too deep (article page, not company home)
             if len(url.split("/")) > 6:
                 continue
             # Filter: too-short host (e.g., "co" typo)
             if len(dom) < 5:
+                continue
+            # v4.15.17: additional URL structural rejects
+            # /partners/ / /events/ / /news/ / /blog/ = subpage on vendor site
+            url_low = url.lower()
+            if any(seg in url_low for seg in (
+                "/partners/", "/partner/", "/reseller/", "/dealer/",
+                "/events/", "/event/", "/news/", "/blog/", "/press/",
+                "/case-studies/", "/case-study/", "/customers/",
+                "/support/", "/careers/", "/jobs/", "/about/",
+                "/investor/", "/investors/",
+            )):
                 continue
             found[dom] = {
                 "name": clean_name,

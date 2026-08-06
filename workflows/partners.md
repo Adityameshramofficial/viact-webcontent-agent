@@ -62,7 +62,84 @@ Safety Officers.
 
 ---
 
+## Anti-Mistake Filter Matrix (v4.15.17 consolidated)
+
+Every category the pipeline REJECTS, why, and where the rule lives.
+This is the reference list — if a bad row ever reaches the "Channel
+Partners (Manual)" or "new emails" tab, check here first.
+
+| # | Category | Example (rejected) | Why NOT a partner | Filter |
+|---|---|---|---|---|
+| 1 | **Video-surveillance / camera / VMS giants** | Motorola, Pelco, Avigilon, Axis, Bosch Security, Hikvision, Dahua, Hanwha, Genetec, Milestone, Verkada, Rhombus, FLIR, i-PRO, Cognyte, AMAG, HiveWatch, Lenel/OnGuard, Idemia | Compete with viAct OR too big — sales team treats cold BD as sales enquiry (Motorola incident 2026-07-23) | `NOISE_NAMES` in `discover_partners.py` |
+| 2 | **Solution-provider competitors** | BriefCam, SafetyIQ, Autodesk, Fieldwire, Fluix, EcoOnline, Corfix, SiteDocs, ZeroEyes, Avathon | Build their own AI-vision / EHS software — won't resell viAct | `NOISE_NAMES` |
+| 3 | **Industrial mega-corps** | Siemens, Rockwell, SAP, Oracle, HPE/HP Enterprise, NVIDIA, Intel, Dell, Boeing, BMW, Pepsi, Coca-Cola, RWE, Accenture, Informatica, Lenovo, Verizon, Amdocs, Arrow Electronics, Atos, SGRE, UTC | Contact-form only; internal partner programs; won't respond to cold BD | `NOISE_NAMES` |
+| 4 | **Industry associations** | Toronto Construction Assoc, Ottawa Construction Assoc, League of Champions, FCIA, ACCNJ | Not businesses that resell software | `NOISE_NAMES` |
+| 5 | **Generic productivity / CRM / BI SaaS** | Trello, Asana, Jira, Notion, Airtable, Zapier, Pipedrive, HubSpot, Google Sheets/Docs, Power BI, Tableau, Looker, Qlik, Slack, Teams, Dropbox, Mailchimp, DocuSign, Stripe, Shopify, QuickBooks | Tools competitors "integrate with" — not BD-relevant partnerships | `NOISE_NAMES` |
+| 6 | **Trade publications / blogs** | ASMAG, Channel Drive, VAR Insights, Source Security, Security Informed, blogs.cctvinstaller.ai, LearnCCTV, Security Update | Not companies — journalists / publishers | `TRADE_PUB_BLOG_HOSTS` in `discover_channel_partners.py` |
+| 7 | **Marketplaces / directories / social** | IndiaMART, Amazon marketplace, LinkedIn, Facebook, Twitter, YouTube, TikTok, Instagram, Reddit, Wikipedia, GitHub, G2, Capterra, TrustRadius, Gartner | Not vendors — listing platforms | `TRADE_PUB_BLOG_HOSTS` |
+| 8 | **Apple resellers** | Gadget & Gear, iSpace, iVenus, Imagine Online Store | Wrong category — Apple products, not industrial safety | `TRADE_PUB_BLOG_HOSTS` |
+| 9 | **Search engines / login pages** | Google.com, PartnerFinder, cloud.google.com, login.noon.partners, Axis Omni banking | Not companies | `TRADE_PUB_BLOG_HOSTS` |
+| 10 | **Blog-article result titles** | "Top 10 AI Vision Software", "X vs Y Review", "Hikvision default password", "How to install Bosch", "5 Reasons to Use Resellers" | Article, not a company — result of a search hit inside a blog | `BLOG_TITLE_TRIGGERS` in `discover_channel_partners.py` |
+| 11 | **Vendor's own subpages** | competitor.com/partners/, /reseller/, /dealer/, /events/, /news/, /blog/, /press/, /customers/, /case-studies/, /careers/, /about/, /investor/ | It's the competitor's OWN promotional page, not an external reseller | URL-segment filter in `discover_channel_partners.py` (v4.15.17) |
+| 12 | **Hallucinated LLM URLs** | safeguardvision.ai, gemini3.io, ailtyics.com, ailytics.com | LLM invented plausible-sounding domain; DNS doesn't resolve | `_domain_resolves()` DNS check in `discover_competitors.py` |
+| 13 | **AI-tool directory sites** | seektool.ai, saashub.com, producthunt.com, aitools.fyi, futuretools.io, toolify.ai, aitoolhunt.com, sourceforge.net, alternativeto.net, crozdesk.com | Third-party listings, not the vendor itself | `BLACKLIST_DOMAINS` in `discover_competitors.py` |
+| 14 | **Wrong subdomain (should be root)** | promiseshop.promise.com, milestone-events.milestone.com, shop./docs./careers./blog./investors. | Brand's own subsidiary/junk subdomain — prefer eTLD+1 root | `_strip_junk_subdomain()` in `enrich_partners.py` |
+| 15 | **Substring-matched wrong URL** | mymilestonecard.net (was matching "Milestone") | Substring "milestone" is buried inside a token — not word-boundary match | `_keyword_matches_domain_token()` word-boundary check in `enrich_partners.py` |
+| 16 | **Placeholder / example emails** | doe@X, jsmith@X, lastfirst@X, johndoe@X, firstname.lastname@X, jadoe@X, doe.j@X, johnsmith@X | Never a real business contact — email-finder pattern examples | `PLACEHOLDER_LOCAL_PARTS` in `scrape_partner_contact.py` |
+| 17 | **Phone number in email column** (legacy) | +1-513-774-1000 in Email col | v4.11 schema shift bug — pre-v4.15.4 tabs wrote data one column off | v4.15.4 header-aware writes prevent, one-off migration script fixes existing |
+| 18 | **Namesake wrong-industry** | Drax music group (draxproject.com) when partner is Drax executive search | LLM picked wrong company with same name | v4.15.11 competitor_context passed to `_summarize_llm` — LLM leaves description empty if scraped site is off-topic |
+| 19 | **Duplicate names with variant spelling** | "Observia AI" vs "Observia.ai", "Rite Hite" vs "RiteHite" | Case + punctuation + .ai/.io suffix + whitespace variance | v4.15.8 `_norm_name` collapses to alphanumeric before dedup |
+| 20 | **Consulting / VC / financial firms** | McKinsey, Bain, Pegasus Tech Ventures, J.S. Held, Drax Executive | They sell services / capital, not software reselling | Operator review — no automatic filter (LLM prompt notes this in v4.13) |
+| 21 | **End-user customers** | JE Dunn, Wates, IHP, Sir Robert McAlpine, Multivac, Zurich Insurance, DP World, APM Terminals, Americold, Piston Automotive, Ludwig Freytag, Titan Airways, Simaero, Dyna Crane, Ceva, Lhoist, Rite Hite | They BUY safety software, they don't RESELL it | Operator review after `discover_partners.py`; v4.13 EXTRACT_PROMPT has REJECT-CUSTOMER rule |
+| 22 | **Generic "integrates with" prose** | Observia claiming "connects with your entire safety & ops stack" listing Enablon/Cority/Power BI | Capability claim, not partnership | v4.15.5 EXTRACT_PROMPT REJECT block for capability-claim sections |
+| 23 | **Silent LLM 404 (dead fallback)** | Groq's `llama-4-scout-17b` was removed; every rate-limit fell to it and returned 404 | Silent-swallow in `_extract_companies` returned [] with no partner discovered | v4.15.3 swapped fallback to `llama-3.1-8b-instant` |
+| 24 | **Media / PR relationships** | Syncomm (OpenEye news republisher on snnonline.com) | Media outlet, not a reseller | v4.15.5 EXTRACT_PROMPT REJECT block for media-PR relationships |
+| 25 | **MES / protocol integration mentions** | Retrocausal listing SAP + Rockwell in "OPC UA / Plug-and-Play" section | Technical protocol capability, not formal partnership | v4.15.5 EXTRACT_PROMPT REJECT block for MES/protocol sections |
+
+**Golden rule (manager verbatim, 2026-07-23)**:
+*"Hume kharidna thodi hai — partners dhundh rahe hai"* — we're not buying,
+we're looking for RESELLERS who can sell viAct too. Every filter above
+enforces this rule.
+
+**When adding a new competitor / row manually**, ask: "Would this
+company respond to 'You already sell X, add viAct to your portfolio'?"
+If they build their own competing product → reject. If they buy the
+product for their own use → reject. If they're too big (Motorola-tier)
+to notice a small AI vendor → reject. Only regional systems integrators /
+authorized resellers / VARs pass.
+
+---
+
 ## Changelog
+
+### v4.15.17 — Consolidated anti-mistake filter matrix + URL-segment reject in channel-partner discovery
+
+**Why**: Session 2026-07-23 shipped 15+ filter fixes (v4.15 → v4.15.16)
+but the rules were scattered across four files (`discover_partners.py`,
+`discover_competitors.py`, `enrich_partners.py`,
+`discover_channel_partners.py`, `scrape_partner_contact.py`). Manager
+asked for zero-mistake guarantee. This changelog entry consolidates the
+25 reject categories into one reference matrix at the top of this doc,
+and adds two more filters to `discover_channel_partners.py` that catch
+recurring leaks:
+
+1. **Compound noise-name substring match**: `NOISE_NAMES` used to only
+   match exact normalized name. Now also matches if any 6+ char noise
+   name appears as a substring of the candidate name — catches things
+   like "Motorola Solutions Partner Portal" or "Bosch Security Reseller
+   Program".
+2. **URL-segment reject**: reject candidates whose URL contains
+   `/partners/`, `/reseller/`, `/dealer/`, `/events/`, `/news/`,
+   `/blog/`, `/press/`, `/case-studies/`, `/customers/`, `/support/`,
+   `/careers/`, `/jobs/`, `/about/`, `/investor/`. These are the
+   competitor's OWN promotional subpage, not an external reseller.
+
+**Files**:
+- `tools/discover_channel_partners.py` — v4.15.17 filter additions
+- `workflows/partners.md` — new "Anti-Mistake Filter Matrix" section
+  (25 rows) placed above the changelog
+
+---
 
 ### v4.15.16 — Channel Partner Discovery mode (BD-outreach target extraction)
 
