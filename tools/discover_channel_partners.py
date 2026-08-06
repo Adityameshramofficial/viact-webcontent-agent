@@ -75,7 +75,27 @@ BLOG_TITLE_TRIGGERS = [
     "top 10", "best of", "list of", "review", "vs.", " vs ",
     "how to", "why ", "5 reasons", "10 reasons",
     "default password", "cheat sheet", "tutorial",
+    # v4.15.18: additional article-title triggers from Trimble/Procore leaks
+    "named ", "becomes ", "silver rate", "gold rate", "price in",
+    "test", "razer", "yandex",
+    "partner program", "partner directory", "directory of",
+    "find a", "find an", "find your", "authorized retailer",
+    "certified consultants", "certified partners",  # directory pages, not the company
+    # Non-BD-relevant industry verticals (fitness, gaming, retail, aviation ops)
+    "gold & silver", "silver price", "gold price",
+    "airports company", "airport company", "airports limited",
+    "gym ", "fitness", "at home",
 ]
+
+# v4.15.18: additional blocked HOSTS surfaced by 2026-07-23 leaks
+_ADDITIONAL_BLOCKED_HOSTS = {
+    "engineering.com","tractorevolution.com","goodreturns.in",
+    "gold.razer.com","razer.com","market.yandex.ru","yandex.ru",
+    "precorathome.com","precor.com",
+    "directory.partner.io","partner.io","istqb.org",
+    "macl.aero","agtechnologies.com",
+    "learncctv.com","cctvinstaller.ai",
+}
 
 
 def _dns_ok(domain: str, timeout: float = 3.0) -> bool:
@@ -180,6 +200,9 @@ def find_channel_partners_for(competitor_name: str,
                 continue
             # Filter: blocked / vendor's own / competitor's own
             if any(bad in dom for bad in TRADE_PUB_BLOG_HOSTS):
+                continue
+            # v4.15.18: additional hosts blocked
+            if any(bad in dom for bad in _ADDITIONAL_BLOCKED_HOSTS):
                 continue
             if competitor_domain and (dom == competitor_domain
                                        or dom.endswith("." + competitor_domain)):
