@@ -85,16 +85,54 @@ BLOG_TITLE_TRIGGERS = [
     "gold & silver", "silver price", "gold price",
     "airports company", "airport company", "airports limited",
     "gym ", "fitness", "at home",
+    # v4.15.19 EHS/Security archetype leak
+    "what is", "what are", "log in", "sign up", "sign in",
+    "manager", "lead consultant", "senior consultant", "junior consultant",
+    "reset", "password", "wiki", "wikipedia",
+    "community patches", "software patches", "software update",
+    "definition", "complete guide", "beginner's guide",
+    "recognized as", "exploring", "comprehensive review",
+    "how modern", "how the", "how to become", "top rated",
+    "best of", "best in", "best rated", "best safety", "best ehs",
+    "leader in", "leader for", "competitors", "complementary",
+    "case study", "the ultimate", "for retail", "for enterprise",
+    "mission vision", "core values",
+    "log in or", "residential reboot", "case guide",
+    # Nproxy / mirror / translate URLs
+    "nproxy", "translate.goog",
 ]
 
-# v4.15.18: additional blocked HOSTS surfaced by 2026-07-23 leaks
+# v4.15.18/19: additional blocked HOSTS surfaced by 2026-07-23 leaks
 _ADDITIONAL_BLOCKED_HOSTS = {
+    # v4.15.18 Trimble/Procore leak — trade pubs, articles, wrong-category
     "engineering.com","tractorevolution.com","goodreturns.in",
     "gold.razer.com","razer.com","market.yandex.ru","yandex.ru",
     "precorathome.com","precor.com",
     "directory.partner.io","partner.io","istqb.org",
     "macl.aero","agtechnologies.com",
     "learncctv.com","cctvinstaller.ai",
+    # v4.15.19 EHS/Security archetype leak — job boards, wikis, definition sites,
+    # cybersecurity vendors, EHS competitors, gaming, nproxy mirrors, model
+    # templates, article sites, vendor's own tenant subdomains
+    "indeed.com","ca.indeed.com","in.indeed.com","uk.indeed.com","jobs.indeed.com",
+    "theladders.com","joinhandshake.com","app.joinhandshake.com",
+    "jobs.trysavvy.co","trysavvy.co","glassdoor.com","seek.com.au","monster.com",
+    "techtarget.com","sumble.com","gitnux.org","wifitalents.com",
+    "cctvwiki.com","dahuawiki.com","wikitraining.com",
+    "tupras-orm.eu.enablon.io","enablon.io",  # Enablon tenant subdomains
+    "wolterskluwer.com","wolters-kluwer.com",  # Enablon parent vendor
+    "eset.com","globalsign.com","ibm.com","clone-systems.com",
+    "axxonsoft.com","hangzhou-axxon","axxonvision",  # AxxonSoft VMS competitor
+    "thomasnet.com","safetyproductfinder.com","partnerbase.com",
+    "efecomunica.efe.com","optisoftly.com","thecityclassified.com",
+    "businessmodelcanvastemplate.com",
+    "store.gaijin.net","gaijin.net",
+    "morphe-patches.software",
+    "summitehsq.com","mirsinfo.com","smartqhse.com",  # EHS competitors
+    "www-trinityconsultants-com.nproxy.org","nproxy.org","translate.google.com",
+    "wittsecurity.com","jonkelch.com",  # individual consultants
+    "avproglobal.com",  # residential AV (wrong category)
+    "securitystandards.ca",  # standards body
 }
 
 

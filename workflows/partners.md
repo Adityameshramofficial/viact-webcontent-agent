@@ -112,6 +112,65 @@ authorized resellers / VARs pass.
 
 ## Changelog
 
+### v4.15.19 — Job boards / wikis / competitor VMS / vendor tenants filtered out
+
+**Why**: 2026-07-23 archetype-batch (EHS implementers + Physical
+security VARs + Regional security integrators) surfaced 34 junk out
+of 54. New categories bypassing v4.15.18 filters:
+
+- **Job boards** (indeed.com, theladders.com, joinhandshake, trysavvy,
+  glassdoor, seek, monster) — DDG returned "Cority Partner Manager"
+  jobs when searching for Cority partners
+- **Definition / research sites** (techtarget.com, sumble.com,
+  gitnux.org, wifitalents) — "What is a VAR" articles
+- **Product wikis** (dahuawiki.com, cctvwiki.com) — user-contributed
+- **Vendor tenant subdomains** (tupras-orm.eu.enablon.io = Enablon
+  tenant for Tupras — clearly not a reseller)
+- **Vendor parent companies** (wolterskluwer.com = Enablon parent)
+- **Cybersecurity / cert vendors** (ESET, GlobalSign, IBM, Clone
+  Systems) — wrong category
+- **Competing VMS** (AxxonSoft) — viAct-adjacent competitor
+- **Directory sites** (thomasnet.com, safetyproductfinder,
+  partnerbase)
+- **Article publisher domains** (efecomunica.efe.com, optisoftly,
+  thecityclassified)
+- **Wrong-category retail / gaming** (store.gaijin.net,
+  precorathome, morphe-patches)
+- **Nproxy / SEO mirror URLs** (nproxy.org, translate.goog)
+- **EHS competitor product pages** (Summit EHSQ, MIRS, SmartQHSE)
+
+**What**: Extended `_ADDITIONAL_BLOCKED_HOSTS` (+30 entries) and
+`BLOG_TITLE_TRIGGERS` (+30 patterns) in
+`tools/discover_channel_partners.py`. Title triggers now catch
+"what is", "log in", "sign up", "manager", "lead consultant",
+"definition", "complete guide", "recognized as", "reset password",
+"wiki", "top rated", "leader in", "competitors", "case study",
+"how to become", "mission vision", "core values", "nproxy",
+"translate.goog", etc.
+
+**Files**:
+- `tools/discover_channel_partners.py` — v4.15.19 additions
+
+---
+
+### v4.15.18 — Tighter filters after Trimble/Procore leak
+
+**Why**: v4.15.17 wasn't catching article-title patterns ("APEX
+named Trimble", "HammerTech Secures $70M Growth", "West Side Tractor
+Sales Becomes Authorized Trimble") or wrong-category hosts
+(engineering.com, razer.com, precor.com, yandex.ru, macl.aero,
+partner.io directory, istqb.org).
+
+**What**: 15 more BLOG_TITLE_TRIGGERS ("named", "becomes", "silver
+rate", "razer", "authorized retailer", "partner program directory",
+"find a/an/your", "airports company", "fitness/gym/at home") + 15
+more _ADDITIONAL_BLOCKED_HOSTS.
+
+**Files**:
+- `tools/discover_channel_partners.py`
+
+---
+
 ### v4.15.17 — Consolidated anti-mistake filter matrix + URL-segment reject in channel-partner discovery
 
 **Why**: Session 2026-07-23 shipped 15+ filter fixes (v4.15 → v4.15.16)
