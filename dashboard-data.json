@@ -1,77 +1,77 @@
 {
-  "total_pages": 176,
-  "this_week_pages": 19,
-  "today_pages": 9,
-  "total_dedup": 65,
-  "last_run_date": "2026-08-05",
+  "total_pages": 191,
+  "this_week_pages": 34,
+  "today_pages": 6,
+  "total_dedup": 68,
+  "last_run_date": "2026-08-07",
   "latest_topics": [
     {
-      "date": "2026-08-05",
+      "date": "2026-08-07",
       "topic": "Construction Site Safety in 2026",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-05",
+      "date": "2026-08-07",
       "topic": "Construction Site Risks",
       "content_type": "Pillar"
     },
     {
-      "date": "2026-08-05",
-      "topic": "10-Step Guide to Preventing Workplace Strains: A Guide for APAC Constr",
+      "date": "2026-08-07",
+      "topic": "Implementing AI Safety Checklist in Automotive Plants: A Guide for HSE",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-05",
-      "topic": "Calculating ROI on Musculoskeletal Injury Prevention: A Guide for APAC",
+      "date": "2026-08-07",
+      "topic": "Calculating ROI of AI in Automotive Manufacturing: A Guide",
       "content_type": "Blog"
     },
     {
-      "date": "2026-08-05",
-      "topic": "Understanding Singapore MOM Regulations for Musculoskeletal Safety",
+      "date": "2026-08-07",
+      "topic": "Meeting Singapore MOM Standards with AI Safety",
       "content_type": "Blog"
     }
   ],
   "recent_outputs": [
     {
-      "date": "2026-08-05",
+      "date": "2026-08-07",
       "topic": "Construction Site Safety in 2026",
       "content_type": "Blog",
-      "meta_title": "Construction Site Safety in 2026",
-      "meta_desc": "AI improves construction site safety.",
+      "meta_title": "Construction Site Safety in 2026: Singapore Guide",
+      "meta_desc": "AI transforms construction site safety for HSE teams",
       "keyword": "construction site safety",
-      "subheadline": "AI improves safety in construction sites.",
-      "problem": "Construction sites face safety risks.",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "Compliance with the MOM WSH Act.",
+      "subheadline": "AI transforms site safety for HSE teams",
+      "problem": "Construction sites face high injury rates",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "Compliance with safety regulations.",
       "source": "Daily Auto-Run — Blog"
     },
     {
-      "date": "2026-08-05",
+      "date": "2026-08-07",
       "topic": "Construction Site Risks",
       "content_type": "Pillar",
-      "meta_title": "Real-Time Construction Site Safety",
-      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety solutions.",
-      "keyword": "construction site safety",
-      "subheadline": "Regulatory non-compliance costs lives and money.",
-      "problem": "Construction sites face high risks, with 90% of sites experiencing accidents. Singapore's MOM and UAE's OSHAD regulate safety.",
+      "meta_title": "AI-Powered Construction Site Safety Automation",
+      "meta_desc": "Reduce construction site risks by 90% with viAct's AI-powered safety automation.",
+      "keyword": "construction site safety automation",
+      "subheadline": "Regulatory non-compliance can lead to significant fines and loss of life.",
+      "problem": "Construction sites face high risks, with 50% of workers experiencing injuries. Regulatory context from MOM and BCA emphasizes safety.",
       "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "Regular safety audits and risk assessments.",
+      "faq_a": "MOM requires employers to ensure a safe working environment.",
       "source": "Daily Auto-Run — Pillar"
     },
     {
-      "date": "2026-08-05",
-      "topic": "10-Step Guide to Preventing Workplace Strains: A Guide for APAC Constr",
+      "date": "2026-08-07",
+      "topic": "Implementing AI Safety Checklist in Automotive Plants: A Guide for HSE",
       "content_type": "Blog",
-      "meta_title": "10-Step Guide to Preventing Workplace Strains",
-      "meta_desc": "Preventing workplace strains in APAC construction with a 10-step guide.",
-      "keyword": "workplace strain prevention",
-      "subheadline": "Preventing workplace strains is crucial for HSE teams to ensure worker safety and reduce costs.",
-      "problem": "Workplace strains pose a significant risk to worker safety and construction project timelines.",
-      "faq_q": "What does Singapore MOM require regarding workplace strain prevention?",
-      "faq_a": "MOM requires compliance with workplace safety regulations.",
-      "source": "Cluster #88-blog3"
+      "meta_title": "Implementing AI Safety Checklist in Automotive Plants",
+      "meta_desc": "Reduce risks and improve safety in automotive manufacturing with AI-powered checklists",
+      "keyword": "AI safety checklist",
+      "subheadline": "Reducing risks and improving safety in automotive manufacturing with AI-powered checklists",
+      "problem": "Inadequate safety checklists pose significant risks to workers in automotive plants.",
+      "faq_q": "What does Singapore MOM require regarding Implementing AI Safety Checklist in Automotive Plants?",
+      "faq_a": "Regular safety audits and risk assessments.",
+      "source": "Cluster #89-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-08-05T12:08:30.465373+05:30"
+  "generated_at": "2026-08-07T11:20:57.201553+05:30"
 }
