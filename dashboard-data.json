@@ -1,10 +1,20 @@
 {
-  "total_pages": 201,
-  "this_week_pages": 10,
-  "today_pages": 10,
+  "total_pages": 203,
+  "this_week_pages": 12,
+  "today_pages": 2,
   "total_dedup": 70,
-  "last_run_date": "2026-08-10",
+  "last_run_date": "2026-08-11",
   "latest_topics": [
+    {
+      "date": "2026-08-11",
+      "topic": "Construction Site Safety in 2026",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-08-11",
+      "topic": "Construction Site Hazards",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-08-10",
       "topic": "Enhancing Construction Site Safety with Generative AI",
@@ -19,19 +29,35 @@
       "date": "2026-08-10",
       "topic": "Streamlining EHS Admin Tasks Checklist: A Guide for APAC Construction",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-08-10",
-      "topic": "Calculating ROI on EHS Automation: A Guide for Singapore Construction",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-08-10",
-      "topic": "Singapore EHS Compliance Cost Savings",
-      "content_type": "Blog"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-08-11",
+      "topic": "Construction Site Safety in 2026",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety in 2026: Singapore Guide",
+      "meta_desc": "AI improves construction site safety for HSE teams",
+      "keyword": "construction site safety",
+      "subheadline": "AI improves site safety for HSE teams",
+      "problem": "Construction sites face high incident rates",
+      "faq_q": "What does Singapore MOM require for construction site safety?",
+      "faq_a": "MOM requires compliance with safety regulations",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-08-11",
+      "topic": "Construction Site Hazards",
+      "content_type": "Pillar",
+      "meta_title": "AI-Powered Construction Site Safety Automation Solutions",
+      "meta_desc": "Reduce construction site hazards with AI-powered safety automation solutions",
+      "keyword": "Construction Safety Automation",
+      "subheadline": "MOM WSH Act requires compliance to reduce risks",
+      "problem": "Construction sites face hazards, affecting 32,000+ workers, with 7,200+ lost workdays, and $2.5M+ in potential savings per project.",
+      "faq_q": "What does Singapore MOM require for AI-Powered Construction Site Safety Automation Solutions?",
+      "faq_a": "MOM WSH Act compliance",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-08-10",
       "topic": "Enhancing Construction Site Safety with Generative AI",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require regarding construction site safety?",
       "faq_a": "MOM requires ensuring workplace safety and health",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-08-10",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Solutions",
-      "meta_desc": "AI-powered construction site safety automation solutions for reduced risks and costs.",
-      "keyword": "construction site safety",
-      "subheadline": "Regulatory non-compliance costs lives and money.",
-      "problem": "Construction sites face high risks. 50% of accidents are preventable.",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires implementing safety measures.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-08-10",
-      "topic": "Streamlining EHS Admin Tasks Checklist: A Guide for APAC Construction",
-      "content_type": "Blog",
-      "meta_title": "Streamlining EHS Admin Tasks Checklist: APAC Construction Guide",
-      "meta_desc": "Streamline EHS admin tasks with AI-powered monitoring, reducing risks and improving compliance in APAC construction.",
-      "keyword": "Streamlining EHS Admin Tasks Checklist",
-      "subheadline": "Efficient EHS admin tasks are crucial for reducing construction site risks and ensuring compliance with regulatory standards.",
-      "problem": "Construction sites face numerous EHS admin challenges, resulting in increased risks and non-compliance.",
-      "faq_q": "What does Singapore MOM require regarding Streamlining EHS Admin Tasks Checklist?",
-      "faq_a": "Compliance with workplace safety and health regulations.",
-      "source": "Cluster #91-blog3"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-08-10T11:08:35.467040+05:30"
+  "generated_at": "2026-08-11T10:50:09.050315+05:30"
 }
