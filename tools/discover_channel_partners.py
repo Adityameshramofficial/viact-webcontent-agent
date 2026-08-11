@@ -293,11 +293,26 @@ def find_channel_partners_for(competitor_name: str,
     return verified
 
 
+def _today_tab_name() -> str:
+    """v4.15.20: default target tab is date-stamped so each day's finds
+    go into their own tab. Older runs stay preserved for history."""
+    from datetime import date
+    return f"Channel Partners - {date.today().isoformat()}"
+
+
 def append_to_channel_partners_tab(entries: list[dict],
-                                    tab: str = "Channel Partners (Manual)",
+                                    tab: str | None = None,
                                     sheet_id: str = "") -> int:
     """Append new channel-partner rows to the target tab. Deduplicates
-    against existing rows by Email + normalized name. Returns count appended."""
+    against existing rows by Email + normalized name. Returns count appended.
+
+    v4.15.20: `tab` defaults to today's date-stamped tab
+    ('Channel Partners - YYYY-MM-DD') so each run's output is preserved
+    in its own tab for historical audit. Pass a specific tab name to
+    override (e.g. 'Channel Partners (Manual)' for the consolidated tab).
+    """
+    if tab is None:
+        tab = _today_tab_name()
     from push_to_sheets import get_sheets_service
 
     if not sheet_id:
@@ -318,12 +333,27 @@ def append_to_channel_partners_tab(entries: list[dict],
             range=f"'{tab}'!A1", valueInputOption="RAW",
             body={"values": [header]}).execute()
 
-    # Read existing for dedup
-    resp = svc.spreadsheets().values().get(spreadsheetId=sheet_id,
-        range=f"'{tab}'!A2:E").execute()
-    existing_rows = resp.get("values", [])
-    existing_emails = {r[4].lower().strip() for r in existing_rows if len(r) > 4}
-    existing_names = {_norm_name(r[0]) for r in existing_rows if len(r) > 0}
+    # v4.15.20: dedup against BOTH today's tab AND the consolidated
+    # 'Channel Partners (Manual)' tab plus ALL prior 'Channel Partners - YYYY-MM-DD'
+    # tabs. Same reseller shouldn't be added twice across dates.
+    existing_emails: set = set()
+    existing_names: set = set()
+    dedup_tabs = [tab]  # today's tab always
+    meta2 = svc.spreadsheets().get(spreadsheetId=sheet_id).execute()
+    for s in meta2.get("sheets", []):
+        t = s["properties"]["title"]
+        if t == "Channel Partners (Manual)" or t.startswith("Channel Partners - "):
+            if t not in dedup_tabs:
+                dedup_tabs.append(t)
+    for dt in dedup_tabs:
+        try:
+            resp = svc.spreadsheets().values().get(spreadsheetId=sheet_id,
+                range=f"'{dt}'!A2:E").execute()
+            for r in resp.get("values", []):
+                if len(r) > 0: existing_names.add(_norm_name(r[0]))
+                if len(r) > 4: existing_emails.add(r[4].lower().strip())
+        except Exception:
+            pass
 
     new_rows = []
     for e in entries:
