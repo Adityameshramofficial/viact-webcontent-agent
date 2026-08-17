@@ -1,10 +1,20 @@
 {
-  "total_pages": 209,
-  "this_week_pages": 18,
-  "today_pages": 0,
+  "total_pages": 211,
+  "this_week_pages": 2,
+  "today_pages": 2,
   "total_dedup": 71,
-  "last_run_date": "2026-08-13",
+  "last_run_date": "2026-08-17",
   "latest_topics": [
+    {
+      "date": "2026-08-17",
+      "topic": "Construction Site Safety Revolution",
+      "content_type": "Blog"
+    },
+    {
+      "date": "2026-08-17",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar"
+    },
     {
       "date": "2026-08-13",
       "topic": "Enhancing Fall Protection in Construction",
@@ -19,19 +29,35 @@
       "date": "2026-08-13",
       "topic": "Calculating ROI of Automated Safety: A Guide for APAC Construction",
       "content_type": "Blog"
-    },
-    {
-      "date": "2026-08-13",
-      "topic": "MOM Compliance in Facility Layout Design: A Guide for Singapore Constr",
-      "content_type": "Blog"
-    },
-    {
-      "date": "2026-08-13",
-      "topic": "Facility-specific Layouts: The Hidden Risk",
-      "content_type": "Pillar"
     }
   ],
   "recent_outputs": [
+    {
+      "date": "2026-08-17",
+      "topic": "Construction Site Safety Revolution",
+      "content_type": "Blog",
+      "meta_title": "Construction Site Safety: How AI Helps",
+      "meta_desc": "AI improves construction site safety in Singapore and UAE",
+      "keyword": "construction site safety",
+      "subheadline": "Artificial Intelligence improves safety outcomes in Singapore and UAE",
+      "problem": "Construction sites face high injury rates and costs.",
+      "faq_q": "What does Singapore MOM require regarding construction site safety?",
+      "faq_a": "MOM requires compliance with the WSH Act.",
+      "source": "Daily Auto-Run — Blog"
+    },
+    {
+      "date": "2026-08-17",
+      "topic": "Construction Site Risks",
+      "content_type": "Pillar",
+      "meta_title": "Construction Site Safety Automation Using AI",
+      "meta_desc": "AI-powered solutions for construction site safety automation, reducing risks and costs.",
+      "keyword": "Construction Site Safety Automation Using AI",
+      "subheadline": "Regulatory requirements and human costs.",
+      "problem": "Construction sites face high risks, affecting 32,000+ workers globally.",
+      "faq_q": "What does Singapore MOM require for Construction Site Safety Automation Using AI?",
+      "faq_a": "Compliance with MOM WSH Act regulations.",
+      "source": "Daily Auto-Run — Pillar"
+    },
     {
       "date": "2026-08-13",
       "topic": "Enhancing Fall Protection in Construction",
@@ -44,34 +70,8 @@
       "faq_q": "What does Singapore MOM require for fall protection?",
       "faq_a": "MOM requires fall protection measures",
       "source": "Daily Auto-Run — Blog"
-    },
-    {
-      "date": "2026-08-13",
-      "topic": "Construction Site Risks",
-      "content_type": "Pillar",
-      "meta_title": "Construction Site Safety Automation with AI",
-      "meta_desc": "Reduce construction site risks with viAct's AI-powered safety automation.",
-      "keyword": "construction site safety automation",
-      "subheadline": "Regulatory non-compliance costs lives and money.",
-      "problem": "Construction sites face high injury rates. According to Singapore's MOM, the construction industry has one of the highest workplace injury rates.",
-      "faq_q": "What does Singapore MOM require for construction site safety?",
-      "faq_a": "MOM requires employers to ensure a safe work environment.",
-      "source": "Daily Auto-Run — Pillar"
-    },
-    {
-      "date": "2026-08-13",
-      "topic": "Calculating ROI of Automated Safety: A Guide for APAC Construction",
-      "content_type": "Blog",
-      "meta_title": "Calculating ROI of Automated Safety Processes",
-      "meta_desc": "Learn how to calculate the return on investment of automated safety processes to reduce risks and costs in construction sites.",
-      "keyword": "Calculating ROI of Automated Safety Processes",
-      "subheadline": "Learn how to calculate the return on investment of automated safety processes to reduce risks and costs in construction sites.",
-      "problem": "Construction sites face high risks and costs due to accidents and injuries.",
-      "faq_q": "What does Singapore MOM require regarding Calculating ROI of Automated Safety Processes?",
-      "faq_a": "MOM requires compliance with safety regulations to reduce workplace injuries and fatalities.",
-      "source": "Cluster #93-blog2"
     }
   ],
   "sheet_url": "https://docs.google.com/spreadsheets/d/1vo2UiNHJIFGyLj7wxAweEMyvwnNJoOVUTrJM4M9KOec/edit",
-  "generated_at": "2026-08-14T11:12:09.654038+05:30"
+  "generated_at": "2026-08-17T10:21:12.570181+05:30"
 }
